@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -151,6 +152,149 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         plt.colorbar()
         plt.savefig(filename)
         plt.show()
+    
+    def _printIndices(self):
+        for i, layer in enumerate(self.layer_indices):
+            print(f"layer{i}: {layer}")
+
+    def graphHex(
+        self,
+        figsize=(10, 8),
+        node_radius=0.28,
+        edge_alpha=0.15,
+        edge_weighted=False,          # if True, scale edge alpha by |W[u,v]|
+        node_fc="white",
+        node_ec="black",
+        font_size=10,
+        label="index",               # "index" (default) or "value"
+        values=None,                 # optional array aligned to global node index
+        dy=1.0,                      # vertical spacing
+        dx=1.0                       # horizontal spacing
+    ):
+        """
+        Draw a hex-layer network:
+        - nodes are arranged in rows with sizes given by self.layer_indices
+        - every node in layer i connects to every node in layer i+1
+        """
+        layers = self.layer_indices  # assumes you've already computed this
+        if not layers:
+            raise ValueError("layer_indices is empty. Initialize the network first.")
+
+        # --- positions (centered rows, optional stagger for hex look) ---
+        pos = {}  # node_id -> (x, y)
+        for i, layer in enumerate(layers):
+            size = len(layer)
+            y = -i * dy
+            # center the row; optionally stagger alternate rows by 0.5*dx
+            offset = -0.5 * (size - 1) * dx
+            for j, node in enumerate(layer):
+                x = offset + j * dx
+                pos[node] = (x, y)
+
+        # --- edge weight normalization (if using W) ---
+        def edge_alpha_for(u, v):
+            if not edge_weighted or getattr(self, "W", None) is None:
+                return edge_alpha
+            w = abs(self.W[u, v])
+            # robust normalization: divide by (median(abs(W_next_layer)) + tiny epsilon)
+            # so outliers don't blow up visualization
+            return min(1.0, edge_alpha * (w / (edge_norms.get(i, 1e-9))))
+
+        edge_norms = {}
+        if edge_weighted and getattr(self, "W", None) is not None:
+            for i in range(len(layers) - 1):
+                u_nodes = layers[i]
+                v_nodes = layers[i + 1]
+                block = np.abs(self.W[np.ix_(u_nodes, v_nodes)])
+                med = np.median(block) if block.size else 1.0
+                edge_norms[i] = med if med > 0 else (np.max(block) if np.max(block) > 0 else 1.0)
+
+        # --- draw ---
+        fig, ax = plt.subplots(figsize=figsize)
+
+        # edges
+        for i in range(len(layers) - 1):
+            for u in layers[i]:
+                x1, y1 = pos[u]
+                for v in layers[i + 1]:
+                    x2, y2 = pos[v]
+                    ax.plot(
+                        [x1, x2], [y1, y2],
+                        linewidth=1.0,
+                        alpha=edge_alpha_for(u, v),
+                    )
+
+        # nodes
+        for node, (x, y) in pos.items():
+            circ = plt.Circle((x, y), node_radius, facecolor=node_fc, edgecolor=node_ec, linewidth=1.2)
+            ax.add_patch(circ)
+            if label == "value" and values is not None:
+                txt = f"{values[node]:.3g}" if isinstance(values[node], (int, float, np.floating)) else str(values[node])
+            else:
+                txt = str(node)
+            ax.text(x, y, txt, ha="center", va="center", fontsize=font_size)
+
+        ax.set_aspect("equal")
+        ax.axis("off")
+
+        # tidy margins
+        xs, ys = zip(*pos.values())
+        pad = 1.5 * node_radius + 0.2
+        ax.set_xlim(min(xs) - pad, max(xs) + pad)
+        ax.set_ylim(min(ys) - pad, max(ys) + pad)
+
+        plt.tight_layout()
+        plt.savefig(f"figures/hexnet_n{self.n}_view.png")
+        plt.show()
+
+
+    def to_dot_string(self):
+        """
+        Export the layered, fully-connected structure as Graphviz DOT text.
+        Node IDs are your global indices. Layers are grouped with ranks.
+        """
+        lines = []
+        lines.append("digraph HexNet {")
+        lines.append('  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];')
+        lines.append('  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true];')
+        lines.append('  edge  [penwidth=1.0, dir="none"];')
+
+        # group nodes by layer (same rank)
+        for i, layer in enumerate(self.layer_indices):
+            lines.append(f'  {{ rank=same; // layer {i}')
+            for n in layer:
+                lines.append(f'    {n};')
+            lines.append("  }")
+        
+        # invisible edges between nodes in same rank to enforce order
+        for i in range(len(self.layer_indices)):
+            line = f"  {self.layer_indices[i][0]}"
+            for u_idx, u in enumerate(self.layer_indices[i]):
+                if u_idx > 0:
+                    line += f" -> {u}"
+            line += " [style=\"invis\"];"
+            lines.append(line)
+
+        # edges between consecutive layers
+        for i in range(len(self.layer_indices) - 1):
+            for u in self.layer_indices[i]:
+                for v in self.layer_indices[i + 1]:
+                    if getattr(self, "W", None) is not None and False:
+                        w = float(self.W[u, v])
+                        # include a lightweight weight attribute (optional)
+                        lines.append(f'  {u} -> {v} [penwidth=1.0, weight="{w:.3g}"];')
+                    else:
+                        lines.append(f"  {u} -> {v};")
+
+        lines.append("}")
+        return "\n".join(lines)
+
+    def graph_dot(self):
+        dot_string = self.to_dot_string()
+        dot_file = f"figures/hexnet_n{self.n}_viewdot.dot"
+        with open(dot_file, 'w') as f:
+            f.write(dot_string)
+        os.system(f"dot -Tpng {dot_file} -o {dot_file.replace('.dot', '.png')}")
 
     # --- animated training ---
     def train_animated(self, data, epochs=25, classification=True, threshold=0.5, pause=0.05):
@@ -263,13 +407,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
 # ---------- Demo with synthetic data ----------
 # We'll create a tiny binary task on n=2 (output matches input for half the samples)
-n = 2
-net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.01)
+n = 3
+net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.1)
 
 # # simple dataset: inputs in {0,1}^n and targets = inputs (identity) for demo
 train_samples = 100
 X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
-Y = X.copy()
+Y = X.copy() * 2
 data = list(zip(X, Y))
 
 # # a simple dataset: Y = 2X
@@ -282,6 +426,9 @@ data = list(zip(X, Y))
 #     ([x0, x1], [2 * x0, 2 * x1]) 
 #     for x0 in np.arange(-1.0, 1.0, 0.1) for x1 in np.arange(-1.0, 1.0, 0.1)
 # ])
+
+net.graphHex()
+net.graph_dot()
 
 net.graph(activation_only=False, detail='untrained')
 
