@@ -32,6 +32,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         self.layer_indices = self._get_default_layer_indices(n)
         self.total_nodes = sum(len(l) for l in self.layer_indices)
         self.W = self._init_weight_matrix(random_init=random_init)
+        self.W_delta = np.zeros_like(self.W)
         self.learning_rate = lr
 
     # --- structure helpers ---
@@ -72,14 +73,15 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         activations = [x.copy()]
         a = x.copy()
         for _ in range(len(self.layer_indices) - 1):
-            a = self._sigmoid(self.W @ a)
+            # a = self._sigmoid(self.W @ a)
+            a = self.W @ a
             activations.append(a.copy())
         return activations
 
     def backward(self, activations, target_full):
         grads_W = np.zeros_like(self.W)
         y_hat = activations[-1]
-        delta = (y_hat - target_full)  # sigmoid + BCE
+        delta = (y_hat - target_full)
 
         for i in reversed(range(len(self.layer_indices) - 1)):
             src = self.layer_indices[i]
@@ -88,8 +90,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             # dW
             for u in src:
                 au = a_prev[u]
-                if au == 0:  # small speedup; not necessary
-                    continue
+                # if au == 0:  # small speedup; not necessary
+                #     continue
                 for v in dst:
                     grads_W[u, v] += delta[v] * au
             # backprop delta
@@ -102,7 +104,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                     new_delta[u] = s * self._sigmoid_deriv_from_output(a_prev[u])
                 delta = new_delta
 
-        self.W -= self.learning_rate * grads_W
+        self.W_delta = -self.learning_rate * grads_W
+        # self.W -= self.W_delta
 
     def _training_step(self, x_in, y_out):
         x0 = np.zeros(self.total_nodes)
@@ -156,7 +159,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
         line_loss, = ax_loss.plot([], [])
-        ax_loss.set_title("Training Loss (BCE)")
+        ax_loss.set_title("Training Loss (MSE)")
         ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
         ax_loss.grid(True)
@@ -181,11 +184,16 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 y_full[self.layer_indices[-1]] = y_out
                 acts = self.forward(x0)
                 y_pred = acts[-1][self.layer_indices[-1]]
+                self.backward(acts, y_full)
 
-                eps = 1e-7
-                y_clip = np.clip(y_pred, eps, 1 - eps)
-                bce = -np.mean(y_out * np.log(y_clip) + (1 - y_out) * np.log(1 - y_clip))
-                total_loss += bce
+                # # bce loss
+                # eps = 1e-7
+                # y_clip = np.clip(y_pred, eps, 1 - eps)
+                # bce = -np.mean(y_out * np.log(y_clip) + (1 - y_out) * np.log(1 - y_clip))
+                # total_loss += bce
+
+                mse = np.mean((y_out - y_pred) ** 2)
+                total_loss += mse
 
                 if multi_label:
                     pred_bin = (y_pred >= threshold).astype(int)
@@ -194,8 +202,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                     acc = float(np.argmax(y_pred) == np.argmax(y_out))
                 total_acc += acc
 
-                self.backward(acts, y_full)
                 count += 1
+
+            self.W += self.W_delta
+            self.W_delta = np.zeros_like(self.W)
 
             losses.append(total_loss)
             accs.append(total_acc / max(1, count))
@@ -213,38 +223,40 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return np.array(losses), np.array(accs)
 
 
-# ---------- Demo with synthetic data ----------
-# We'll create a tiny binary task on n=2 (output matches input for half the samples)
-n = 3
-net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.01)
+if __name__ == "__main__":
+    # ---------- Demo with synthetic data ----------
+    # We'll create a tiny binary task on n=2 (output matches input for half the samples)
+    n = 3
+    net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.1)
 
-# simple dataset: inputs in {0,1}^n and targets = inputs (identity) for demo
-train_samples = 10000
-X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
-# Y = X.copy()
-Y = X.copy() * 2
-data = list(zip(X, Y))
+    # simple dataset: inputs in {0,1}^n and targets = inputs (identity) for demo
+    train_samples = 10000
+    X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
+    # Y = X.copy()
+    Y = X.copy() * 2
+    data = list(zip(X, Y))
 
-# print(data)
+    # # a simple dataset: Y = 2X
+    # data = np.array([
+    #     # ([0.1, 0.2], [0.2, 0.4]),
+    #     # ([0.5, 0.6], [1.0, 1.2]),
+    #     # ([0.3, 0.4], [0.6, 0.8]),
+    #     # ([0.7, 0.8], [1.4, 1.6]),
+    #     # ([0.9, 1.0], [1.8, 2.0])
+    #     ([x0, x1], [2 * x0, 2 * x1]) 
+    #     for x0 in np.arange(-1.0, 1.0, 0.1) for x1 in np.arange(-1.0, 1.0, 0.1)
+    # ])
 
-# # a simple dataset: Y = 2X
-# data = np.array([
-#     # ([0.1, 0.2], [0.2, 0.4]),
-#     # ([0.5, 0.6], [1.0, 1.2]),
-#     # ([0.3, 0.4], [0.6, 0.8]),
-#     # ([0.7, 0.8], [1.4, 1.6]),
-#     # ([0.9, 1.0], [1.8, 2.0])
-#     ([x0, x1], [2 * x0, 2 * x1]) 
-#     for x0 in np.arange(-1.0, 1.0, 0.1) for x1 in np.arange(-1.0, 1.0, 0.1)
-# ])
+    print("Starting training...")
+    
+    # run training animation
+    losses, accs = net.train(data, epochs=250, threshold=0.1)
+    # losses, accs = net.train_animated(data, epochs=50, threshold=0.1, pause=0.00005)
 
-# print(data)
+    print("Training completed!")
+    print(f"Final loss: {losses[-1] if len(losses) > 0 else 'N/A'}")
+    print(f"Final accuracy: {accs[-1] if len(accs) > 0 else 'N/A'}")
 
-# net.graph(activation_only=False)
-
-# run training animation
-losses, accs = net.train_animated(data, epochs=250, threshold=0.1, pause=0.005)
-
-# Show final structure & weights for sanity
-# net.graph(activation_only=True)
-# net.graph(activation_only=False)
+    # Show final structure & weights for sanity
+    # net.graph(activation_only=True)
+    net.graph(activation_only=False)

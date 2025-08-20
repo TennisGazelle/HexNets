@@ -1,30 +1,10 @@
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 import pickle
-from abc import ABC, abstractmethod
 
-# === Base class (with graph) ===
-class BaseNeuralNetwork(ABC):
-    @abstractmethod
-    def save(self, filepath):
-        pass
+import matplotlib.pyplot as plt
+import numpy as np
 
-    @abstractmethod
-    def load(self, filepath):
-        pass
-
-    @abstractmethod
-    def train(self, data):
-        pass
-
-    @abstractmethod
-    def test(self, x):
-        pass
-
-    def graph(self, activation_only=True, detail=""):
-        self._graphW(activation_only=activation_only, detail=detail)
-
+from src.networks.network import BaseNeuralNetwork
 
 # === Hexagonal Neural Network ===
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
@@ -152,6 +132,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         plt.colorbar()
         plt.savefig(filename)
         plt.show()
+
+        return filename
     
     def _printIndices(self):
         for i, layer in enumerate(self.layer_indices):
@@ -244,8 +226,11 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         ax.set_ylim(min(ys) - pad, max(ys) + pad)
 
         plt.tight_layout()
-        plt.savefig(f"figures/hexnet_n{self.n}_view.png")
+        filename = f"figures/hexnet_n{self.n}_view.png"
+        plt.savefig(filename)
         plt.show()
+
+        return filename
 
 
     def to_dot_string(self):
@@ -294,7 +279,11 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         dot_file = f"figures/hexnet_n{self.n}_viewdot.dot"
         with open(dot_file, 'w') as f:
             f.write(dot_string)
-        os.system(f"dot -Tpng {dot_file} -o {dot_file.replace('.dot', '.png')}")
+
+        png_file = dot_file.replace('.dot', '.png')
+        os.system(f"dot -Tpng {dot_file} -o {png_file}")
+
+        return png_file
 
     # --- animated training ---
     def train_animated(self, data, epochs=25, classification=True, threshold=0.5, pause=0.05):
@@ -399,41 +388,12 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             plt.pause(pause)
 
             if epoch == epochs - 1:
-                fig_loss.savefig(f"figures/hexnet_n{self.n}_loss_{epoch + 1}.png")
-                fig_acc.savefig(f"figures/hexnet_n{self.n}_acc_{epoch + 1}.png")
+                fig_loss_filename = f"figures/hexnet_n{self.n}_loss_{epoch + 1}.png"
+                fig_acc_filename = f"figures/hexnet_n{self.n}_acc_{epoch + 1}.png"
+                fig_loss.savefig(fig_loss_filename)
+                fig_acc.savefig(fig_acc_filename)
+                print(f"Training complete! Loss: {epoch_loss:.3f}, Accuracy: {epoch_acc:.3f}")
+                print(f"Training Loss saved to {fig_loss_filename}")
+                print(f"Training Accuracy saved to {fig_acc_filename}")
 
         return np.array(losses), np.array(accs)
-
-
-def get_dataset(n, train_samples, type="identity", scale=1.0):
-    if type == "identity":
-        X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
-        Y = X.copy()
-    elif type == "linear":
-        X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
-        Y = X.copy() * scale
-    else:
-        raise ValueError(f"Invalid dataset type: {type}")
-    return list(zip(X, Y))
-
-def main():
-    # ---------- Demo with synthetic data ----------
-    # We'll create a tiny binary task on n=2 (output matches input for half the samples)
-    n = 3
-    net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.1)
-
-    data = get_dataset(n, 100, type="identity")
-    # data = get_dataset(n, 100, type="linear", scale=2.0)
-
-    net.graphHex()
-    net.graph_dot()
-
-    net.graph(activation_only=False, detail='untrained')
-
-    losses, accs = net.train_animated(data, epochs=100, pause=0.05)
-
-    net.graph(activation_only=False, detail='trained')
-
-# --- main ---
-if __name__ == "__main__":
-    main()
