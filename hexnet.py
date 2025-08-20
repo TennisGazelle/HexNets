@@ -27,11 +27,12 @@ class BaseNeuralNetwork(ABC):
 
 # === Hexagonal Neural Network ===
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
-    def __init__(self, n, random_init=True, lr=0.01):
+    def __init__(self, n, random_init=True, lr=0.05):
         self.n = n
         self.layer_indices = self._get_default_layer_indices(n)
         self.total_nodes = sum(len(l) for l in self.layer_indices)
         self.W = self._init_weight_matrix(random_init=random_init)
+        self.W_delta = np.zeros_like(self.W)
         self.learning_rate = lr
 
     # --- structure helpers ---
@@ -50,76 +51,90 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     # --- weights ---
     def _init_weight_matrix(self, random_init=True):
         W = np.zeros((self.total_nodes, self.total_nodes))
+        rng = np.random.default_rng()
+        if not random_init: return W
         for i in range(len(self.layer_indices) - 1):
-            for u in self.layer_indices[i]:
-                for v in self.layer_indices[i + 1]:
-                    W[u, v] = np.random.randn() * 0.1 if random_init else 0.0
+            src = self.layer_indices[i]
+            dst = self.layer_indices[i + 1]
+            fan_in = len(src)
+            fan_out = len(dst)
+            std = np.sqrt(2.0 / (fan_in + fan_out))
+            for u in src:
+                for v in dst:
+                    W[u, v] = rng.normal(0.0, std)
         return W
 
-    # --- activations ---
-    def _relu(self, x):
-        return np.maximum(0, x)
+    @staticmethod
+    def _sigmoid(x): return 1.0 / (1.0 + np.exp(-x))
+    @staticmethod
+    def _sigmoid_deriv_from_output(sig_y): return sig_y * (1.0 - sig_y)
 
-    def _relu_deriv(self, x):
-        # x here is the post-activation value used in our forward history
-        return (x > 0).astype(float)
-
-    # --- forward & backward ---
     def forward(self, x):
         activations = [x.copy()]
         a = x.copy()
         for _ in range(len(self.layer_indices) - 1):
-            a = self._relu(self.W @ a)
+            # a = self._sigmoid(self.W @ a)
+            a = self.W @ a
             activations.append(a.copy())
         return activations
 
-    def backward(self, activations, target):
-        grads = np.zeros_like(self.W)
-        # derivative w.r.t. output activations (MSE loss: dL/dy = y - t)
-        delta = (activations[-1] - target) * self._relu_deriv(activations[-1])
-        # walk layers backward
+    def backward(self, activations, target_full):
+        grads_W = np.zeros_like(self.W)
+        y_hat = activations[-1]
+        delta = (y_hat - target_full)
+
         for i in reversed(range(len(self.layer_indices) - 1)):
-            src_nodes = self.layer_indices[i]
-            dst_nodes = self.layer_indices[i + 1]
-            # weight grads: outer product between delta(dst) and activations(src)
-            for u in src_nodes:
-                au = activations[i][u]
-                if au == 0:
-                    continue
-                for v in dst_nodes:
-                    grads[u, v] += delta[v] * au
+            src = self.layer_indices[i]
+            dst = self.layer_indices[i + 1]
+            a_prev = activations[i]
+            # dW
+            for u in src:
+                au = a_prev[u]
+                # if au == 0:  # small speedup; not necessary
+                #     continue
+                for v in dst:
+                    grads_W[u, v] += delta[v] * au
+            # backprop delta
             if i > 0:
-                # backpropagate delta to previous layer (pre-activation grads already folded into relu deriv)
-                new_delta = np.zeros(len(activations[i]))
-                for u in src_nodes:
+                new_delta = np.zeros(self.total_nodes)
+                for u in src:
                     s = 0.0
-                    for v in dst_nodes:
+                    for v in dst:
                         s += self.W[u, v] * delta[v]
-                    new_delta[u] = s * self._relu_deriv(activations[i][u])
+                    new_delta[u] = s * self._sigmoid_deriv_from_output(a_prev[u])
                 delta = new_delta
-        # SGD update
-        self.W -= self.learning_rate * grads
 
-    # --- public API ---
-    def train(self, data):
-        for x_input, y_target in data:
-            x0 = np.zeros(self.total_nodes)
-            x0[self.layer_indices[0]] = x_input
-            y_full = np.zeros(self.total_nodes)
-            y_full[self.layer_indices[-1]] = y_target
-            activations = self.forward(x0)
-            self.backward(activations, y_full)
+        self.W_delta = -self.learning_rate * grads_W
+        # self.W -= self.W_delta
 
-    def test(self, x_input):
+    def _training_step(self, x_in, y_out):
+        x0 = np.zeros(self.total_nodes)
+        x0[self.layer_indices[0]] = x_in
+
+        y_full = np.zeros(self.total_nodes)
+        y_full[self.layer_indices[-1]] = y_out
+
+        acts = self.forward(x0)
+
+        self.backward(acts, y_full)
+
+    def train(self, data, epochs=1, multi_label=True, threshold=0.5):
+        for _ in range(epochs):
+            for x_in, y_out in data:
+                self._training_step(x_in, y_out)
+
+    def test(self, x_input, multi_label=True, threshold=0.5):
         x0 = np.zeros(self.total_nodes)
         x0[self.layer_indices[0]] = x_input
-        activations = self.forward(x0)
-        return activations[-1][self.layer_indices[-1]]
+        acts = self.forward(x0)
+        y = acts[-1][self.layer_indices[-1]]
+        if multi_label:
+            return (y >= threshold).astype(int), y
+        else:
+            return np.argmax(y), y
 
     def save(self, filepath):
-        with open(filepath, 'wb') as f:
-            pickle.dump({'n': self.n, 'W': self.W}, f)
-
+        with open(filepath, 'wb') as f: pickle.dump({'n': self.n, 'W': self.W}, f)
     def load(self, filepath):
         with open(filepath, 'rb') as f:
             state = pickle.load(f)
@@ -129,29 +144,18 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             self.W = state['W']
 
     def _graphW(self, activation_only=True):
-        title = "Activation Structure" if activation_only else "Weight Matrix"
         matrix = (self.W != 0).astype(int) if activation_only else self.W
         plt.figure(figsize=(7, 7))
-        plt.imshow(matrix, cmap='Greys' if activation_only else 'viridis', interpolation='none')
-        plt.title(title + f" (n={self.n})")
+        plt.imshow(matrix, interpolation='none')
+        plt.title(("Activation Structure" if activation_only else "Weight Matrix") + f" (n={self.n})")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
-        plt.grid(visible=True, color='black', linewidth=0.5)
+        plt.grid(visible=True)
         plt.colorbar()
         plt.show()
 
-    # --- animated training ---
-    def train_animated(self, data, epochs=25, classification=True, threshold=0.5, pause=0.05):
-        """
-        Train while animating loss & accuracy over epochs.
-        - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
-        - classification=True: accuracy computed by thresholding outputs at `threshold`
-          else we report 'pseudo-accuracy' as 1 / (1 + MAE) for a rough regression score.
-        """
-        losses = []
-        accs = []
-
-        # Prepare two separate figures to respect "one chart per figure"
+    def train_animated(self, data, epochs=25, multi_label=True, threshold=0.5, pause=0.0):
+        losses, accs = [], []
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
         line_loss, = ax_loss.plot([], [])
@@ -169,90 +173,90 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         ax_acc.set_ylim(0, 1)
         ax_acc.grid(True)
 
-        # training loop
         for epoch in range(epochs):
             total_loss = 0.0
-            correct = 0
+            total_acc = 0.0
             count = 0
-
-            for x_input, y_target in data:
-                # build padded vectors
+            for x_in, y_out in data:
                 x0 = np.zeros(self.total_nodes)
-                x0[self.layer_indices[0]] = x_input
+                x0[self.layer_indices[0]] = x_in
                 y_full = np.zeros(self.total_nodes)
-                y_full[self.layer_indices[-1]] = y_target
+                y_full[self.layer_indices[-1]] = y_out
+                acts = self.forward(x0)
+                y_pred = acts[-1][self.layer_indices[-1]]
+                self.backward(acts, y_full)
 
-                activations = self.forward(x0)
+                # # bce loss
+                # eps = 1e-7
+                # y_clip = np.clip(y_pred, eps, 1 - eps)
+                # bce = -np.mean(y_out * np.log(y_clip) + (1 - y_out) * np.log(1 - y_clip))
+                # total_loss += bce
 
-                # loss (MSE on final layer nodes only)
-                y_pred = activations[-1][self.layer_indices[-1]]
-                mse = np.mean((y_pred - y_target) ** 2)
+                mse = np.mean((y_out - y_pred) ** 2)
                 total_loss += mse
 
-                # accuracy
-                if classification:
+                if multi_label:
                     pred_bin = (y_pred >= threshold).astype(int)
-                    tgt_bin = (y_target >= 0.5).astype(int)
-                    correct += np.mean(pred_bin == tgt_bin)
+                    acc = np.mean(pred_bin == (y_out >= 0.5))
                 else:
-                    # a simple bounded score for regression feel: 1/(1+MAE)
-                    mae = np.mean(np.abs(y_pred - y_target))
-                    correct += 1.0 / (1.0 + mae)
+                    acc = float(np.argmax(y_pred) == np.argmax(y_out))
+                total_acc += acc
 
                 count += 1
 
-                # backprop step
-                self.backward(activations, y_full)
+            self.W += self.W_delta
+            self.W_delta = np.zeros_like(self.W)
 
-            epoch_loss = total_loss #/ max(count, 1)
-            epoch_acc = correct / max(count, 1)
-            losses.append(epoch_loss)
-            accs.append(epoch_acc)
-
-            # update plots
+            losses.append(total_loss)
+            accs.append(total_acc / max(1, count))
             line_loss.set_data(np.arange(1, len(losses)+1), losses)
             ax_loss.relim()
             ax_loss.autoscale_view()
             fig_loss.canvas.draw()
-            # plt.pause(pause)
 
             line_acc.set_data(np.arange(1, len(accs)+1), accs)
             ax_acc.relim()
             ax_acc.autoscale_view()
             fig_acc.canvas.draw()
-
             plt.pause(pause)
 
         return np.array(losses), np.array(accs)
 
 
-# ---------- Demo with synthetic data ----------
-# We'll create a tiny binary task on n=2 (output matches input for half the samples)
-n = 2
-net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.01)
+if __name__ == "__main__":
+    # ---------- Demo with synthetic data ----------
+    # We'll create a tiny binary task on n=2 (output matches input for half the samples)
+    n = 3
+    net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.1)
 
-# # simple dataset: inputs in {0,1}^n and targets = inputs (identity) for demo
-train_samples = 64
-X = (np.random.rand(train_samples, n) > 0.5).astype(float)
-Y = X.copy()
-data = list(zip(X, Y))
+    # simple dataset: inputs in {0,1}^n and targets = inputs (identity) for demo
+    train_samples = 10000
+    X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
+    # Y = X.copy()
+    Y = X.copy() * 2
+    data = list(zip(X, Y))
 
-# a simple dataset: Y = 2X
-# data = np.array([
-#     # ([0.1, 0.2], [0.2, 0.4]),
-#     # ([0.5, 0.6], [1.0, 1.2]),
-#     # ([0.3, 0.4], [0.6, 0.8]),
-#     # ([0.7, 0.8], [1.4, 1.6]),
-#     # ([0.9, 1.0], [1.8, 2.0])
-#     ([x0, x1], [2 * x0, 2 * x1]) 
-#     for x0 in np.arange(-1.0, 1.0, 0.1) for x1 in np.arange(-1.0, 1.0, 0.1)
-# ])
+    # # a simple dataset: Y = 2X
+    # data = np.array([
+    #     # ([0.1, 0.2], [0.2, 0.4]),
+    #     # ([0.5, 0.6], [1.0, 1.2]),
+    #     # ([0.3, 0.4], [0.6, 0.8]),
+    #     # ([0.7, 0.8], [1.4, 1.6]),
+    #     # ([0.9, 1.0], [1.8, 2.0])
+    #     ([x0, x1], [2 * x0, 2 * x1]) 
+    #     for x0 in np.arange(-1.0, 1.0, 0.1) for x1 in np.arange(-1.0, 1.0, 0.1)
+    # ])
 
-# net.graph(activation_only=False)
+    print("Starting training...")
+    
+    # run training animation
+    losses, accs = net.train(data, epochs=250, threshold=0.1)
+    # losses, accs = net.train_animated(data, epochs=50, threshold=0.1, pause=0.00005)
 
-# run animation
-losses, accs = net.train_animated(data, epochs=100, classification=False, threshold=0.5, pause=0.05)
+    print("Training completed!")
+    print(f"Final loss: {losses[-1] if len(losses) > 0 else 'N/A'}")
+    print(f"Final accuracy: {accs[-1] if len(accs) > 0 else 'N/A'}")
 
-# Show final structure & weights for sanity
-# net.graph(activation_only=True)
-net.graph(activation_only=False)
+    # Show final structure & weights for sanity
+    # net.graph(activation_only=True)
+    net.graph(activation_only=False)
