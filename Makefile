@@ -19,6 +19,25 @@ test:
 run:
 	@${PYTHON} working_hexnet.py
 
+.PHONY: ref-graphs
+ref-graphs:
+	@${PYTHON} cli.py ref -n 2 -g activation
+	@${PYTHON} cli.py ref -n 3 -g activation
+	@${PYTHON} cli.py ref -n 4 -g activation
+	@${PYTHON} cli.py ref -n 5 -g activation
+	@${PYTHON} cli.py ref -n 6 -g activation
+	@${PYTHON} cli.py ref -n 7 -g activation
+	@${PYTHON} cli.py ref -n 8 -g activation
+
+
+	@${PYTHON} cli.py ref -n 2 -g dot
+	@${PYTHON} cli.py ref -n 3 -g dot
+	@${PYTHON} cli.py ref -n 4 -g dot
+	@${PYTHON} cli.py ref -n 5 -g dot
+	@${PYTHON} cli.py ref -n 6 -g dot
+	@${PYTHON} cli.py ref -n 7 -g dot
+	@${PYTHON} cli.py ref -n 8 -g dot
+
 .PHONY: clean-all
 clean-all: clean-venv clean-figures
 

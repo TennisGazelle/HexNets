@@ -1,15 +1,18 @@
 import os
 import pickle
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from src.networks.network import BaseNeuralNetwork
+from src.networks.activations import ReLU
+from src.networks.loss import HuberLoss, MeanSquaredError
 
 # === Hexagonal Neural Network ===
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def __init__(self, n, random_init=True, lr=0.01):
-        self.n = n
+        super().__init__(n, ReLU(), HuberLoss())
         self.layer_indices = self._get_default_layer_indices(n)
         self.total_nodes = sum(len(l) for l in self.layer_indices)
         self.W = self._init_weight_matrix(random_init=random_init)
@@ -41,16 +44,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                     W[u, v] = np.random.randn() if random_init else 0.0
         return W
 
-    # --- activations ---
-    def _relu(self, x, alpha=0.01):
-        return np.maximum(0, x)
-        # return np.where(x >= 0, x, alpha * x)
-
-    def _relu_deriv(self, x, alpha=0.01):
-        # x here is the post-activation value used in our forward history
-        return (x > 0).astype(float)
-        # return np.where(x > 0, 1.0, 0.0)
-
     # --- forward & backward ---
     def forward(self, x):
         activations = [x.copy()]
@@ -58,7 +51,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         for i in range(len(self.layer_indices) - 1):
             z = self.W.T @ a
             if i < len(self.layer_indices) - 2:
-                a = self._relu(z)
+                a = self.activation.activate(z)
             else:
                 a = z
             activations.append(a.copy())
@@ -66,9 +59,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     def backward(self, activations, target):
         grads = np.zeros_like(self.W)
-        diff = activations[-1] - target  # linear output layer
-        delta_thr = 0.1
-        delta = np.where(np.abs(diff) <= delta_thr, diff, delta_thr * np.sign(diff))
+        delta = self.loss.calc_delta(target, activations[-1])
         # walk layers backward
         for i in reversed(range(len(self.layer_indices) - 1)):
             src_nodes = self.layer_indices[i]
@@ -87,7 +78,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                     s = 0.0
                     for v in dst_nodes:
                         s += self.W[u, v] * delta[v]
-                    new_delta[u] = s * self._relu_deriv(activations[i][u])
+                    new_delta[u] = s * self.activation.deactivate(activations[i][u])
                 delta = new_delta
         # SGD update
         # print(f"[dbg] ||delta_out||={np.linalg.norm(delta):.3e}  ||grads||={np.linalg.norm(grads):.3e}")
@@ -146,10 +137,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     def graphHex(
         self,
-        figsize=(10, 8),
+        figsize=(10, 10),
         node_radius=0.28,
-        edge_alpha=0.15,
-        edge_weighted=False,          # if True, scale edge alpha by |W[u,v]|
+        edge_alpha=1,
+        edge_weighted=True,          # if True, scale edge alpha by |W[u,v]|
         node_fc="white",
         node_ec="black",
         font_size=10,
@@ -178,23 +169,23 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 x = offset + j * dx
                 pos[node] = (x, y)
 
-        # --- edge weight normalization (if using W) ---
-        def edge_alpha_for(u, v):
-            if not edge_weighted or getattr(self, "W", None) is None:
-                return edge_alpha
-            w = abs(self.W[u, v])
-            # robust normalization: divide by (median(abs(W_next_layer)) + tiny epsilon)
-            # so outliers don't blow up visualization
-            return min(1.0, edge_alpha * (w / (edge_norms.get(i, 1e-9))))
+        # # --- edge weight normalization (if using W) ---
+        # def edge_alpha_for(u, v):
+        #     if not edge_weighted or getattr(self, "W", None) is None:
+        #         return edge_alpha
+        #     w = abs(self.W[u, v])
+        #     # robust normalization: divide by (median(abs(W_next_layer)) + tiny epsilon)
+        #     # so outliers don't blow up visualization
+        #     return min(1.0, edge_alpha * (w / (edge_norms.get(i, 1e-9))))
 
-        edge_norms = {}
-        if edge_weighted and getattr(self, "W", None) is not None:
-            for i in range(len(layers) - 1):
-                u_nodes = layers[i]
-                v_nodes = layers[i + 1]
-                block = np.abs(self.W[np.ix_(u_nodes, v_nodes)])
-                med = np.median(block) if block.size else 1.0
-                edge_norms[i] = med if med > 0 else (np.max(block) if np.max(block) > 0 else 1.0)
+        # edge_norms = {}
+        # if edge_weighted and getattr(self, "W", None) is not None:
+        #     for i in range(len(layers) - 1):
+        #         u_nodes = layers[i]
+        #         v_nodes = layers[i + 1]
+        #         block = np.abs(self.W[np.ix_(u_nodes, v_nodes)])
+        #         med = np.median(block) if block.size else 1.0
+        #         edge_norms[i] = med if med > 0 else (np.max(block) if np.max(block) > 0 else 1.0)
 
         # --- draw ---
         fig, ax = plt.subplots(figsize=figsize)
@@ -208,18 +199,20 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                     ax.plot(
                         [x1, x2], [y1, y2],
                         linewidth=1.0,
-                        alpha=edge_alpha_for(u, v),
+                        color="black",
+                        zorder=1,
+                        # alpha=edge_alpha_for(u, v),
                     )
 
         # nodes
         for node, (x, y) in pos.items():
-            circ = plt.Circle((x, y), node_radius, facecolor=node_fc, edgecolor=node_ec, linewidth=1.2)
+            circ = plt.Circle((x, y), node_radius, facecolor=node_fc, edgecolor=node_ec, linewidth=1.2, zorder=10)
             ax.add_patch(circ)
             if label == "value" and values is not None:
                 txt = f"{values[node]:.3g}" if isinstance(values[node], (int, float, np.floating)) else str(values[node])
             else:
                 txt = str(node)
-            ax.text(x, y, txt, ha="center", va="center", fontsize=font_size)
+            ax.text(x, y, txt, ha="center", va="center", fontsize=font_size, zorder=11)
 
         ax.set_aspect("equal")
         ax.axis("off")
@@ -238,7 +231,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return filename
 
 
-    def to_dot_string(self):
+    def to_dot_string(self) -> List[str]:
         """
         Export the layered, fully-connected structure as Graphviz DOT text.
         Node IDs are your global indices. Layers are grouped with ranks.
@@ -277,13 +270,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                         lines.append(f"  {u} -> {v};")
 
         lines.append("}")
-        return "\n".join(lines)
+        return lines
 
     def graph_dot(self):
-        dot_string = self.to_dot_string()
+        dot_string_list = self.to_dot_string()
         dot_file = f"figures/hexnet_n{self.n}_viewdot.dot"
         with open(dot_file, 'w') as f:
-            f.write(dot_string)
+            for line in dot_string_list:
+                f.write(line + "\n")
 
         png_file = dot_file.replace('.dot', '.png')
         os.system(f"dot -Tpng {dot_file} -o {png_file}")
@@ -302,7 +296,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
         line_loss, = ax_loss.plot([], [])
-        ax_loss.set_title("Training Loss (MAE)")
+        ax_loss.set_title(f"Training Loss ({self.loss.name})")
         ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
         ax_loss.grid(True)
@@ -310,7 +304,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         fig_acc = plt.figure(figsize=(6, 4))
         ax_acc = fig_acc.add_subplot(111)
         line_acc, = ax_acc.plot([], [])
-        ax_acc.set_title("Training Accuracy")
+        ax_acc.set_title(f"Training Accuracy ({self.loss.name})")
         ax_acc.set_xlabel("Epoch")
         ax_acc.set_ylabel("Accuracy")
         ax_acc.set_ylim(0, 1)
@@ -344,12 +338,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
                 # loss (MSE on final layer nodes only)
                 y_pred = activations[-1][self.layer_indices[-1]]
-                diff = y_pred - y_target
-                delta_thr = 0.1  # tune: try 0.1, 0.25, 1.0
-                huber = np.where(np.abs(diff) <= delta_thr,
-                                0.5 * diff**2,
-                                delta_thr * (np.abs(diff) - 0.5 * delta_thr))
-                total_loss += np.mean(huber)
+                total_loss += self.loss.calc_loss(y_target, y_pred)
 
                 # # accuracy
                 # if classification:
@@ -390,12 +379,15 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             plt.pause(pause)
 
             if epoch == epochs - 1:
-                fig_loss_filename = f"figures/hexnet_n{self.n}_loss_{epoch + 1}.png"
-                fig_acc_filename = f"figures/hexnet_n{self.n}_acc_{epoch + 1}.png"
+                fig_loss_filename = f"figures/hexnet_n{self.n}_loss-{self.loss.name}_{epoch + 1}.png"
+                fig_acc_filename = f"figures/hexnet_n{self.n}_acc-{self.loss.name}_{epoch + 1}.png"
                 fig_loss.savefig(fig_loss_filename)
                 fig_acc.savefig(fig_acc_filename)
-                print(f"Training complete! Loss: {epoch_loss:.3f}, Accuracy: {epoch_acc:.3f}")
-                print(f"Training Loss saved to {fig_loss_filename}")
-                print(f"Training Accuracy saved to {fig_acc_filename}")
+                print(f"Training complete!")
+                print(f"Network: n={self.n}, lr={self.learning_rate}, epochs={epochs}")
+                print(f"Loss ({self.loss.name}): {epoch_loss:.3f}")
+                print(f"Loss saved to {fig_loss_filename}")
+                print(f"Accuracy ({self.loss.name}): {epoch_acc:.3f}")
+                print(f"Accuracy saved to {fig_acc_filename}")
 
         return np.array(self.training_metrics["loss"]), np.array(self.training_metrics["accuracy"])
