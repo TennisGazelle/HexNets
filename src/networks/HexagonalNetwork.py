@@ -14,6 +14,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         self.total_nodes = sum(len(l) for l in self.layer_indices)
         self.W = self._init_weight_matrix(random_init=random_init)
         self.learning_rate = lr
+        self.training_metrics = {
+            "loss": [],
+            "accuracy": []
+        }
 
     # --- structure helpers ---
     def _hex_layer_sizes(self, n):
@@ -34,7 +38,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         for i in range(len(self.layer_indices) - 1):
             for u in self.layer_indices[i]:
                 for v in self.layer_indices[i + 1]:
-                    W[u, v] = np.random.randn() * 2 if random_init else 0.0
+                    W[u, v] = np.random.randn() if random_init else 0.0
         return W
 
     # --- activations ---
@@ -108,7 +112,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     def save(self, filepath):
         with open(filepath, 'wb') as f:
-            pickle.dump({'n': self.n, 'W': self.W}, f)
+            pickle.dump({'n': self.n, 'W': self.W, 'training_metrics': self.training_metrics}, f)
 
     def load(self, filepath):
         with open(filepath, 'rb') as f:
@@ -117,6 +121,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             self.layer_indices = self._get_default_layer_indices(self.n)
             self.total_nodes = sum(len(l) for l in self.layer_indices)
             self.W = state['W']
+            self.training_metrics = state['training_metrics']
 
     def _graphW(self, activation_only=True, detail=""):
         title = "Activation Structure" if activation_only else "Weight Matrix"
@@ -293,9 +298,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         - classification=True: accuracy computed by thresholding outputs at `threshold`
           else we report 'pseudo-accuracy' as 1 / (1 + MAE) for a rough regression score.
         """
-        losses = []
-        accs = []
-
         # Prepare two separate figures to respect "one chart per figure"
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
@@ -372,16 +374,16 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
             epoch_loss = total_loss
             epoch_acc = correct / max(count, 1.0)
-            losses.append(epoch_loss)
-            accs.append(epoch_acc)
+            self.training_metrics["loss"].append(epoch_loss)
+            self.training_metrics["accuracy"].append(epoch_acc)
 
             # update plots
-            line_loss.set_data(np.arange(1, len(losses)+1), losses)
+            line_loss.set_data(np.arange(1, len(self.training_metrics["loss"])+1), self.training_metrics["loss"])
             ax_loss.relim()
             ax_loss.autoscale_view()
             fig_loss.canvas.draw()
 
-            line_acc.set_data(np.arange(1, len(accs)+1), accs)
+            line_acc.set_data(np.arange(1, len(self.training_metrics["accuracy"])+1), self.training_metrics["accuracy"])
             ax_acc.relim()
             ax_acc.autoscale_view()
             fig_acc.canvas.draw()
@@ -396,4 +398,4 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 print(f"Training Loss saved to {fig_loss_filename}")
                 print(f"Training Accuracy saved to {fig_acc_filename}")
 
-        return np.array(losses), np.array(accs)
+        return np.array(self.training_metrics["loss"]), np.array(self.training_metrics["accuracy"])

@@ -1,0 +1,43 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Hex Net Matplotlib (n=3)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "ref",
+                "-n", "3",
+                "-g", "matplotlib"
+            ]
+        },
+        {
+            "name": "Hex Net Dot (n=3)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "ref",
+                "-n", "3",
+                "-g", "dot"
+            ]
+        },
+        {
+            "name": "Hex Net Simulate (n=3)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "sim",
+                "-n", "3",
+                "-t", "linear",
+                "-ds", "100",
+                "-e", "1000"
+            ]
+        }
+    ]
+}
