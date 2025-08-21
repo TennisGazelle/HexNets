@@ -17,7 +17,7 @@ test:
 
 .PHONY: run
 run:
-	@${PYTHON} working_hexnet.py
+	@${PYTHON} cli.py sim -n 3 -lr 0.001 -t linear -e 200
 
 .PHONY: ref-graphs
 ref-graphs:
@@ -28,7 +28,6 @@ ref-graphs:
 	@${PYTHON} cli.py ref -n 6 -g activation
 	@${PYTHON} cli.py ref -n 7 -g activation
 	@${PYTHON} cli.py ref -n 8 -g activation
-
 
 	@${PYTHON} cli.py ref -n 2 -g dot
 	@${PYTHON} cli.py ref -n 3 -g dot

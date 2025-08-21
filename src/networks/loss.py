@@ -26,7 +26,7 @@ class MeanSquaredError(BaseLoss):
 
 class HuberLoss(BaseLoss):
     def __init__(self, delta_threshold=1.0):
-        super().__init__("huber_loss")
+        super().__init__(f"huber_loss_(delta-{delta_threshold})")
         self.delta_threshold = delta_threshold
 
     def calc_loss(self, y_true, y_pred):
@@ -56,3 +56,16 @@ class LogCoshLoss(BaseLoss):
     def calc_delta(self, y_true, y_pred):
         diff = y_pred - y_true
         return np.tanh(diff)
+
+class QuantileLoss(BaseLoss):
+    def __init__(self, tau=0.5):
+        super().__init__("quantile_loss")
+        self.tau = tau
+
+    def calc_loss(self, y_true, y_pred):
+        diff = y_pred - y_true
+        return np.mean(np.maximum(self.tau * diff, (self.tau - 1) * diff))
+
+    def calc_delta(self, y_true, y_pred):
+        diff = y_pred - y_true
+        return np.where(diff >= 0, self.tau, self.tau - 1)

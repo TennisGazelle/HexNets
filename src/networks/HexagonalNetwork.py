@@ -6,20 +6,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from src.networks.network import BaseNeuralNetwork
-from src.networks.activations import ReLU
-from src.networks.loss import HuberLoss, MeanSquaredError
+from src.networks.activations import LeakyReLU, ReLU, Sigmoid
+from src.networks.loss import HuberLoss, LogCoshLoss, MeanSquaredError, QuantileLoss
 
 # === Hexagonal Neural Network ===
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def __init__(self, n, random_init=True, lr=0.01):
-        super().__init__(n, ReLU(), HuberLoss())
+        super().__init__(n, Sigmoid(), MeanSquaredError())
         self.layer_indices = self._get_default_layer_indices(n)
         self.total_nodes = sum(len(l) for l in self.layer_indices)
         self.W = self._init_weight_matrix(random_init=random_init)
         self.learning_rate = lr
         self.training_metrics = {
             "loss": [],
-            "accuracy": []
+            "accuracy": [],
+            "r_squared": []
         }
 
     # --- structure helpers ---
@@ -118,6 +119,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         title = "Activation Structure" if activation_only else "Weight Matrix"
         filename = f"figures/hexnet_n{self.n}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
         matrix = (self.W != 0).astype(int) if activation_only else self.W
+
         plt.figure(figsize=(7, 7))
         plt.imshow(matrix, cmap='Greys' if activation_only else 'viridis', interpolation='none')
         plt.suptitle(title + f" (n={self.n})")
@@ -239,8 +241,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         lines = []
         lines.append("digraph HexNet {")
         lines.append('  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];')
-        lines.append('  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true];')
-        lines.append('  edge  [penwidth=1.0, dir="none"];')
+        lines.append('  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true, zorder=10];')
+        lines.append('  edge  [penwidth=0.5, dir="none", zorder=1];')
 
         # group nodes by layer (same rank)
         for i, layer in enumerate(self.layer_indices):
@@ -285,14 +287,20 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return png_file
 
     # --- animated training ---
-    def train_animated(self, data, epochs=25, classification=True, threshold=0.5, pause=0.05):
+    def train_animated(self, data, epochs=25, threshold=0.5, pause=0.05) -> tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
-        - classification=True: accuracy computed by thresholding outputs at `threshold`
-          else we report 'pseudo-accuracy' as 1 / (1 + MAE) for a rough regression score.
         """
-        # Prepare two separate figures to respect "one chart per figure"
+        print(f"Network:")
+        print(f"n:\t{self.n}")
+        print(f"lr:\t{self.learning_rate}")
+        print(f"epochs:\t{epochs}")
+        print(f"loss:\t{self.loss.name}")
+        print(f"activation:\t{self.activation.name}")
+        print("Training...")
+
+        # Prepare separate figures to respect "one chart per figure"
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
         line_loss, = ax_loss.plot([], [])
@@ -304,17 +312,28 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         fig_acc = plt.figure(figsize=(6, 4))
         ax_acc = fig_acc.add_subplot(111)
         line_acc, = ax_acc.plot([], [])
-        ax_acc.set_title(f"Training Accuracy ({self.loss.name})")
+        ax_acc.set_title(f"Training Accuracy")
         ax_acc.set_xlabel("Epoch")
         ax_acc.set_ylabel("Accuracy")
         ax_acc.set_ylim(0, 1)
         ax_acc.grid(True)
+
+        fig_r2 = plt.figure(figsize=(6, 4))
+        ax_r2 = fig_r2.add_subplot(111)
+        line_r2, = ax_r2.plot([], [])
+        ax_r2.set_title(f"Training R^2")
+        ax_r2.set_xlabel("Epoch")
+        ax_r2.set_ylabel("R^2")
+        ax_r2.grid(True)
 
         # training loop
         for epoch in range(epochs):
             total_loss = 0.0
             correct = 0
             count = 0
+            ss_res_sum = 0.0
+            sum_y = 0.0
+            sum_y2 = 0.0
 
             for x_input, y_target in data:
                 # build padded vectors
@@ -340,15 +359,28 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 y_pred = activations[-1][self.layer_indices[-1]]
                 total_loss += self.loss.calc_loss(y_target, y_pred)
 
-                # # accuracy
+                # accuracy
                 # if classification:
                 #     pred_bin = (y_pred >= threshold).astype(int)
                 #     tgt_bin = (y_target >= 0.5).astype(int)
                 #     correct += np.mean(pred_bin == tgt_bin)
                 # else:
                 # a simple bounded score for regression feel: 1/(1+MAE)
-                mae = np.mean(np.abs(y_pred - y_target))
-                correct += 1.0 / (1.0 + mae)
+                # mae = np.mean(np.abs(y_pred - y_target))
+                # correct += 1.0 / (1.0 + mae)
+
+                rmse = np.sqrt(np.mean((y_pred - y_target)**2))
+                score = np.exp(-rmse)  # maps 0->1, larger errors decay smoothly
+                correct += score
+
+                # scale = np.maximum(1e-8, np.mean(np.abs(y_target)))  # per-sample
+                # nmae = np.mean(np.abs(y_pred - y_target)) / scale
+                # correct += np.exp(-nmae)
+
+                # r_squared
+                ss_res_sum += float(np.sum((y_pred - y_target)**2))
+                sum_y += float(np.sum(y_target))
+                sum_y2 += float(np.sum(y_target**2))
 
                 count += 1
 
@@ -361,10 +393,16 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 #     mae_after = np.mean(np.abs(y_pred_after - y_target))
                 #     print(f"MAE before: {mae}, after: {mae_after}, delta_y={np.linalg.norm(y_pred_after - y_pred)}")
 
-            epoch_loss = total_loss
-            epoch_acc = correct / max(count, 1.0)
+            # r_squared, cont'd
+            ss_tot = sum_y2 - (sum_y**2 / count)
+            r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
+
+            epoch_loss = total_loss / count
+            epoch_acc = correct / count
+            epoch_r2 = r_squared
             self.training_metrics["loss"].append(epoch_loss)
             self.training_metrics["accuracy"].append(epoch_acc)
+            self.training_metrics["r_squared"].append(epoch_r2)
 
             # update plots
             line_loss.set_data(np.arange(1, len(self.training_metrics["loss"])+1), self.training_metrics["loss"])
@@ -376,18 +414,28 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             ax_acc.relim()
             ax_acc.autoscale_view()
             fig_acc.canvas.draw()
+
+            line_r2.set_data(np.arange(1, len(self.training_metrics["r_squared"])+1), self.training_metrics["r_squared"])
+            ax_r2.relim()
+            ax_r2.autoscale_view()
+            fig_r2.canvas.draw()
+
             plt.pause(pause)
 
             if epoch == epochs - 1:
                 fig_loss_filename = f"figures/hexnet_n{self.n}_loss-{self.loss.name}_{epoch + 1}.png"
-                fig_acc_filename = f"figures/hexnet_n{self.n}_acc-{self.loss.name}_{epoch + 1}.png"
+                fig_acc_filename = f"figures/hexnet_n{self.n}_acc_{epoch + 1}.png"
+                fig_r2_filename = f"figures/hexnet_n{self.n}_r2_{epoch + 1}.png"
                 fig_loss.savefig(fig_loss_filename)
                 fig_acc.savefig(fig_acc_filename)
+                fig_r2.savefig(fig_r2_filename)
+                print("")
                 print(f"Training complete!")
-                print(f"Network: n={self.n}, lr={self.learning_rate}, epochs={epochs}")
-                print(f"Loss ({self.loss.name}): {epoch_loss:.3f}")
-                print(f"Loss saved to {fig_loss_filename}")
-                print(f"Accuracy ({self.loss.name}): {epoch_acc:.3f}")
-                print(f"Accuracy saved to {fig_acc_filename}")
+                print(f"Loss: \t\t {epoch_loss:.3f}")
+                print(f"Accu: \t\t {epoch_acc:.3f}")
+                print(f"R^2: \t\t {epoch_r2:.3f}")
+                print(f"Loss output: \t {fig_loss_filename}")
+                print(f"Accu output: \t {fig_acc_filename}")
+                print(f"R^2 output: \t {fig_r2_filename}")
 
-        return np.array(self.training_metrics["loss"]), np.array(self.training_metrics["accuracy"])
+        return epoch_loss, epoch_acc, epoch_r2
