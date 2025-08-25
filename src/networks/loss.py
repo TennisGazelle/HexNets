@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
+
 class BaseLoss(ABC):
     def __init__(self, name):
         self.name = name
@@ -24,6 +25,7 @@ class MeanSquaredError(BaseLoss):
     def calc_delta(self, y_true, y_pred):
         return (2 / y_true.shape[0]) * (y_pred - y_true)
 
+
 class HuberLoss(BaseLoss):
     def __init__(self, delta_threshold=1.0):
         super().__init__(f"huber_loss_(delta-{delta_threshold})")
@@ -42,7 +44,15 @@ class HuberLoss(BaseLoss):
         diff = y_pred - y_true
         abs_diff = np.abs(diff)
         # elementwise grad (not normalized by N, to match your MSE.delta)
-        return np.where(abs_diff <= self.delta_threshold, diff, self.delta_threshold * np.sign(diff)) / y_true.shape[0]
+        return (
+            np.where(
+                abs_diff <= self.delta_threshold,
+                diff,
+                self.delta_threshold * np.sign(diff),
+            )
+            / y_true.shape[0]
+        )
+
 
 class LogCoshLoss(BaseLoss):
     def __init__(self):
@@ -56,6 +66,7 @@ class LogCoshLoss(BaseLoss):
     def calc_delta(self, y_true, y_pred):
         diff = y_pred - y_true
         return np.tanh(diff)
+
 
 class QuantileLoss(BaseLoss):
     def __init__(self, tau=0.5):

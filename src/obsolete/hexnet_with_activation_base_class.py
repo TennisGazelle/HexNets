@@ -4,6 +4,7 @@ import pickle
 from abc import ABC, abstractmethod
 import pathlib
 
+
 # =============================
 # Activations (pluggable)
 # =============================
@@ -88,7 +89,9 @@ class BaseNeuralNetwork(ABC):
         pass
 
     def graph(self, activation_only=True, save_to_file_path=None):
-        self._graphW(activation_only=activation_only, save_to_file_path=save_to_file_path)
+        self._graphW(
+            activation_only=activation_only, save_to_file_path=save_to_file_path
+        )
 
 
 # =============================
@@ -110,7 +113,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         self._activations.set_activation(name)
 
     def _hex_layer_sizes(self, n):
-        return list(range(n, 2*n)) + list(range(2*n - 2, n - 1, -1))
+        return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))
 
     def _get_default_layer_indices(self, n):
         sizes = self._hex_layer_sizes(n)
@@ -167,10 +170,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
         if self.mode == "classification":
             # BCE with sigmoid output: delta = y_hat - y
-            delta = (self._activations.activate(y_hat) - target_full)
+            delta = self._activations.activate(y_hat) - target_full
         else:
             # MSE with identity output: delta = (y_hat - y) * 1
-            delta = (y_hat - target_full)
+            delta = y_hat - target_full
 
         for i in reversed(range(len(self.layer_indices) - 1)):
             src = self.layer_indices[i]
@@ -265,7 +268,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         accs = []
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
-        line_loss, = ax_loss.plot([], [])
+        (line_loss,) = ax_loss.plot([], [])
         ax_loss.set_title("Training Loss")
         ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
@@ -273,7 +276,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
         fig_acc = plt.figure(figsize=(6, 4))
         ax_acc = fig_acc.add_subplot(111)
-        line_acc, = ax_acc.plot([], [])
+        (line_acc,) = ax_acc.plot([], [])
         ax_acc.set_title("Training Accuracy")
         ax_acc.set_xlabel("Epoch")
         ax_acc.set_ylabel("Accuracy")
@@ -287,7 +290,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             for x_in, y_out in data:
                 acts = self._training_step(x_in, y_out)
                 y_pred = acts[-1][self.layer_indices[-1]]
-                loss, acc = self._compute_epoch_metrics(y_pred, y_out, self.mode, threshold)
+                loss, acc = self._compute_epoch_metrics(
+                    y_pred, y_out, self.mode, threshold
+                )
                 total_loss += loss
                 total_acc += acc
                 count += 1
@@ -295,13 +300,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             losses.append(total_loss / max(1, count))
             accs.append(total_acc / max(1, count))
 
-            line_loss.set_data(np.arange(1, len(losses)+1), losses)
+            line_loss.set_data(np.arange(1, len(losses) + 1), losses)
             ax_loss.relim()
             ax_loss.autoscale_view()
             fig_loss.canvas.draw()
             plt.pause(pause)
 
-            line_acc.set_data(np.arange(1, len(accs)+1), accs)
+            line_acc.set_data(np.arange(1, len(accs) + 1), accs)
             ax_acc.relim()
             ax_acc.autoscale_view()
             fig_acc.canvas.draw()
@@ -312,7 +317,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     # ---- plotting helpers ----
     def _plot_training_curves(self, losses, accs, title_suffix=""):
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.plot(np.arange(1, len(losses)+1), losses)
+        ax.plot(np.arange(1, len(losses) + 1), losses)
         ax.set_title(f"Loss {title_suffix}")
         ax.set_xlabel("Epoch")
         ax.set_ylabel("Loss")
@@ -320,7 +325,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         plt.show()
 
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.plot(np.arange(1, len(accs)+1), accs)
+        ax.plot(np.arange(1, len(accs) + 1), accs)
         ax.set_title(f"Accuracy {title_suffix}")
         ax.set_xlabel("Epoch")
         ax.set_ylabel("Accuracy")
@@ -341,24 +346,27 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     # ---- persistence ----
     def save(self, filepath):
-        with open(filepath, 'wb') as f:
-            pickle.dump({'n': self.n, 'W': self.W, 'act': self.getActivationFunc()}, f)
+        with open(filepath, "wb") as f:
+            pickle.dump({"n": self.n, "W": self.W, "act": self.getActivationFunc()}, f)
 
     def load(self, filepath):
-        with open(filepath, 'rb') as f:
+        with open(filepath, "rb") as f:
             state = pickle.load(f)
-            self.n = state['n']
+            self.n = state["n"]
             self.layer_indices = self._get_default_layer_indices(self.n)
             self.total_nodes = sum(len(l) for l in self.layer_indices)
-            self.W = state['W']
-            self.setActivationFunc(state.get('act', 'SIGMOID'))
+            self.W = state["W"]
+            self.setActivationFunc(state.get("act", "SIGMOID"))
 
     # ---- graphs of structure / weights ----
     def _graphW(self, activation_only=True, save_to_file_path=None):
         matrix = (self.W != 0).astype(int) if activation_only else self.W
         plt.figure(figsize=(7, 7))
-        plt.imshow(matrix, interpolation='none')
-        plt.title(("Activation Structure" if activation_only else "Weight Matrix") + f" (n={self.n})")
+        plt.imshow(matrix, interpolation="none")
+        plt.title(
+            ("Activation Structure" if activation_only else "Weight Matrix")
+            + f" (n={self.n})"
+        )
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         plt.grid(visible=True)
@@ -372,7 +380,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     @staticmethod
     def show_reference_graphs(save_to_file_path=None):
         def hex_layer_sizes(n):
-            return list(range(n, 2*n)) + list(range(2*n - 2, n - 1, -1))
+            return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))
+
         def get_default_layer_indices(n):
             sizes = hex_layer_sizes(n)
             idx = []
@@ -381,29 +390,39 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 idx.append(list(range(s, s + size)))
                 s += size
             return idx
+
         def build_adj(layer_indices):
             N = sum(len(l) for l in layer_indices)
             A = np.zeros((N, N), dtype=int)
             for i in range(len(layer_indices) - 1):
                 for u in layer_indices[i]:
-                    for v in layer_indices[i+1]:
+                    for v in layer_indices[i + 1]:
                         A[u, v] = 1
             return A
+
         A2 = build_adj(get_default_layer_indices(2))
         A3 = build_adj(get_default_layer_indices(3))
         A4 = build_adj(get_default_layer_indices(4))
         fig, axs = plt.subplots(2, 2, figsize=(12, 12))
-        axs[0, 0].imshow(A2, cmap='Blues', interpolation='none')
+        axs[0, 0].imshow(A2, cmap="Blues", interpolation="none")
         axs[0, 0].set_title("n = 2")
-        axs[0, 0].grid(visible=True, color='black', linewidth=0.5)
-        axs[0, 1].imshow(A3, cmap='Oranges', interpolation='none')
+        axs[0, 0].grid(visible=True, color="black", linewidth=0.5)
+        axs[0, 1].imshow(A3, cmap="Oranges", interpolation="none")
         axs[0, 1].set_title("n = 3")
-        axs[0, 1].grid(visible=True, color='black', linewidth=0.5)
-        axs[1, 0].imshow(A4, cmap='Greens', interpolation='none')
+        axs[0, 1].grid(visible=True, color="black", linewidth=0.5)
+        axs[1, 0].imshow(A4, cmap="Greens", interpolation="none")
         axs[1, 0].set_title("n = 4")
-        axs[1, 0].grid(visible=True, color='black', linewidth=0.5)
-        axs[1, 1].axis('off')
-        axs[1, 1].text(0.5, 0.5, "Hexagonal Adjacency\nTop Left: n=2, Top Right: n=3\nBottom Left: n=4", ha='center', va='center', fontsize=14, wrap=True)
+        axs[1, 0].grid(visible=True, color="black", linewidth=0.5)
+        axs[1, 1].axis("off")
+        axs[1, 1].text(
+            0.5,
+            0.5,
+            "Hexagonal Adjacency\nTop Left: n=2, Top Right: n=3\nBottom Left: n=4",
+            ha="center",
+            va="center",
+            fontsize=14,
+            wrap=True,
+        )
         plt.suptitle("Reference Hexagonal Adjacency Matrices", fontsize=16)
         plt.tight_layout()
         if save_to_file_path is not None:
@@ -411,14 +430,20 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         else:
             plt.show()
 
+
 def main():
 
     # ---------- Demo with synthetic data ----------
     # We'll create a tiny binary task on n=2 (output matches input for half the samples)
     # HexagonalNeuralNetwork.show_reference_graphs(save_to_file_path=pathlib.Path("hexnet_reference_graphs.png"))
     n = 3
-    regression_net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.001, mode="regression")
-    regression_net.graph(activation_only=False, save_to_file_path=pathlib.Path(f"hexnet_graph_w_n{n}_uninitialized.png"))
+    regression_net = HexagonalNeuralNetwork(
+        n=n, random_init=True, lr=0.001, mode="regression"
+    )
+    regression_net.graph(
+        activation_only=False,
+        save_to_file_path=pathlib.Path(f"hexnet_graph_w_n{n}_uninitialized.png"),
+    )
 
     # classification_net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.001, mode="classification")
     # classification_net.graph(activation_only=False, save_to_file_path=pathlib.Path(f"hexnet_graph_w_n{n}_uninitialized.png"))
@@ -442,7 +467,7 @@ def main():
     #     # ([0.3, 0.4], [0.6, 0.8]),
     #     # ([0.7, 0.8], [1.4, 1.6]),
     #     # ([0.9, 1.0], [1.8, 2.0])
-    #     ([x0, x1], [2 * x0, 2 * x1]) 
+    #     ([x0, x1], [2 * x0, 2 * x1])
     #     for x0 in np.arange(-1.0, 1.0, 0.1) for x1 in np.arange(-1.0, 1.0, 0.1)
     # ])
 
@@ -453,7 +478,7 @@ def main():
     # Dataset: multi-label identity with some noise to avoid symmetry traps
     train_samples = 1000
     X = (np.random.rand(train_samples, n) > 0.5).astype(bool)
-    noise_mask = (np.random.rand(train_samples, n) < 0.1)
+    noise_mask = np.random.rand(train_samples, n) < 0.1
     Y = (X ^ noise_mask).astype(float)
     data = list(zip(X, Y))
 
@@ -462,9 +487,11 @@ def main():
 
     # Show final structure & weights for sanity
     # net.graph(activation_only=True)
-    regression_net.graph(activation_only=False, save_to_file_path=pathlib.Path(f"hexnet_graph_w_n{n}_trained.png"))
+    regression_net.graph(
+        activation_only=False,
+        save_to_file_path=pathlib.Path(f"hexnet_graph_w_n{n}_trained.png"),
+    )
 
 
 if __name__ == "__main__":
     main()
-

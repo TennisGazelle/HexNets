@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
+
 class BaseActivation(ABC):
     def __init__(self, name):
         self.name = name
@@ -24,6 +25,7 @@ class ReLU(BaseActivation):
     def deactivate(self, x):
         return (x > 0).astype(float)
 
+
 class LeakyReLU(BaseActivation):
     def __init__(self, alpha=0.01):
         super().__init__("leaky_relu")
@@ -34,6 +36,7 @@ class LeakyReLU(BaseActivation):
 
     def deactivate(self, x):
         return np.where(x > 0, 1, self.alpha)
+
 
 class Sigmoid(BaseActivation):
     def __init__(self):

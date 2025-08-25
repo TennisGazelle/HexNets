@@ -1,9 +1,14 @@
 from argparse import ArgumentParser
 from argparse import Namespace
-from src.commands.command import Command, add_structure_argument, validate_structure_argument
+from src.commands.command import (
+    Command,
+    add_structure_argument,
+    validate_structure_argument,
+)
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 
 import numpy as np
+
 
 def get_dataset(n, train_samples, type="identity", scale=1.0):
     if type == "identity":
@@ -16,14 +21,15 @@ def get_dataset(n, train_samples, type="identity", scale=1.0):
         raise ValueError(f"Invalid dataset type: {type}")
     return list(zip(X, Y))
 
+
 class SimulateCommand(Command):
 
     def name(self) -> str:
         return "sim"
-    
+
     def help(self) -> str:
         return "Simulate a Hexagonal Neural Network being trained and tested"
-    
+
     def configure_parser(self, parser: ArgumentParser):
         add_structure_argument(parser)
 
@@ -33,7 +39,7 @@ class SimulateCommand(Command):
             help="Type of dataset to use",
             choices=["identity", "linear"],
             default="identity",
-            dest="type"
+            dest="type",
         )
 
         parser.add_argument(
@@ -42,7 +48,7 @@ class SimulateCommand(Command):
             help="Initial learning rate for the network",
             type=float,
             default=0.1,
-            dest="lr"
+            dest="lr",
         )
 
         parser.add_argument(
@@ -51,7 +57,7 @@ class SimulateCommand(Command):
             help="Number of epochs to train for",
             type=int,
             default=100,
-            dest="epochs"
+            dest="epochs",
         )
 
         parser.add_argument(
@@ -60,18 +66,17 @@ class SimulateCommand(Command):
             help="Pause between epochs",
             type=float,
             default=0.05,
-            dest="pause"
+            dest="pause",
         )
 
         parser.add_argument(
-            "-ds"
-            "--dataset-size",
+            "-ds" "--dataset-size",
             help="Number of samples in the dataset",
             type=int,
             default=100,
-            dest="dataset_size"
+            dest="dataset_size",
         )
-    
+
     def validate_args(self, args: Namespace):
         validate_structure_argument(args)
 
@@ -81,7 +86,7 @@ class SimulateCommand(Command):
             raise ValueError("Pause must be at least 0")
         if args.dataset_size < 1:
             raise ValueError("Dataset size must be at least 1")
-    
+
     def invoke(self, args: Namespace):
         net = HexagonalNeuralNetwork(n=args.n, random_init=True, lr=args.lr)
 
