@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from src.networks.activations import BaseActivation
-from src.networks.loss import BaseLoss
+from src.networks.activation.activations import BaseActivation
+from src.networks.loss.loss import BaseLoss
+
 
 # === Base class ===
 class BaseNeuralNetwork(ABC):
