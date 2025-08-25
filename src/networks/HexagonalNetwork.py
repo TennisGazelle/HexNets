@@ -8,14 +8,21 @@ from matplotlib.patches import Patch
 from matplotlib.colors import ListedColormap
 
 from src.networks.network import BaseNeuralNetwork
-from src.networks.activations import LeakyReLU, ReLU, Sigmoid
-from src.networks.loss import HuberLoss, LogCoshLoss, MeanSquaredError, QuantileLoss
+
+from src.networks.activation.LeakyRelu import LeakyReLU
+from src.networks.activation.Relu import ReLU
+from src.networks.activation.Sigmoid import Sigmoid
+
+from src.networks.loss.HuberLoss import HuberLoss
+from src.networks.loss.LogCoshLoss import LogCoshLoss
+from src.networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
+from src.networks.loss.QuantileLoss import QuantileLoss
 
 
 # === Hexagonal Neural Network ===
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def __init__(self, n, r=0, random_init=True, lr=0.01):
-        super().__init__(n, Sigmoid(), MeanSquaredError())
+        super().__init__(n, Sigmoid(), MeanSquaredErrorLoss())
         self.r = r
         self.learning_rate = lr
         self.total_nodes = self._calc_total_nodes(n)
@@ -482,7 +489,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 #         print(f"layer {li}: pos={pos}, neg={neg}, total={total}, ratio={pos/total}")
 
                 # loss (MSE on final layer nodes only)
-                y_pred = self.unpad_output(activations[-1], self.r)
+                y_pred = self.unpad_output(activations[-1])
                 total_loss += self.loss.calc_loss(y_target, y_pred)
 
                 # accuracy
