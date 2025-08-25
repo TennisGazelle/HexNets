@@ -4,6 +4,8 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import Patch
+from matplotlib.colors import ListedColormap
 
 from src.networks.network import BaseNeuralNetwork
 from src.networks.activations import LeakyReLU, ReLU, Sigmoid
@@ -14,16 +16,10 @@ from src.networks.loss import HuberLoss, LogCoshLoss, MeanSquaredError, Quantile
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def __init__(self, n, r=0, random_init=True, lr=0.01):
         super().__init__(n, Sigmoid(), MeanSquaredError())
-        self.total_nodes = self._calc_total_nodes(n)
-        self.dir_metrics = {
-            i: {
-                "W": self._init_weight_matrix(i, random_init=random_init),
-                "indices": self._get_layer_indices(n, r=i),
-            }
-            for i in range(0, 6)
-        }
         self.r = r
         self.learning_rate = lr
+        self.total_nodes = self._calc_total_nodes(n)
+        self.dir_metrics = self._init_dir_metrics(random_init=random_init)
         self.training_metrics = {"loss": [], "accuracy": [], "r_squared": []}
 
     # --- structure helpers ---
@@ -98,24 +94,34 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 for v in layer_indices[i + 1]:
                     W[u, v] = np.random.randn() if random_init else count
                     count += 1
-        return W
+        return W, layer_indices
+
+    def _init_dir_metrics(self, random_init=True) -> dict[int, dict[str, np.ndarray]]:
+        dir_metrics = {}
+        for i in range(0, 6):
+            W, layer_indices = self._init_weight_matrix(i, random_init=random_init)
+            dir_metrics[i] = {
+                "W": W,
+                "indices": layer_indices,
+            }
+        return dir_metrics
 
     # --- forward & backward ---
-    def pad_input(self, x, this_r: int = 0):
-        if this_r == 0:
+    def pad_input(self, x):
+        if self.r == 0:
             x0 = np.zeros(self.total_nodes)
-            x0[self.dir_metrics[this_r]["indices"][0]] = x
+            x0[self.dir_metrics[self.r]["indices"][0]] = x
             return x0
         else:
             x0 = np.zeros(self.total_nodes)
             # todo: implement this padding for each r
             return x0
 
-    def unpad_output(self, y, this_r: int = 0):
-        if this_r == 0:
-            return y[self.dir_metrics[this_r]["indices"][-1]]
+    def unpad_output(self, y):
+        if self.r == 0:
+            return y[self.dir_metrics[self.r]["indices"][-1]]
         else:
-            return y[self.dir_metrics[this_r]["indices"][-1]]
+            return y[self.dir_metrics[self.r]["indices"][-1]]
 
     def forward(self, x):
         activations = [x.copy()]
@@ -160,14 +166,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     # --- public API ---
     def train(self, data):
         for x_input, y_target in data:
-            x_full = self.pad_input(x_input, self.r)
+            x_full = self.pad_input(x_input)
             y_full = np.zeros(self.total_nodes)
             y_full[self.dir_metrics[self.r]["indices"][-1]] = y_target
             activations = self.forward(x_full)
             self.backward(activations, y_full)
 
     def test(self, x_input):
-        x_full = self.pad_input(x_input, self.r)
+        x_full = self.pad_input(x_input)
         activations = self.forward(x_full)
         return self.unpad_output(activations[-1], self.r)
 
@@ -184,7 +190,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     def load(self, filepath):
         with open(filepath, "rb") as f:
-            state = pickle.load(f)
+            state = (pickle.load(f),)
             self.n = state["n"]
             self.total_nodes = self._calc_total_nodes(self.n)
             self.dir_metrics = {
@@ -199,25 +205,50 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def _graphW(self, activation_only=True, detail=""):
         title = "Activation Structure" if activation_only else "Weight Matrix"
         filename = f"figures/hexnet_n{self.n}_r{self.r}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
-        matrix = (
-            (self.dir_metrics[self.r]["W"] != 0).astype(int)
-            if activation_only
-            else self.dir_metrics[self.r]["W"]
-        )
+        matrix = (self.dir_metrics[self.r]["W"] != 0).astype(int) if activation_only else self.dir_metrics[self.r]["W"]
 
         plt.figure(figsize=(7, 7))
-        plt.imshow(
-            matrix, cmap="Greys" if activation_only else "viridis", interpolation="none"
-        )
+        plt.imshow(matrix, cmap="Greys" if activation_only else "viridis", interpolation="none")
         plt.suptitle(title + f" (n={self.n}, r={self.r})")
         plt.title(f"lr={self.learning_rate}, {detail}")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         # plt.grid(visible=True, color='black', linewidth=0.5)
-        plt.colorbar()
+        if not activation_only:
+            plt.colorbar()
         plt.savefig(filename)
         plt.show()
 
+        return filename
+
+    def _graph_multi_W(self, detail="", r_list=list(range(0, 6))):
+        title = "Activation Structure"
+        filename = f"figures/hexnet_n{self.n}_multi_W_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
+
+        colors = ["Blues", "Greens", "Reds", "Purples", "Oranges", "Greys"]
+
+        plt.figure(figsize=(3.5 * (self.n - 1), 3.5 * (self.n - 1)))
+
+        legend_handles = []
+        for i, r in enumerate(r_list):
+            matrix = (self.dir_metrics[r]["W"] != 0).astype(int)
+
+            # Create colors with alpha: white (transparent) for 0, colored for 1
+            base_cmap = plt.cm.get_cmap(colors[i])  # get the colormap
+            colors_with_alpha = [(1, 1, 1, 0)]  # transparent white for 0
+            colors_with_alpha.extend([(*base_cmap(0.7)[:3], 0.7)])  # colored with alpha for 1
+            custom_cmap = ListedColormap(colors_with_alpha)
+
+            plt.imshow(matrix, cmap=custom_cmap, interpolation="none")
+            legend_handles.append(Patch(color=base_cmap(0.7), alpha=0.7, label=f"Rotation {r}"))
+
+        plt.suptitle(title + f" (n={self.n})")
+        plt.title(f"{detail}")
+        plt.xticks(np.arange(self.total_nodes))
+        plt.yticks(np.arange(self.total_nodes))
+        plt.legend(handles=legend_handles, title="Rotation")
+        plt.savefig(filename)
+        plt.show()
         return filename
 
     def _printIndices(self, r):
@@ -243,9 +274,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         - nodes are arranged in rows with sizes given by self.layer_indices
         - every node in layer i connects to every node in layer i+1
         """
-        layers = self.dir_metrics[self.r][
-            "indices"
-        ]  # assumes you've already computed this
+        layers = self.dir_metrics[self.r]["indices"]  # assumes you've already computed this
         if not layers:
             raise ValueError("layer_indices is empty. Initialize the network first.")
 
@@ -309,9 +338,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             ax.add_patch(circ)
             if label == "value" and values is not None:
                 txt = (
-                    f"{values[node]:.3g}"
-                    if isinstance(values[node], (int, float, np.floating))
-                    else str(values[node])
+                    f"{values[node]:.3g}" if isinstance(values[node], (int, float, np.floating)) else str(values[node])
                 )
             else:
                 txt = str(node)
@@ -340,12 +367,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         """
         lines = []
         lines.append("digraph HexNet {")
-        lines.append(
-            '  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];'
-        )
-        lines.append(
-            "  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true, zorder=10];"
-        )
+        lines.append('  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];')
+        lines.append("  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true, zorder=10];")
         lines.append('  edge  [penwidth=0.5, dir="none", zorder=1];')
 
         # group nodes by layer (same rank)
@@ -391,9 +414,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return png_file
 
     # --- animated training ---
-    def train_animated(
-        self, data, epochs=25, threshold=0.5, pause=0.05
-    ) -> tuple[float, float, float]:
+    def train_animated(self, data, epochs=25, threshold=0.5, pause=0.05) -> tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
@@ -443,7 +464,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
             for x_input, y_target in data:
                 # build padded vectors
-                x_full = self.pad_input(x_input, self.r)
+                x_full = self.pad_input(x_input)
                 y_full = np.zeros(self.total_nodes)
                 y_full[self.dir_metrics[self.r]["indices"][-1]] = y_target
                 # print("--------------------------------")
@@ -538,12 +559,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
             if epoch == epochs - 1:
                 fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss.name}_{epoch + 1}.png"
-                fig_acc_filename = (
-                    f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
-                )
-                fig_r2_filename = (
-                    f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
-                )
+                fig_acc_filename = f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
+                fig_r2_filename = f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
                 fig_loss.savefig(fig_loss_filename)
                 fig_acc.savefig(fig_acc_filename)
                 fig_r2.savefig(fig_r2_filename)

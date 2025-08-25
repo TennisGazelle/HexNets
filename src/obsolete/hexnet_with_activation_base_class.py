@@ -89,9 +89,7 @@ class BaseNeuralNetwork(ABC):
         pass
 
     def graph(self, activation_only=True, save_to_file_path=None):
-        self._graphW(
-            activation_only=activation_only, save_to_file_path=save_to_file_path
-        )
+        self._graphW(activation_only=activation_only, save_to_file_path=save_to_file_path)
 
 
 # =============================
@@ -290,9 +288,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             for x_in, y_out in data:
                 acts = self._training_step(x_in, y_out)
                 y_pred = acts[-1][self.layer_indices[-1]]
-                loss, acc = self._compute_epoch_metrics(
-                    y_pred, y_out, self.mode, threshold
-                )
+                loss, acc = self._compute_epoch_metrics(y_pred, y_out, self.mode, threshold)
                 total_loss += loss
                 total_acc += acc
                 count += 1
@@ -363,10 +359,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         matrix = (self.W != 0).astype(int) if activation_only else self.W
         plt.figure(figsize=(7, 7))
         plt.imshow(matrix, interpolation="none")
-        plt.title(
-            ("Activation Structure" if activation_only else "Weight Matrix")
-            + f" (n={self.n})"
-        )
+        plt.title(("Activation Structure" if activation_only else "Weight Matrix") + f" (n={self.n})")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         plt.grid(visible=True)
@@ -437,9 +430,7 @@ def main():
     # We'll create a tiny binary task on n=2 (output matches input for half the samples)
     # HexagonalNeuralNetwork.show_reference_graphs(save_to_file_path=pathlib.Path("hexnet_reference_graphs.png"))
     n = 3
-    regression_net = HexagonalNeuralNetwork(
-        n=n, random_init=True, lr=0.001, mode="regression"
-    )
+    regression_net = HexagonalNeuralNetwork(n=n, random_init=True, lr=0.001, mode="regression")
     regression_net.graph(
         activation_only=False,
         save_to_file_path=pathlib.Path(f"hexnet_graph_w_n{n}_uninitialized.png"),

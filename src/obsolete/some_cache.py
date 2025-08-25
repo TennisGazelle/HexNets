@@ -142,19 +142,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         matrix = (self.W != 0).astype(int) if activation_only else self.W
         plt.figure(figsize=(7, 7))
         plt.imshow(matrix, interpolation="none")
-        plt.title(
-            ("Activation Structure" if activation_only else "Weight Matrix")
-            + f" (n={self.n})"
-        )
+        plt.title(("Activation Structure" if activation_only else "Weight Matrix") + f" (n={self.n})")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         plt.grid(visible=True)
         plt.colorbar()
         plt.show()
 
-    def train_animated(
-        self, data, epochs=25, multi_label=True, threshold=0.5, pause=0.05
-    ):
+    def train_animated(self, data, epochs=25, multi_label=True, threshold=0.5, pause=0.05):
         losses, accs = [], []
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
@@ -187,9 +182,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
                 eps = 1e-7
                 y_clip = np.clip(y_pred, eps, 1 - eps)
-                bce = -np.mean(
-                    y_out * np.log(y_clip) + (1 - y_out) * np.log(1 - y_clip)
-                )
+                bce = -np.mean(y_out * np.log(y_clip) + (1 - y_out) * np.log(1 - y_clip))
                 total_loss += bce
 
                 if multi_label:

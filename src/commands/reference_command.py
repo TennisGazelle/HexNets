@@ -23,7 +23,7 @@ class ReferenceCommand(Command):
             "-g",
             "--graph",
             help="which type of graph to output",
-            choices=["dot", "matplotlib", "activation", "weight", "terminal_indices"],
+            choices=["dot", "matplotlib", "activation", "weight", "multi_activation", "terminal_indices"],
             default="matplotlib",
             dest="graph",
         )
@@ -56,6 +56,10 @@ class ReferenceCommand(Command):
 
         elif args.graph == "weight":
             output_file = net._graphW(activation_only=False, detail=args.detail)
+            print(f"Graph saved to {output_file}")
+
+        elif args.graph == "multi_activation":
+            output_file = net._graph_multi_W(detail=args.detail)
             print(f"Graph saved to {output_file}")
 
         elif args.graph == "terminal_indices":

@@ -51,9 +51,7 @@ class Command(ABC):
 
 
 def add_structure_argument(parser: ArgumentParser):
-    parser.add_argument(
-        "-n", type=int, default=3, help="Number of input nodes", dest="n"
-    )
+    parser.add_argument("-n", type=int, default=3, help="Number of input nodes", dest="n")
 
     parser.add_argument(
         "-r",
@@ -69,6 +67,4 @@ def validate_structure_argument(args: Namespace):
     if args.n < 2:
         raise ValueError("Number of input nodes must be at least 2")
     if args.rotation < 0 or args.rotation > 5:
-        raise ValueError(
-            f"Invalid rotation input: {args.rotation}. Must be a value between 0 and 5."
-        )
+        raise ValueError(f"Invalid rotation input: {args.rotation}. Must be a value between 0 and 5.")

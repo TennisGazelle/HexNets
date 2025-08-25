@@ -47,3 +47,11 @@ clean-venv:
 .PHONY: clean-figures
 clean-figures:
 	rm -rf figures/*
+
+.PHONY: lint-check
+lint-check:
+	black --check src -l 120
+
+.PHONY: lint-format
+lint-format:
+	black src -l 120
