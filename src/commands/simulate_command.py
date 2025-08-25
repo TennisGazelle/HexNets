@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from argparse import Namespace
-from src.commands.command import Command, add_n_argument, validate_n_argument
+from src.commands.command import Command, add_structure_argument, validate_structure_argument
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 
 import numpy as np
@@ -25,7 +25,7 @@ class SimulateCommand(Command):
         return "Simulate a Hexagonal Neural Network being trained and tested"
     
     def configure_parser(self, parser: ArgumentParser):
-        add_n_argument(parser)
+        add_structure_argument(parser)
 
         parser.add_argument(
             "-t",
@@ -73,7 +73,7 @@ class SimulateCommand(Command):
         )
     
     def validate_args(self, args: Namespace):
-        validate_n_argument(args)
+        validate_structure_argument(args)
 
         if args.epochs < 1:
             raise ValueError("Number of epochs must be at least 1")

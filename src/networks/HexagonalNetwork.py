@@ -11,11 +11,16 @@ from src.networks.loss import HuberLoss, LogCoshLoss, MeanSquaredError, Quantile
 
 # === Hexagonal Neural Network ===
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
-    def __init__(self, n, random_init=True, lr=0.01):
+    def __init__(self, n, r=0, random_init=True, lr=0.01):
         super().__init__(n, Sigmoid(), MeanSquaredError())
-        self.layer_indices = self._get_default_layer_indices(n)
-        self.total_nodes = sum(len(l) for l in self.layer_indices)
-        self.W = self._init_weight_matrix(random_init=random_init)
+        self.total_nodes = self._calc_total_nodes(n)
+        self.dir_metrics = {
+            i: { 
+                'W': self._init_weight_matrix(i, random_init=random_init), 
+                'indices': self._get_layer_indices(n, r=i)
+            } for i in range(0, 6)
+        }
+        self.r = r
         self.learning_rate = lr
         self.training_metrics = {
             "loss": [],
@@ -24,6 +29,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         }
 
     # --- structure helpers ---
+    def _calc_total_nodes(self, n):
+        return sum(l for l in self._hex_layer_sizes(n))
+
     def _hex_layer_sizes(self, n):
         return list(range(n, 2*n)) + list(range(2*n - 2, n - 1, -1))
 
@@ -35,23 +43,88 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             indices.append(list(range(start, start + size)))
             start += size
         return indices
+    
+    def _get_layer_indices(self, n, r=1):
+        assert 0 <= r <= 5, f"Invalid rotation: {r}"
+        max_row_size = 2*n - 1
+        
+        def _get_top_down():
+            return self._get_default_layer_indices(n)
+
+        if r == 0:
+            return _get_top_down()
+        if r == 3:
+            return [rw[::-1] for rw in _get_top_down()[::-1]]
+
+        def _get_top_right_to_bottom_left():
+            new_indices = [[] for _ in range(max_row_size)]
+            node_idx = 0
+            for row_idx in range(max_row_size):
+                min_new_row_idx = max(0, (row_idx - n + 1))
+                max_new_row_idx = min(max_row_size - 1, row_idx + n - 1)
+                for new_row_idx in range(min_new_row_idx, max_new_row_idx + 1):
+                    new_indices[new_row_idx].append(node_idx)
+                    node_idx += 1
+            return new_indices
+
+        if r == 1:
+            return [rw[::-1] for rw in _get_top_right_to_bottom_left()]
+        if r == 4:
+            return [rw for rw in _get_top_right_to_bottom_left()[::-1]]
+        
+        def _get_top_left_to_bottom_right():
+            new_indices = [[] for _ in range(max_row_size)]
+            node_idx = 0
+            for row_idx in range(max_row_size):
+                min_new_row_idx = max(0, (row_idx - n + 1))
+                max_new_row_idx = min(max_row_size - 1, row_idx + n - 1)
+                for new_row_idx in range(max_new_row_idx, min_new_row_idx - 1, -1):
+                    new_indices[new_row_idx].append(node_idx)
+                    node_idx += 1
+            return new_indices
+        
+        if r == 5:
+            return [rw for rw in _get_top_left_to_bottom_right()]
+        if r == 2:
+            return [rw[::-1] for rw in _get_top_left_to_bottom_right()[::-1]]
+        
+        raise ValueError(f"Invalid rotation: {r}")
 
     # --- weights ---
-    def _init_weight_matrix(self, random_init=True):
+    def _init_weight_matrix(self, this_r: int, random_init=True):
         W = np.zeros((self.total_nodes, self.total_nodes))
-        for i in range(len(self.layer_indices) - 1):
-            for u in self.layer_indices[i]:
-                for v in self.layer_indices[i + 1]:
-                    W[u, v] = np.random.randn() if random_init else 0.0
+        layer_indices = self._get_layer_indices(self.n, r=this_r)
+        count = 1
+        for i in range(len(layer_indices) - 1):
+            for u in layer_indices[i]:
+                for v in layer_indices[i + 1]:
+                    W[u, v] = np.random.randn() if random_init else count
+                    count += 1
         return W
 
     # --- forward & backward ---
+    def pad_input(self, x, this_r: int = 0):
+        if this_r == 0:
+            x0 = np.zeros(self.total_nodes)
+            x0[self.dir_metrics[this_r]['indices'][0]] = x
+            return x0
+        else:
+            x0 = np.zeros(self.total_nodes)
+            # todo: implement this padding for each r
+            return x0
+
+    def unpad_output(self, y, this_r: int = 0):
+        if this_r == 0:
+            return y[self.dir_metrics[this_r]['indices'][-1]]
+        else:
+            return y[self.dir_metrics[this_r]['indices'][-1]]
+
     def forward(self, x):
         activations = [x.copy()]
         a = x.copy()
-        for i in range(len(self.layer_indices) - 1):
-            z = self.W.T @ a
-            if i < len(self.layer_indices) - 2:
+        for i in range(len(self.dir_metrics[self.r]['indices']) - 1):
+            z = self.dir_metrics[self.r]['W'].T @ a
+            if i < len(self.dir_metrics[self.r]['indices']) - 2:
                 a = self.activation.activate(z)
             else:
                 a = z
@@ -59,12 +132,12 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return activations
 
     def backward(self, activations, target):
-        grads = np.zeros_like(self.W)
+        grads = np.zeros_like(self.dir_metrics[self.r]['W'])
         delta = self.loss.calc_delta(target, activations[-1])
         # walk layers backward
-        for i in reversed(range(len(self.layer_indices) - 1)):
-            src_nodes = self.layer_indices[i]
-            dst_nodes = self.layer_indices[i + 1]
+        for i in reversed(range(len(self.dir_metrics[self.r]['indices']) - 1)):
+            src_nodes = self.dir_metrics[self.r]['indices'][i]
+            dst_nodes = self.dir_metrics[self.r]['indices'][i + 1]
             # weight grads: outer product between delta(dst) and activations(src)
             for u in src_nodes:
                 au = activations[i][u]
@@ -78,66 +151,72 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 for u in src_nodes:
                     s = 0.0
                     for v in dst_nodes:
-                        s += self.W[u, v] * delta[v]
+                        s += self.dir_metrics[self.r]['W'][u, v] * delta[v]
                     new_delta[u] = s * self.activation.deactivate(activations[i][u])
                 delta = new_delta
         # SGD update
         # print(f"[dbg] ||delta_out||={np.linalg.norm(delta):.3e}  ||grads||={np.linalg.norm(grads):.3e}")
 
-        self.W -= self.learning_rate * grads
+        self.dir_metrics[self.r]['W'] -= self.learning_rate * grads
 
     # --- public API ---
     def train(self, data):
         for x_input, y_target in data:
-            x0 = np.zeros(self.total_nodes)
-            x0[self.layer_indices[0]] = x_input
+            x_full = self.pad_input(x_input, self.r)
             y_full = np.zeros(self.total_nodes)
-            y_full[self.layer_indices[-1]] = y_target
-            activations = self.forward(x0)
+            y_full[self.dir_metrics[self.r]['indices'][-1]] = y_target
+            activations = self.forward(x_full)
             self.backward(activations, y_full)
 
     def test(self, x_input):
-        x0 = np.zeros(self.total_nodes)
-        x0[self.layer_indices[0]] = x_input
-        activations = self.forward(x0)
-        return activations[-1][self.layer_indices[-1]]
+        x_full = self.pad_input(x_input, self.r)
+        activations = self.forward(x_full)
+        return self.unpad_output(activations[-1], self.r)
 
     def save(self, filepath):
         with open(filepath, 'wb') as f:
-            pickle.dump({'n': self.n, 'W': self.W, 'training_metrics': self.training_metrics}, f)
+            pickle.dump({
+                'n': self.n, 
+                'dir_metrics': self.dir_metrics, 
+                'training_metrics': self.training_metrics
+            }, f)
 
     def load(self, filepath):
         with open(filepath, 'rb') as f:
             state = pickle.load(f)
             self.n = state['n']
-            self.layer_indices = self._get_default_layer_indices(self.n)
-            self.total_nodes = sum(len(l) for l in self.layer_indices)
-            self.W = state['W']
+            self.total_nodes = self._calc_total_nodes(self.n)
+            self.dir_metrics = {
+                i: { 
+                    'W': state['dir_metrics'][i]['W'], 
+                    'indices': state['dir_metrics'][i]['indices']
+                } for i in range(0, 6)
+            }
             self.training_metrics = state['training_metrics']
 
     def _graphW(self, activation_only=True, detail=""):
         title = "Activation Structure" if activation_only else "Weight Matrix"
-        filename = f"figures/hexnet_n{self.n}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
-        matrix = (self.W != 0).astype(int) if activation_only else self.W
+        filename = f"figures/hexnet_n{self.n}_r{self.r}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
+        matrix = (self.dir_metrics[self.r]['W'] != 0).astype(int) if activation_only else self.dir_metrics[self.r]['W']
 
         plt.figure(figsize=(7, 7))
         plt.imshow(matrix, cmap='Greys' if activation_only else 'viridis', interpolation='none')
-        plt.suptitle(title + f" (n={self.n})")
+        plt.suptitle(title + f" (n={self.n}, r={self.r})")
         plt.title(f"lr={self.learning_rate}, {detail}")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
-        plt.grid(visible=True, color='black', linewidth=0.5)
+        # plt.grid(visible=True, color='black', linewidth=0.5)
         plt.colorbar()
         plt.savefig(filename)
         plt.show()
 
         return filename
     
-    def _printIndices(self):
-        for i, layer in enumerate(self.layer_indices):
+    def _printIndices(self, r):
+        for i, layer in enumerate(self.dir_metrics[r]['indices']):
             print(f"layer{i}: {layer}")
 
-    def graphHex(
+    def _graph_hex(
         self,
         figsize=(10, 10),
         node_radius=0.28,
@@ -156,7 +235,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         - nodes are arranged in rows with sizes given by self.layer_indices
         - every node in layer i connects to every node in layer i+1
         """
-        layers = self.layer_indices  # assumes you've already computed this
+        layers = self.dir_metrics[self.r]['indices']  # assumes you've already computed this
         if not layers:
             raise ValueError("layer_indices is empty. Initialize the network first.")
 
@@ -226,7 +305,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         ax.set_ylim(min(ys) - pad, max(ys) + pad)
 
         plt.tight_layout()
-        filename = f"figures/hexnet_n{self.n}_view.png"
+        filename = f"figures/hexnet_n{self.n}_r{self.r}_view.png"
         plt.savefig(filename)
         plt.show()
 
@@ -245,27 +324,27 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         lines.append('  edge  [penwidth=0.5, dir="none", zorder=1];')
 
         # group nodes by layer (same rank)
-        for i, layer in enumerate(self.layer_indices):
+        for i, layer in enumerate(self.dir_metrics[self.r]['indices']):
             lines.append(f'  {{ rank=same; // layer {i}')
             for n in layer:
                 lines.append(f'    {n};')
             lines.append("  }")
         
         # invisible edges between nodes in same rank to enforce order
-        for i in range(len(self.layer_indices)):
-            line = f"  {self.layer_indices[i][0]}"
-            for u_idx, u in enumerate(self.layer_indices[i]):
+        for i in range(len(self.dir_metrics[self.r]['indices'])):
+            line = f"  {self.dir_metrics[self.r]['indices'][i][0]}"
+            for u_idx, u in enumerate(self.dir_metrics[self.r]['indices'][i]):
                 if u_idx > 0:
                     line += f" -> {u}"
             line += " [style=\"invis\"];"
             lines.append(line)
 
         # edges between consecutive layers
-        for i in range(len(self.layer_indices) - 1):
-            for u in self.layer_indices[i]:
-                for v in self.layer_indices[i + 1]:
+        for i in range(len(self.dir_metrics[self.r]['indices']) - 1):
+            for u in self.dir_metrics[self.r]['indices'][i]:
+                for v in self.dir_metrics[self.r]['indices'][i + 1]:
                     if getattr(self, "W", None) is not None and False:
-                        w = float(self.W[u, v])
+                        w = float(self.dir_metrics[self.r]['W'][u, v])
                         # include a lightweight weight attribute (optional)
                         lines.append(f'  {u} -> {v} [penwidth=1.0, weight="{w:.3g}"];')
                     else:
@@ -274,9 +353,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         lines.append("}")
         return lines
 
-    def graph_dot(self):
+    def _graph_hex_dot(self):
         dot_string_list = self.to_dot_string()
-        dot_file = f"figures/hexnet_n{self.n}_viewdot.dot"
+        dot_file = f"figures/hexnet_n{self.n}_r{self.r}_viewdot.dot"
         with open(dot_file, 'w') as f:
             for line in dot_string_list:
                 f.write(line + "\n")
@@ -337,15 +416,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
             for x_input, y_target in data:
                 # build padded vectors
-                x0 = np.zeros(self.total_nodes)
-                x0[self.layer_indices[0]] = x_input
+                x_full = self.pad_input(x_input, self.r)
                 y_full = np.zeros(self.total_nodes)
-                y_full[self.layer_indices[-1]] = y_target
+                y_full[self.dir_metrics[self.r]['indices'][-1]] = y_target
                 # print("--------------------------------")
 
                 # print(f"x input={x_input}, x_padded={x0}, y expected={y_target}, y_padded={y_full}")
 
-                activations = self.forward(x0)
+                activations = self.forward(x_full)
                 # print(f"activations={activations}")
 
                 # for li, a in enumerate(activations):
@@ -356,7 +434,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 #         print(f"layer {li}: pos={pos}, neg={neg}, total={total}, ratio={pos/total}")
 
                 # loss (MSE on final layer nodes only)
-                y_pred = activations[-1][self.layer_indices[-1]]
+                y_pred = self.unpad_output(activations[-1], self.r)
                 total_loss += self.loss.calc_loss(y_target, y_pred)
 
                 # accuracy
@@ -423,9 +501,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             plt.pause(pause)
 
             if epoch == epochs - 1:
-                fig_loss_filename = f"figures/hexnet_n{self.n}_loss-{self.loss.name}_{epoch + 1}.png"
-                fig_acc_filename = f"figures/hexnet_n{self.n}_acc_{epoch + 1}.png"
-                fig_r2_filename = f"figures/hexnet_n{self.n}_r2_{epoch + 1}.png"
+                fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss.name}_{epoch + 1}.png"
+                fig_acc_filename = f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
+                fig_r2_filename = f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
                 fig_loss.savefig(fig_loss_filename)
                 fig_acc.savefig(fig_acc_filename)
                 fig_r2.savefig(fig_r2_filename)

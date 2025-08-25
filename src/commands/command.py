@@ -47,7 +47,7 @@ class Command(ABC):
     def invoke(self, args: Namespace):
         pass
 
-def add_n_argument(parser: ArgumentParser):
+def add_structure_argument(parser: ArgumentParser):
     parser.add_argument(
         "-n",
         type=int,
@@ -56,6 +56,17 @@ def add_n_argument(parser: ArgumentParser):
         dest="n"
     )
 
-def validate_n_argument(args: Namespace):
+    parser.add_argument(
+        "-r",
+        "--rotation",
+        help="Value between 0 and 5, (e.g. 0,1,2,3,4,5) of which hexagon rotation to display",
+        type=int,
+        default=0,
+        dest="rotation"
+    )
+
+def validate_structure_argument(args: Namespace):
     if args.n < 2:
         raise ValueError("Number of input nodes must be at least 2")
+    if args.rotation < 0 or args.rotation > 5:
+        raise ValueError(f"Invalid rotation input: {args.rotation}. Must be a value between 0 and 5.")
