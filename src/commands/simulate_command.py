@@ -48,7 +48,7 @@ class SimulateCommand(Command):
             help="Initial learning rate for the network",
             type=float,
             default=0.1,
-            dest="lr",
+            dest="learning_rate",
         )
 
         parser.add_argument(
@@ -70,7 +70,8 @@ class SimulateCommand(Command):
         )
 
         parser.add_argument(
-            "-ds" "--dataset-size",
+            "-ds",
+            "--dataset-size",
             help="Number of samples in the dataset",
             type=int,
             default=100,
@@ -88,7 +89,7 @@ class SimulateCommand(Command):
             raise ValueError("Dataset size must be at least 1")
 
     def invoke(self, args: Namespace):
-        net = HexagonalNeuralNetwork(n=args.n, random_init=True, lr=args.lr)
+        net = HexagonalNeuralNetwork(n=args.n, r=args.rotation, random_init=True, lr=args.learning_rate)
 
         if args.type == "identity":
             data = get_dataset(args.n, args.dataset_size, type="identity")

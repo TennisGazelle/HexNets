@@ -115,20 +115,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     # --- forward & backward ---
     def pad_input(self, x):
-        if self.r == 0:
-            x0 = np.zeros(self.total_nodes)
-            x0[self.dir_metrics[self.r]["indices"][0]] = x
-            return x0
-        else:
-            x0 = np.zeros(self.total_nodes)
-            # todo: implement this padding for each r
-            return x0
+        x0 = np.zeros(self.total_nodes)
+        x0[self.dir_metrics[self.r]["indices"][0]] = x
+        return x0
+
+    def pad_output(self, y):
+        y0 = np.zeros(self.total_nodes)
+        y0[self.dir_metrics[self.r]["indices"][-1]] = y
+        return y0
 
     def unpad_output(self, y):
-        if self.r == 0:
-            return y[self.dir_metrics[self.r]["indices"][-1]]
-        else:
-            return y[self.dir_metrics[self.r]["indices"][-1]]
+        return y[self.dir_metrics[self.r]["indices"][-1]]
 
     def forward(self, x):
         activations = [x.copy()]
@@ -174,8 +171,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def train(self, data):
         for x_input, y_target in data:
             x_full = self.pad_input(x_input)
-            y_full = np.zeros(self.total_nodes)
-            y_full[self.dir_metrics[self.r]["indices"][-1]] = y_target
+            y_full = self.pad_output(y_target)
             activations = self.forward(x_full)
             self.backward(activations, y_full)
 
@@ -428,6 +424,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         """
         print(f"Network:")
         print(f"n:\t{self.n}")
+        print(f"r:\t{self.r}")
         print(f"lr:\t{self.learning_rate}")
         print(f"epochs:\t{epochs}")
         print(f"loss:\t{self.loss.name}")
@@ -446,7 +443,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         fig_acc = plt.figure(figsize=(6, 4))
         ax_acc = fig_acc.add_subplot(111)
         (line_acc,) = ax_acc.plot([], [])
-        ax_acc.set_title(f"Training Accuracy")
+        ax_acc.set_title(f"Training Accuracy (RMSE)")
         ax_acc.set_xlabel("Epoch")
         ax_acc.set_ylabel("Accuracy")
         ax_acc.set_ylim(0, 1)
@@ -455,7 +452,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         fig_r2 = plt.figure(figsize=(6, 4))
         ax_r2 = fig_r2.add_subplot(111)
         (line_r2,) = ax_r2.plot([], [])
-        ax_r2.set_title(f"Training R^2")
+        ax_r2.set_title(f"Training R^2 (coefficient of determination)")
         ax_r2.set_xlabel("Epoch")
         ax_r2.set_ylabel("R^2")
         ax_r2.grid(True)
@@ -472,8 +469,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             for x_input, y_target in data:
                 # build padded vectors
                 x_full = self.pad_input(x_input)
-                y_full = np.zeros(self.total_nodes)
-                y_full[self.dir_metrics[self.r]["indices"][-1]] = y_target
+                y_full = self.pad_output(y_target)
                 # print("--------------------------------")
 
                 # print(f"x input={x_input}, x_padded={x0}, y expected={y_target}, y_padded={y_full}")
