@@ -3,9 +3,7 @@ import numpy as np
 from src.networks.activation.activations import BaseActivation
 
 
-class Sigmoid(BaseActivation):
-    def __init__(self):
-        super().__init__("sigmoid")
+class Sigmoid(BaseActivation, display_name="sigmoid"):
 
     def activate(self, x):
         return 1 / (1 + np.exp(-x))

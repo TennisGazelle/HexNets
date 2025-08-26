@@ -3,9 +3,7 @@ import numpy as np
 from src.networks.activation.activations import BaseActivation
 
 
-class ReLU(BaseActivation):
-    def __init__(self):
-        super().__init__("relu")
+class ReLU(BaseActivation, display_name="relu"):
 
     def activate(self, x):
         return np.maximum(0, x)

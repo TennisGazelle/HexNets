@@ -3,9 +3,8 @@ import numpy as np
 from src.networks.activation.activations import BaseActivation
 
 
-class LeakyReLU(BaseActivation):
+class LeakyReLU(BaseActivation, display_name="leaky_relu"):
     def __init__(self, alpha=0.01):
-        super().__init__("leaky_relu")
         self.alpha = alpha
 
     def activate(self, x):

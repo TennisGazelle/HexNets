@@ -6,6 +6,8 @@ from src.commands.command import (
     validate_structure_argument,
 )
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
+from src.networks.activation.activations import get_activation_function
+from src.networks.loss.loss import get_loss_function
 
 import numpy as np
 
@@ -89,7 +91,16 @@ class SimulateCommand(Command):
             raise ValueError("Dataset size must be at least 1")
 
     def invoke(self, args: Namespace):
-        net = HexagonalNeuralNetwork(n=args.n, r=args.rotation, random_init=True, lr=args.learning_rate)
+        loss_function = get_loss_function(args.loss)
+        activation_function = get_activation_function(args.activation)
+        net = HexagonalNeuralNetwork(
+            n=args.n,
+            r=args.rotation,
+            random_init=True,
+            lr=args.learning_rate,
+            activation=activation_function,
+            loss=loss_function,
+        )
 
         if args.type == "identity":
             data = get_dataset(args.n, args.dataset_size, type="identity")
@@ -98,4 +109,6 @@ class SimulateCommand(Command):
         else:
             raise ValueError(f"Invalid dataset type: {args.type}")
 
+        net._graphW(activation_only=False, detail="untrained")
         net.train_animated(data, epochs=args.epochs, pause=args.pause)
+        net._graphW(activation_only=False, detail="trained")

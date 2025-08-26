@@ -21,8 +21,8 @@ from src.networks.loss.QuantileLoss import QuantileLoss
 
 # === Hexagonal Neural Network ===
 class HexagonalNeuralNetwork(BaseNeuralNetwork):
-    def __init__(self, n, r=0, random_init=True, lr=0.01):
-        super().__init__(n, Sigmoid(), MeanSquaredErrorLoss())
+    def __init__(self, n, r=0, random_init=True, lr=0.01, activation=Sigmoid, loss=MeanSquaredErrorLoss):
+        super().__init__(n, activation, loss)
         self.r = r
         self.learning_rate = lr
         self.total_nodes = self._calc_total_nodes(n)
@@ -168,12 +168,23 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         self.dir_metrics[self.r]["W"] -= self.learning_rate * grads
 
     # --- public API ---
-    def train(self, data):
-        for x_input, y_target in data:
-            x_full = self.pad_input(x_input)
-            y_full = self.pad_output(y_target)
-            activations = self.forward(x_full)
-            self.backward(activations, y_full)
+    def calc_accuracy(self, y_pred, y_target):
+        rmse = np.sqrt(np.mean((y_pred - y_target) ** 2))
+        score = np.exp(-rmse)  # map rmse to [0,1]
+        return score
+
+    def calc_r2(self, y_pred, y_target):
+        ss_res = np.sum((y_target - y_pred) ** 2)
+        ss_tot = np.sum((y_target - np.mean(y_target)) ** 2)
+        return 1 - ss_res / ss_tot
+
+    def train(self, data, epochs=1):
+        for _ in range(epochs):
+            for x_input, y_target in data:
+                x_full = self.pad_input(x_input)
+                y_full = self.pad_output(y_target)
+                activations = self.forward(x_full)
+                self.backward(activations, y_full)
 
     def test(self, x_input):
         x_full = self.pad_input(x_input)
@@ -427,15 +438,15 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         print(f"r:\t{self.r}")
         print(f"lr:\t{self.learning_rate}")
         print(f"epochs:\t{epochs}")
-        print(f"loss:\t{self.loss.name}")
-        print(f"activation:\t{self.activation.name}")
+        print(f"loss:\t{self.loss.display_name}")
+        print(f"activation:\t{self.activation.display_name}")
         print("Training...")
 
         # Prepare separate figures to respect "one chart per figure"
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
         (line_loss,) = ax_loss.plot([], [])
-        ax_loss.set_title(f"Training Loss ({self.loss.name})")
+        ax_loss.set_title(f"Training Loss ({self.loss})")
         ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
         ax_loss.grid(True)
@@ -561,7 +572,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             plt.pause(pause)
 
             if epoch == epochs - 1:
-                fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss.name}_{epoch + 1}.png"
+                fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss}_{epoch + 1}.png"
                 fig_acc_filename = f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
                 fig_r2_filename = f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
                 fig_loss.savefig(fig_loss_filename)

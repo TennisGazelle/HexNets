@@ -3,9 +3,8 @@ import numpy as np
 from src.networks.loss.loss import BaseLoss
 
 
-class QuantileLoss(BaseLoss):
+class QuantileLoss(BaseLoss, display_name="quantile"):
     def __init__(self, tau=0.5):
-        super().__init__("quantile_loss")
         self.tau = tau
 
     def calc_loss(self, y_true, y_pred):

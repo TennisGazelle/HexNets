@@ -3,9 +3,7 @@ import numpy as np
 from src.networks.loss.loss import BaseLoss
 
 
-class MeanSquaredErrorLoss(BaseLoss):
-    def __init__(self):
-        super().__init__("mean_squared_error")
+class MeanSquaredErrorLoss(BaseLoss, display_name="mean_squared_error"):
 
     def calc_loss(self, y_true, y_pred):
         return np.mean((y_true - y_pred) ** 2)

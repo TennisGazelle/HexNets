@@ -3,9 +3,8 @@ import numpy as np
 from src.networks.loss.loss import BaseLoss
 
 
-class HuberLoss(BaseLoss):
+class HuberLoss(BaseLoss, display_name="huber"):
     def __init__(self, delta_threshold=1.0):
-        super().__init__(f"huber_loss_(delta-{delta_threshold})")
         self.delta_threshold = delta_threshold
 
     def calc_loss(self, y_true, y_pred):
