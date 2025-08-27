@@ -23,8 +23,8 @@ class ReferenceCommand(Command):
             "-g",
             "--graph",
             help="which type of graph to output",
-            choices=["dot", "matplotlib", "activation", "weight", "multi_activation", "terminal_indices"],
-            default="matplotlib",
+            choices=["structure_dot", "structure_matplotlib", "activation", "weight", "multi_activation", "layer_indices_terminal"],
+            default="structure_matplotlib",
             dest="graph",
         )
         parser.add_argument(
@@ -42,13 +42,13 @@ class ReferenceCommand(Command):
             n=args.n, r=args.rotation, random_init=True, activation=args.activation, loss=args.loss
         )
 
-        if args.graph == "dot":
+        if args.graph == "structure_dot":
             print("This assumes you have Graphviz installed...")
             output_file = net._graph_hex_dot()
             print(f"Graph saved to {output_file}")
             print(f"Note: Dot file outputted to {output_file.replace('.png', '.dot')}")
 
-        elif args.graph == "matplotlib":
+        elif args.graph == "structure_matplotlib":
             output_file = net._graph_hex()
             print(f"Graph saved to {output_file}")
 
@@ -61,10 +61,10 @@ class ReferenceCommand(Command):
             print(f"Graph saved to {output_file}")
 
         elif args.graph == "multi_activation":
-            output_file = net._graph_multi_W(detail=args.detail)
+            output_file = net._graph_multi_activation(detail=args.detail)
             print(f"Graph saved to {output_file}")
 
-        elif args.graph == "terminal_indices":
+        elif args.graph == "layer_indices_terminal":
             net._printIndices(args.rotation)
         else:
             raise ValueError(f"Invalid graph type: {args.graph}")

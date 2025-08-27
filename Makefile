@@ -21,21 +21,49 @@ run:
 
 .PHONY: ref-graphs
 ref-graphs:
-	@${PYTHON} cli.py ref -n 2 -g activation
-	@${PYTHON} cli.py ref -n 3 -g activation
-	@${PYTHON} cli.py ref -n 4 -g activation
-	@${PYTHON} cli.py ref -n 5 -g activation
-	@${PYTHON} cli.py ref -n 6 -g activation
-	@${PYTHON} cli.py ref -n 7 -g activation
-	@${PYTHON} cli.py ref -n 8 -g activation
+	@echo "Generating reference graphs..."
+	@echo "----------------------------------------"
+	@echo "n=2, layer_indices_terminal, multi_activation, structure_matplotlib"
+	@${PYTHON} cli.py ref -n 2 -g layer_indices_terminal
+	@${PYTHON} cli.py ref -n 2 -g multi_activation
+	@${PYTHON} cli.py ref -n 2 -g structure_matplotlib
 
-	@${PYTHON} cli.py ref -n 2 -g dot
-	@${PYTHON} cli.py ref -n 3 -g dot
-	@${PYTHON} cli.py ref -n 4 -g dot
-	@${PYTHON} cli.py ref -n 5 -g dot
-	@${PYTHON} cli.py ref -n 6 -g dot
-	@${PYTHON} cli.py ref -n 7 -g dot
-	@${PYTHON} cli.py ref -n 8 -g dot
+	@echo "----------------------------------------"
+	@echo "n=3, layer_indices_terminal, multi_activation, structure_matplotlib"
+	@${PYTHON} cli.py ref -n 3 -g layer_indices_terminal
+	@${PYTHON} cli.py ref -n 3 -g multi_activation
+	@${PYTHON} cli.py ref -n 3 -g structure_matplotlib
+
+	@echo "----------------------------------------"
+	@echo "n=4, layer_indices_terminal, multi_activation, structure_matplotlib"
+	@${PYTHON} cli.py ref -n 4 -g layer_indices_terminal
+	@${PYTHON} cli.py ref -n 4 -g multi_activation
+	@${PYTHON} cli.py ref -n 4 -g structure_matplotlib
+
+	@echo "----------------------------------------"
+	@echo "n=5, layer_indices_terminal, multi_activation, structure_matplotlib"
+	@${PYTHON} cli.py ref -n 5 -g layer_indices_terminal
+	@${PYTHON} cli.py ref -n 5 -g multi_activation
+	@${PYTHON} cli.py ref -n 5 -g structure_matplotlib
+
+	@echo "----------------------------------------"
+	@echo "n=6, layer_indices_terminal, multi_activation, structure_matplotlib"
+	@${PYTHON} cli.py ref -n 6 -g layer_indices_terminal
+	@${PYTHON} cli.py ref -n 6 -g multi_activation
+	@${PYTHON} cli.py ref -n 6 -g structure_matplotlib
+
+	@echo "----------------------------------------"
+	@echo "n=7, layer_indices_terminal, multi_activation, structure_matplotlib"
+	@${PYTHON} cli.py ref -n 7 -g layer_indices_terminal
+	@${PYTHON} cli.py ref -n 7 -g multi_activation
+	@${PYTHON} cli.py ref -n 7 -g structure_matplotlib
+
+	@echo "----------------------------------------"
+	@echo "n=8, layer_indices_terminal, multi_activation, structure_matplotlib"
+	@${PYTHON} cli.py ref -n 8 -g layer_indices_terminal
+	@${PYTHON} cli.py ref -n 8 -g multi_activation
+	@${PYTHON} cli.py ref -n 8 -g structure_matplotlib
+
 
 .PHONY: clean-all
 clean-all: clean-venv clean-figures

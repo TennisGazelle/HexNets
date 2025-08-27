@@ -1,3 +1,4 @@
+import math
 import os
 import pickle
 from typing import List
@@ -109,6 +110,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             W, layer_indices = self._init_weight_matrix(i, random_init=random_init)
             dir_metrics[i] = {
                 "W": W,
+                "delta_W": np.zeros_like(W),
                 "indices": layer_indices,
             }
         return dir_metrics
@@ -139,7 +141,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             activations.append(a.copy())
         return activations
 
-    def backward(self, activations, target):
+    def backward(self, activations, target, apply_delta_W=True):
         grads = np.zeros_like(self.dir_metrics[self.r]["W"])
         delta = self.loss.calc_delta(target, activations[-1])
         # walk layers backward
@@ -165,7 +167,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         # SGD update
         # print(f"[dbg] ||delta_out||={np.linalg.norm(delta):.3e}  ||grads||={np.linalg.norm(grads):.3e}")
 
-        self.dir_metrics[self.r]["W"] -= self.learning_rate * grads
+        if apply_delta_W:
+            self.dir_metrics[self.r]["delta_W"] += self.learning_rate * grads
+        else:
+            self.dir_metrics[self.r]["W"] -= self.learning_rate * grads
+
+    def apply_delta_W(self):
+        self.dir_metrics[self.r]["W"] -= self.learning_rate * self.dir_metrics[self.r]["delta_W"]
+        self.dir_metrics[self.r]["delta_W"].fill(0)
 
     # --- public API ---
     def calc_accuracy(self, y_pred, y_target):
@@ -184,7 +193,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 x_full = self.pad_input(x_input)
                 y_full = self.pad_output(y_target)
                 activations = self.forward(x_full)
-                self.backward(activations, y_full)
+                self.backward(activations, y_full, apply_delta_W=False)
+            self.apply_delta_W()
 
     def test(self, x_input):
         x_full = self.pad_input(x_input)
@@ -235,9 +245,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
         return filename
 
-    def _graph_multi_W(self, detail="", r_list=list(range(0, 6))):
+    def _graph_multi_activation(self, detail="", r_list=list(range(0, 6))):
         title = "Activation Structure"
-        filename = f"figures/hexnet_n{self.n}_multi_W_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
+        filename = f"figures/hexnet_n{self.n}_multi_activation{'_' + detail if detail else ''}.png"
 
         colors = ["Blues", "Greens", "Reds", "Purples", "Oranges", "Greys"]
 
@@ -280,7 +290,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         font_size=10,
         label="index",  # "index" (default) or "value"
         values=None,  # optional array aligned to global node index
-        dy=1.0,  # vertical spacing
+        dy=math.sqrt(3)/2,  # vertical spacing
         dx=1.0,  # horizontal spacing
     ):
         """
@@ -293,6 +303,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             raise ValueError("layer_indices is empty. Initialize the network first.")
 
         # --- positions (centered rows, optional stagger for hex look) ---
+        node_index = 0
         pos = {}  # node_id -> (x, y)
         for i, layer in enumerate(layers):
             size = len(layer)
@@ -301,7 +312,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             offset = -0.5 * (size - 1) * dx
             for j, node in enumerate(layer):
                 x = offset + j * dx
-                pos[node] = (x, y)
+                pos[node_index] = (x, y)
+                node_index += 1
 
         # # --- edge weight normalization (if using W) ---
         # def edge_alpha_for(u, v):
@@ -525,7 +537,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 count += 1
 
                 # backprop step
-                self.backward(activations, y_full)
+                self.backward(activations, y_full, apply_delta_W=False)
 
                 # if epoch % 10 == 0:
                 #     activations_after = self.forward(x0)
@@ -534,7 +546,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 #     print(f"MAE before: {mae}, after: {mae_after}, delta_y={np.linalg.norm(y_pred_after - y_pred)}")
 
             # r_squared, cont'd
-            ss_tot = sum_y2 - (sum_y**2 / count)
+            ss_tot = sum_y2 - (sum_y**2 / (count * self.n))
             r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
             epoch_loss = total_loss / count
@@ -543,6 +555,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             self.training_metrics["loss"].append(epoch_loss)
             self.training_metrics["accuracy"].append(epoch_acc)
             self.training_metrics["r_squared"].append(epoch_r2)
+            self.apply_delta_W()
 
             # update plots
             line_loss.set_data(
