@@ -4,6 +4,8 @@ from src.commands.command import (
     Command,
     add_structure_argument,
     validate_structure_argument,
+    add_training_arguments,
+    validate_training_arguments,
 )
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 from src.networks.activation.activations import get_activation_function
@@ -30,11 +32,11 @@ class SimulateCommand(Command):
         return "sim"
 
     def help(self) -> str:
-        return "Simulate a Hexagonal Neural Network being trained and tested"
+        return "Ad Hoc: Mostly for testing. Simulates a Hexagonal Neural Network being trained and tested and shows figures"
 
     def configure_parser(self, parser: ArgumentParser):
         add_structure_argument(parser)
-
+        add_training_arguments(parser)
         parser.add_argument(
             "-t",
             "--type",
@@ -45,48 +47,17 @@ class SimulateCommand(Command):
         )
 
         parser.add_argument(
-            "-lr",
-            "--learning-rate",
-            help="Initial learning rate for the network",
-            type=float,
-            default=0.1,
-            dest="learning_rate",
-        )
-
-        parser.add_argument(
-            "-e",
-            "--epochs",
-            help="Number of epochs to train for",
-            type=int,
-            default=100,
-            dest="epochs",
-        )
-
-        parser.add_argument(
-            "-p",
-            "--pause",
-            help="Pause between epochs",
-            type=float,
-            default=0.05,
-            dest="pause",
-        )
-
-        parser.add_argument(
             "-ds",
             "--dataset-size",
             help="Number of samples in the dataset",
             type=int,
-            default=100,
+            default=250,
             dest="dataset_size",
         )
 
     def validate_args(self, args: Namespace):
         validate_structure_argument(args)
-
-        if args.epochs < 1:
-            raise ValueError("Number of epochs must be at least 1")
-        if args.pause < 0:
-            raise ValueError("Pause must be at least 0")
+        validate_training_arguments(args)
         if args.dataset_size < 1:
             raise ValueError("Dataset size must be at least 1")
 
@@ -97,7 +68,7 @@ class SimulateCommand(Command):
             n=args.n,
             r=args.rotation,
             random_init=True,
-            lr=args.learning_rate,
+            learning_rate=args.learning_rate,
             activation=activation_function,
             loss=loss_function,
         )
@@ -109,6 +80,6 @@ class SimulateCommand(Command):
         else:
             raise ValueError(f"Invalid dataset type: {args.type}")
 
-        net._graphW(activation_only=False, detail="untrained")
+        # net.graph_weights(activation_only=False, detail="untrained")
         net.train_animated(data, epochs=args.epochs, pause=args.pause)
-        net._graphW(activation_only=False, detail="trained")
+        # net.graph_weights(activation_only=False, detail="trained")

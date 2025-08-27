@@ -8,19 +8,19 @@ from src.networks.loss.loss import get_available_loss_functions
 
 def print_header():
     header1 = """
-                         __     _   
-      /\  /\_____  __ /\ \ \___| |_ 
+                         __     _ 
+      /\  /\_____  __ /\ \ \___| |_
      / /_/ / _ \ \/ //  \/ / _ \ __|
-    / __  /  __/>  </ /\  /  __/ |_ 
+    / __  /  __/>  </ /\  /  __/ |_
     \/ /_/ \___/_/\_\_\ \/ \___|\__|
     """
 
     header2 = """
-        __  __          _   __     __ 
+        __  __          _   __     __
        / / / /__  _  __/ | / /__  / /_
       / /_/ / _ \| |/_/  |/ / _ \/ __/
-     / __  /  __/>  </ /|  /  __/ /_  
-    /_/ /_/\___/_/|_/_/ |_/\___/\__/  
+     / __  /  __/>  </ /|  /  __/ /_
+    /_/ /_/\___/_/|_/_/ |_/\___/\__/
     """
     print(random.choice([header1, header2]))
 
@@ -93,6 +93,35 @@ def add_structure_argument(parser: ArgumentParser):
     )
 
 
+def add_training_arguments(parser: ArgumentParser):
+    parser.add_argument(
+        "-lr",
+        "--learning-rate",
+        help="Initial learning rate for the network",
+        type=float,
+        default=0.01,
+        dest="learning_rate",
+    )
+
+    parser.add_argument(
+        "-e",
+        "--epochs",
+        help="Number of epochs to train for",
+        type=int,
+        default=100,
+        dest="epochs",
+    )
+
+    parser.add_argument(
+        "-p",
+        "--pause",
+        help="Pause between epochs",
+        type=float,
+        default=0.05,
+        dest="pause",
+    )
+
+
 def validate_structure_argument(args: Namespace):
     if args.n < 2:
         raise ValueError("Number of input nodes must be at least 2")
@@ -104,3 +133,12 @@ def validate_structure_argument(args: Namespace):
         )
     if args.loss not in get_available_loss_functions():
         raise ValueError(f"Invalid loss function: {args.loss}. Must be one of: {get_available_loss_functions()}")
+
+
+def validate_training_arguments(args: Namespace):
+    if args.epochs < 1:
+        raise ValueError("Number of epochs must be at least 1")
+    if args.pause < 0:
+        raise ValueError("Pause must be at least 0")
+    if args.learning_rate <= 0:
+        raise ValueError("Learning rate must be greater than 0")

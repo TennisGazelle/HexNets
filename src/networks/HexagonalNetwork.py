@@ -8,6 +8,8 @@ import numpy as np
 from matplotlib.patches import Patch
 from matplotlib.colors import ListedColormap
 
+from src.networks.activation.activations import BaseActivation
+from src.networks.loss.loss import BaseLoss
 from src.networks.network import BaseNeuralNetwork
 
 from src.networks.activation.LeakyRelu import LeakyReLU
@@ -21,14 +23,22 @@ from src.networks.loss.QuantileLoss import QuantileLoss
 
 
 # === Hexagonal Neural Network ===
-class HexagonalNeuralNetwork(BaseNeuralNetwork):
-    def __init__(self, n, r=0, random_init=True, lr=0.01, activation=Sigmoid, loss=MeanSquaredErrorLoss):
-        super().__init__(n, activation, loss)
+class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hexagonal_neural_network"):
+    def __init__(
+        self,
+        n: int = 2,
+        r: int = 0,
+        random_init: bool = True,
+        learning_rate: float = 0.01,
+        activation: BaseActivation = Sigmoid,
+        loss: BaseLoss = MeanSquaredErrorLoss,
+    ):
+        super().__init__(learning_rate, activation, loss)
+        self.n = n
         self.r = r
-        self.learning_rate = lr
         self.total_nodes = self._calc_total_nodes(n)
         self.dir_metrics = self._init_dir_metrics(random_init=random_init)
-        self.training_metrics = {"loss": [], "accuracy": [], "r_squared": []}
+        self.training_metrics = self.init_training_metrics()
 
     # --- structure helpers ---
     def _calc_total_nodes(self, n):
@@ -129,7 +139,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def unpad_output(self, y):
         return y[self.dir_metrics[self.r]["indices"][-1]]
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         activations = [x.copy()]
         a = x.copy()
         for i in range(len(self.dir_metrics[self.r]["indices"]) - 1):
@@ -141,7 +151,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             activations.append(a.copy())
         return activations
 
-    def backward(self, activations, target, apply_delta_W=True):
+    def backward(self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True):
         grads = np.zeros_like(self.dir_metrics[self.r]["W"])
         delta = self.loss.calc_delta(target, activations[-1])
         # walk layers backward
@@ -173,7 +183,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             self.dir_metrics[self.r]["W"] -= self.learning_rate * grads
 
     def apply_delta_W(self):
-        self.dir_metrics[self.r]["W"] -= self.learning_rate * self.dir_metrics[self.r]["delta_W"]
+        self.dir_metrics[self.r]["W"] -= self.dir_metrics[self.r]["delta_W"]
         self.dir_metrics[self.r]["delta_W"].fill(0)
 
     # --- public API ---
@@ -226,15 +236,15 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             }
             self.training_metrics = state["training_metrics"]
 
-    def _graphW(self, activation_only=True, detail=""):
+    def graph_weights(self, activation_only=True, detail=""):
         title = "Activation Structure" if activation_only else "Weight Matrix"
         filename = f"figures/hexnet_n{self.n}_r{self.r}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
         matrix = (self.dir_metrics[self.r]["W"] != 0).astype(int) if activation_only else self.dir_metrics[self.r]["W"]
 
         plt.figure(figsize=(7, 7))
         plt.imshow(matrix, cmap="Greys" if activation_only else "viridis", interpolation="none")
-        plt.suptitle(title + f" (n={self.n}, r={self.r})")
-        plt.title(f"lr={self.learning_rate}, {detail}")
+        plt.suptitle(title)
+        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate}, {detail}")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         # plt.grid(visible=True, color='black', linewidth=0.5)
@@ -266,8 +276,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             plt.imshow(matrix, cmap=custom_cmap, interpolation="none")
             legend_handles.append(Patch(color=base_cmap(0.7), alpha=0.7, label=f"Rotation {r}"))
 
-        plt.suptitle(title + f" (n={self.n})")
-        plt.title(f"{detail}")
+        plt.suptitle(title)
+        plt.title(f"n={self.n}, {detail}")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         plt.legend(handles=legend_handles, title="Rotation")
@@ -279,8 +289,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         for i, layer in enumerate(self.dir_metrics[r]["indices"]):
             print(f"layer{i}: {layer}")
 
+    def graph_structure(self, detail="", medium="matplotlib"):
+        if medium == "matplotlib":
+            self._graph_hex(detail=detail)
+        elif medium == "dot":
+            self._graph_hex_dot()
+        else:
+            raise ValueError(f"Invalid medium: {medium}")
+
     def _graph_hex(
         self,
+        detail="",
         figsize=(10, 10),
         node_radius=0.28,
         edge_alpha=1,
@@ -290,7 +309,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         font_size=10,
         label="index",  # "index" (default) or "value"
         values=None,  # optional array aligned to global node index
-        dy=math.sqrt(3)/2,  # vertical spacing
+        dy=math.sqrt(3) / 2,  # vertical spacing
         dx=1.0,  # horizontal spacing
     ):
         """
@@ -380,7 +399,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         ax.set_ylim(min(ys) - pad, max(ys) + pad)
 
         plt.tight_layout()
-        filename = f"figures/hexnet_n{self.n}_r{self.r}_view.png"
+        filename = f"figures/hexnet_n{self.n}_r{self.r}_structure{'_' + detail if detail else ''}.png"
+        plt.suptitle(f"Graph Structure")
+        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate}, {detail}")
         plt.savefig(filename)
         plt.show()
 
@@ -440,42 +461,41 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return png_file
 
     # --- animated training ---
-    def train_animated(self, data, epochs=25, threshold=0.5, pause=0.05) -> tuple[float, float, float]:
+    def train_animated(self, data, epochs=25, pause=0.05) -> tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
-        print(f"Network:")
+        print(f"Hexagonal Network Training:")
         print(f"n:\t{self.n}")
         print(f"r:\t{self.r}")
         print(f"lr:\t{self.learning_rate}")
         print(f"epochs:\t{epochs}")
+        print(f"datapoints:\t{len(data)}")
         print(f"loss:\t{self.loss.display_name}")
         print(f"activation:\t{self.activation.display_name}")
+
         print("Training...")
 
-        # Prepare separate figures to respect "one chart per figure"
-        fig_loss = plt.figure(figsize=(6, 4))
-        ax_loss = fig_loss.add_subplot(111)
+        # three charts in a single figure
+        fig, (ax_loss, ax_acc, ax_r2) = plt.subplots(3, 1, figsize=(6, 12))
+        fig.suptitle(f"Training {self.display_name} ({self.loss}, {self.activation})")
+
         (line_loss,) = ax_loss.plot([], [])
-        ax_loss.set_title(f"Training Loss ({self.loss})")
-        ax_loss.set_xlabel("Epoch")
+        ax_loss.set_title(f"Loss ({self.loss})")
+        # ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
         ax_loss.grid(True)
 
-        fig_acc = plt.figure(figsize=(6, 4))
-        ax_acc = fig_acc.add_subplot(111)
         (line_acc,) = ax_acc.plot([], [])
-        ax_acc.set_title(f"Training Accuracy (RMSE)")
-        ax_acc.set_xlabel("Epoch")
+        ax_acc.set_title(f"Accuracy (RMSE)")
+        # ax_acc.set_xlabel("Epoch")
         ax_acc.set_ylabel("Accuracy")
         ax_acc.set_ylim(0, 1)
         ax_acc.grid(True)
 
-        fig_r2 = plt.figure(figsize=(6, 4))
-        ax_r2 = fig_r2.add_subplot(111)
         (line_r2,) = ax_r2.plot([], [])
-        ax_r2.set_title(f"Training R^2 (coefficient of determination)")
+        ax_r2.set_title(f"R^2 (coefficient of determination)")
         ax_r2.set_xlabel("Epoch")
         ax_r2.set_ylabel("R^2")
         ax_r2.grid(True)
@@ -491,13 +511,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
             for x_input, y_target in data:
                 # build padded vectors
-                x_full = self.pad_input(x_input)
-                y_full = self.pad_output(y_target)
+                x_input_full = self.pad_input(x_input)
+                y_target_full = self.pad_output(y_target)
                 # print("--------------------------------")
 
                 # print(f"x input={x_input}, x_padded={x0}, y expected={y_target}, y_padded={y_full}")
 
-                activations = self.forward(x_full)
+                activations = self.forward(x_input_full)
                 # print(f"activations={activations}")
 
                 # for li, a in enumerate(activations):
@@ -537,7 +557,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 count += 1
 
                 # backprop step
-                self.backward(activations, y_full, apply_delta_W=False)
+                self.backward(activations, y_target_full, apply_delta_W=False)
 
                 # if epoch % 10 == 0:
                 #     activations_after = self.forward(x0)
@@ -564,7 +584,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             )
             ax_loss.relim()
             ax_loss.autoscale_view()
-            fig_loss.canvas.draw()
+            # fig_loss.canvas.draw()
 
             line_acc.set_data(
                 np.arange(1, len(self.training_metrics["accuracy"]) + 1),
@@ -572,7 +592,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             )
             ax_acc.relim()
             ax_acc.autoscale_view()
-            fig_acc.canvas.draw()
+            # fig_acc.canvas.draw()
 
             line_r2.set_data(
                 np.arange(1, len(self.training_metrics["r_squared"]) + 1),
@@ -580,24 +600,29 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             )
             ax_r2.relim()
             ax_r2.autoscale_view()
-            fig_r2.canvas.draw()
+            # fig_r2.canvas.draw()
 
             plt.pause(pause)
 
             if epoch == epochs - 1:
-                fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss}_{epoch + 1}.png"
-                fig_acc_filename = f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
-                fig_r2_filename = f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
-                fig_loss.savefig(fig_loss_filename)
-                fig_acc.savefig(fig_acc_filename)
-                fig_r2.savefig(fig_r2_filename)
+                training_figure_filename = (
+                    f"figures/hexnet_n{self.n}_r{self.r}_training_{self.loss}_{self.activation}_{epoch + 1}.png"
+                )
+                # fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss}_{epoch + 1}.png"
+                # fig_acc_filename = f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
+                # fig_r2_filename = f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
+                # fig_loss.savefig(fig_loss_filename)
+                # fig_acc.savefig(fig_acc_filename)
+                # fig_r2.savefig(fig_r2_filename)
+                plt.savefig(training_figure_filename)
                 print("")
                 print(f"Training complete!")
                 print(f"Loss: \t\t {epoch_loss:.3f}")
                 print(f"Accu: \t\t {epoch_acc:.3f}")
                 print(f"R^2: \t\t {epoch_r2:.3f}")
-                print(f"Loss output: \t {fig_loss_filename}")
-                print(f"Accu output: \t {fig_acc_filename}")
-                print(f"R^2 output: \t {fig_r2_filename}")
+                print(f"Training figure saved to: {training_figure_filename}")
+                # print(f"Loss output: \t {fig_loss_filename}")
+                # print(f"Accu output: \t {fig_acc_filename}")
+                # print(f"R^2 output: \t {fig_r2_filename}")
 
         return epoch_loss, epoch_acc, epoch_r2
