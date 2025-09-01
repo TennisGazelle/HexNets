@@ -1,7 +1,5 @@
 from argparse import ArgumentParser
 from argparse import Namespace
-import pathlib
-import json
 from src.networks.loss.loss import get_loss_function
 from src.networks.activation.activations import get_activation_function
 from src.commands.command import (
@@ -12,12 +10,13 @@ from src.commands.command import (
     validate_training_arguments,
     add_global_arguments,
     validate_global_arguments,
-    get_dataset
+    get_dataset,
 )
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 from src.networks.MLPNetwork import MLPNetwork
 from src.networks.network import BaseNeuralNetwork
 from src.run_service import RunService
+
 
 class TrainCommand(Command):
     def name(self):
@@ -30,7 +29,7 @@ class TrainCommand(Command):
         add_hex_only_arguments(parser)
         add_training_arguments(parser)
         add_global_arguments(parser)
-         # parser.add_argument("data", type=str, help="The data to train the network on", choices=["identity", "linear"])
+        # parser.add_argument("data", type=str, help="The data to train the network on", choices=["identity", "linear"])
 
         # parser.add_argument(
         #     "-o",
@@ -41,14 +40,14 @@ class TrainCommand(Command):
         #     dest="output_name",
         # )
 
-        parser.add_argument(
-            "-i",
-            "--input-dir",
-            type=pathlib.Path,
-            help="The directory to load the model from (if provided, epoch number suffix will be updated)",
-            default=None,
-            dest="input_dir",
-        )
+        # parser.add_argument(
+        #     "-i",
+        #     "--input-dir",
+        #     type=pathlib.Path,
+        #     help="The directory to load the model from (if provided, epoch number suffix will be updated)",
+        #     default=None,
+        #     dest="input_dir",
+        # )
 
     def validate_args(self, args: Namespace):
         validate_hex_only_arguments(args)
@@ -56,7 +55,6 @@ class TrainCommand(Command):
         validate_global_arguments(args)
 
         # make sure there's a legit run in there
-
 
     def invoke(self, args: Namespace):
         loss_function = get_loss_function(args.loss)
@@ -90,10 +88,14 @@ class TrainCommand(Command):
         else:
             raise ValueError(f"Invalid model: {args.model}")
 
-
         run = RunService(args)
 
         net.show_stats()
+        run.print_paths()
+
+        if args.dry_run:
+            print("Dry run only, none of the above files were created")
+            exit(0)
 
         net.graph_weights(activation_only=True, output_dir=run.get_figures_path())
         net.train_animated(data, epochs=args.epochs, pause=args.pause, output_dir=run.get_figures_path())

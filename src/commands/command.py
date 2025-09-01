@@ -25,6 +25,7 @@ def print_header():
     """
     print(random.choice([header1, header2]))
 
+
 def get_dataset(n, train_samples, type="identity", scale=1.0):
     if type == "identity":
         X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
@@ -35,6 +36,7 @@ def get_dataset(n, train_samples, type="identity", scale=1.0):
     else:
         raise ValueError(f"Invalid dataset type: {type}")
     return list(zip(X, Y))
+
 
 class Command(ABC):
 
@@ -169,6 +171,10 @@ def add_training_arguments(parser: ArgumentParser):
         type=int,
         default=250,
         dest="dataset_size",
+    )
+
+    parser.add_argument(
+        "--dry-run", help="What would be run, do not create a run.", default=False, action="store_true", dest="dry_run"
     )
 
 

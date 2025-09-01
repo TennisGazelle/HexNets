@@ -128,7 +128,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         print(f"epochs completed:\t{self.epochs_completed}")
         print(f"loss_method:\t{self.loss.display_name}")
         print(f"activation_method:\t{self.activation.display_name}")
-        
+
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
         # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
@@ -139,7 +139,9 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
     def graph_structure(self, detail="", output_dir: pathlib.Path = None):
         pass
 
-    def train_animated(self, data, epochs=25, pause=0.05, output_dir: pathlib.Path = None) -> tuple[float, float, float]:
+    def train_animated(
+        self, data, epochs=25, pause=0.05, output_dir: pathlib.Path = None
+    ) -> tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)

@@ -26,14 +26,13 @@ class BaseNeuralNetwork(ABC):
     # def _init_from_file(self, filepath):
     #     pass
 
-    @abstractmethod 
+    @abstractmethod
     def show_stats(self):
         pass
 
     @abstractmethod
     def save(self, filepath) -> None:
         pass
-
 
     @abstractmethod
     def load(filepath) -> "BaseNeuralNetwork":

@@ -62,6 +62,16 @@
                 "-m", "mlp",
                 "-t", "identity",
             ]
+        },
+        {
+            "name": "Stats Command",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "stats",
+                "runs/2025-09-01_14-06-42"
+            ]
         }
     ]
 }

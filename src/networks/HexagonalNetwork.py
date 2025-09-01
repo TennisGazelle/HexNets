@@ -485,14 +485,16 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
 
     # --- animated training ---
-    def train_animated(self, data, epochs=25, pause=0.05, output_dir: pathlib.Path = None) -> tuple[float, float, float]:
+    def train_animated(
+        self, data, epochs=25, pause=0.05, output_dir: pathlib.Path = None
+    ) -> tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
         print(f"Hexagonal Network Training:")
-        print(f'epochs:\t{epochs}')
-        print(f'datapoints:\t{len(data)}')
+        print(f"epochs:\t{epochs}")
+        print(f"datapoints:\t{len(data)}")
 
         print("Training...")
         parent_dir = output_dir if output_dir else pathlib.Path("figures")

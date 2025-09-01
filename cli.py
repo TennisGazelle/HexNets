@@ -3,6 +3,7 @@ import argparse
 from src.commands.reference_command import ReferenceCommand
 from src.commands.simulate_command import SimulateCommand
 from src.commands.train_command import TrainCommand
+from src.commands.stats_conmand import StatsCommand
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Hexagonal Neural Network CLI tool")
@@ -13,6 +14,7 @@ def parse_args():
         ReferenceCommand(),
         SimulateCommand(),
         TrainCommand(),
+        StatsCommand()
     ]
 
     for command in commands:

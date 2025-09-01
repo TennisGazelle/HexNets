@@ -8,7 +8,7 @@ from src.commands.command import (
     validate_training_arguments,
     add_global_arguments,
     validate_global_arguments,
-    get_dataset
+    get_dataset,
 )
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 from src.networks.activation.activations import get_activation_function
