@@ -1,12 +1,16 @@
+import pickle
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
+import pathlib
 
 from src.networks.network import BaseNeuralNetwork
 from src.networks.activation.activations import BaseActivation
 from src.networks.loss.loss import BaseLoss
 from src.networks.activation.Sigmoid import Sigmoid
 from src.networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
+from src.networks.activation.activations import get_activation_function
+from src.networks.loss.loss import get_loss_function
 
 
 class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
@@ -23,9 +27,11 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_dims = hidden_dims
-        self.weights = []
-        self.weights_delta = []
+        self.epochs_completed = 0
+        self.W = []
+        self.delta_W = []
         self.training_metrics = self.init_training_metrics()
+        self.epochs_completed = 0
 
         if len(hidden_dims) == 0:
             raise ValueError("hidden_dims must be a list of at least one integer")
@@ -39,21 +45,47 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
     # --- structure helpers ---
     def _add_layer(self, incoming_dim: int, outgoing_dim: int):
         weights = np.random.random((incoming_dim, outgoing_dim)) - 0.5
-        self.weights.append(weights)
-        self.weights_delta.append(np.zeros((incoming_dim, outgoing_dim)))
+        self.W.append(weights)
+        self.delta_W.append(np.zeros((incoming_dim, outgoing_dim)))
 
-    def save(self, filepath):
-        pass
+    def save(self, filepath) -> None:
+        with open(filepath, "wb") as f:
+            pickle.dump(
+                {
+                    "input_dim": self.input_dim,
+                    "output_dim": self.output_dim,
+                    "hidden_dims": self.hidden_dims,
+                    "weights": self.W,
+                    "training_metrics": self.training_metrics,
+                    "learning_rate": self.learning_rate,
+                    "activation": self.activation.display_name,
+                    "loss": self.loss.display_name,
+                    "epochs_completed": self.epochs_completed,
+                },
+                f,
+            )
+        print(f"Model saved to: {filepath}")
 
     def load(self, filepath):
-        pass
+        with open(filepath, "rb") as f:
+            data = pickle.load(f)
+            self.input_dim = data["input_dim"]
+            self.output_dim = data["output_dim"]
+            self.hidden_dims = data["hidden_dims"]
+            self.W = data["weights"]
+            self.training_metrics = data["training_metrics"]
+            self.learning_rate = data["learning_rate"]
+            self.activation = get_activation_function(data["activation"])
+            self.loss = get_loss_function(data["loss"])
+            self.epochs_completed = data["epochs_completed"]
+            print(f"Model loaded from: {filepath}")
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         activations = [x.copy()]
         a = x.copy()
-        for i in range(len(self.weights)):
-            z = self.weights[i].T @ a
-            if i < len(self.weights) - 1:
+        for i in range(len(self.W)):
+            z = self.W[i].T @ a
+            if i < len(self.W) - 1:
                 a = self.activation.activate(z)
             else:
                 a = z
@@ -62,26 +94,26 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return activations
 
     def backward(self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True):
-        grads = [np.zeros_like(w) for w in self.weights]
+        grads = [np.zeros_like(w) for w in self.W]
         delta = self.loss.calc_delta(target, self.activation.deactivate(activations[-1]))
 
-        for i in reversed(range(len(self.weights))):
+        for i in reversed(range(len(self.W))):
             grads[i] = activations[i + 1] @ delta
 
             if i > 0:
-                delta = delta @ self.weights[i].T * self.activation.deactivate(activations[i])
+                delta = delta @ self.W[i].T * self.activation.deactivate(activations[i])
 
         if apply_delta_W:
-            for i in range(len(self.weights)):
-                self.weights_delta[i] += self.learning_rate * grads[i]
+            for i in range(len(self.W)):
+                self.delta_W[i] += self.learning_rate * grads[i]
         else:
-            for i in range(len(self.weights)):
-                self.weights[i] -= self.learning_rate * grads[i]
+            for i in range(len(self.W)):
+                self.W[i] -= self.learning_rate * grads[i]
 
     def apply_delta_W(self):
-        for i in range(len(self.weights)):
-            self.weights[i] -= self.learning_rate * self.weights_delta[i]
-            self.weights_delta[i].fill(0)
+        for i in range(len(self.W)):
+            self.W[i] -= self.learning_rate * self.delta_W[i]
+            self.delta_W[i].fill(0)
 
     def train(self, data):
         pass
@@ -89,25 +121,36 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
     def test(self, x):
         pass
 
-    def graph_weights(self, activation_only=True, detail=""):
+    def show_stats(self):
+        print(f"MLP Network Stats:")
+        print(f"layer_sizes:\t{[self.input_dim] + self.hidden_dims + [self.output_dim]}")
+        print(f"lr:\t{self.learning_rate:.3f}")
+        print(f"epochs completed:\t{self.epochs_completed}")
+        print(f"loss_method:\t{self.loss.display_name}")
+        print(f"activation_method:\t{self.activation.display_name}")
+        
+        # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
+        # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
+        # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
+
+    def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
         pass
 
-    def graph_structure(self, detail=""):
+    def graph_structure(self, detail="", output_dir: pathlib.Path = None):
         pass
 
-    def train_animated(self, data, epochs=25, pause=0.05) -> tuple[float, float, float]:
+    def train_animated(self, data, epochs=25, pause=0.05, output_dir: pathlib.Path = None) -> tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
         print(f"MLP Network Training:")
-        print(f"layer_sizes:\t{[self.input_dim] + self.hidden_dims + [self.output_dim]}")
-        print(f"lr:\t{self.learning_rate}")
         print(f"epochs:\t{epochs}")
         print(f"datapoints:\t{len(data)}")
-        print(f"loss:\t{self.loss.display_name}")
-        print(f"activation:\t{self.activation.display_name}")
+
         print("Training...")
+        parent_dir = output_dir if output_dir else pathlib.Path("figures")
+        parent_dir.mkdir(parents=True, exist_ok=True)
 
         # three charts in a single figure
         fig, (ax_loss, ax_acc, ax_r2) = plt.subplots(3, 1, figsize=(6, 12))
@@ -133,7 +176,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         ax_r2.grid(True)
 
         # training loop
-        for epoch in range(epochs):
+        for epoch in range(self.epochs_completed, epochs + self.epochs_completed):
             total_loss = 0.0
             correct = 0
             count = 0
@@ -204,6 +247,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self.training_metrics["accuracy"].append(epoch_acc)
             self.training_metrics["r_squared"].append(epoch_r2)
             self.apply_delta_W()
+            self.epochs_completed += 1
 
             # update plots
             line_loss.set_data(
@@ -230,25 +274,31 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             ax_r2.autoscale_view()
             # fig_r2.canvas.draw()
 
+            fig.canvas.draw()
+
             plt.pause(pause)
 
-            if epoch == epochs - 1:
-                training_figure_filename = f"figures/mlp_training_{self.loss}_{self.activation}_{epoch + 1}.png"
+            if epoch == epochs + self.epochs_completed - 1:
+                training_figure_filename = f"mlp_training_{self.loss}_{self.activation}_{epoch + 1}.png"
                 # fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss}_{epoch + 1}.png"
                 # fig_acc_filename = f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
                 # fig_r2_filename = f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
                 # fig_loss.savefig(fig_loss_filename)
                 # fig_acc.savefig(fig_acc_filename)
                 # fig_r2.savefig(fig_r2_filename)
-                plt.savefig(training_figure_filename)
+                plt.savefig(parent_dir / training_figure_filename)
                 print("")
                 print(f"Training complete!")
                 print(f"Loss: \t\t {epoch_loss:.3f}")
                 print(f"Accu: \t\t {epoch_acc:.3f}")
                 print(f"R^2: \t\t {epoch_r2:.3f}")
-                print(f"Training figure saved to: {training_figure_filename}")
+                print(f"Epochs completed: {epoch + 1}")
+                print(f"Training figure saved to: {parent_dir / training_figure_filename}")
                 # print(f"Loss output: \t {fig_loss_filename}")
                 # print(f"Accu output: \t {fig_acc_filename}")
                 # print(f"R^2 output: \t {fig_r2_filename}")
 
         return epoch_loss, epoch_acc, epoch_r2
+
+    def get_metrics_json(self):
+        return self.training_metrics

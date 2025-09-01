@@ -2,28 +2,19 @@ from argparse import ArgumentParser
 from argparse import Namespace
 from src.commands.command import (
     Command,
-    add_structure_argument,
-    validate_structure_argument,
+    add_hex_only_arguments,
+    validate_hex_only_arguments,
     add_training_arguments,
     validate_training_arguments,
+    add_global_arguments,
+    validate_global_arguments,
+    get_dataset
 )
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 from src.networks.activation.activations import get_activation_function
 from src.networks.loss.loss import get_loss_function
 
 import numpy as np
-
-
-def get_dataset(n, train_samples, type="identity", scale=1.0):
-    if type == "identity":
-        X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
-        Y = X.copy()
-    elif type == "linear":
-        X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
-        Y = X.copy() * scale
-    else:
-        raise ValueError(f"Invalid dataset type: {type}")
-    return list(zip(X, Y))
 
 
 class SimulateCommand(Command):
@@ -35,31 +26,14 @@ class SimulateCommand(Command):
         return "Ad Hoc: Mostly for testing. Simulates a Hexagonal Neural Network being trained and tested and shows figures"
 
     def configure_parser(self, parser: ArgumentParser):
-        add_structure_argument(parser)
+        add_hex_only_arguments(parser)
         add_training_arguments(parser)
-        parser.add_argument(
-            "-t",
-            "--type",
-            help="Type of dataset to use",
-            choices=["identity", "linear"],
-            default="identity",
-            dest="type",
-        )
-
-        parser.add_argument(
-            "-ds",
-            "--dataset-size",
-            help="Number of samples in the dataset",
-            type=int,
-            default=250,
-            dest="dataset_size",
-        )
+        add_global_arguments(parser)
 
     def validate_args(self, args: Namespace):
-        validate_structure_argument(args)
+        validate_hex_only_arguments(args)
         validate_training_arguments(args)
-        if args.dataset_size < 1:
-            raise ValueError("Dataset size must be at least 1")
+        validate_global_arguments(args)
 
     def invoke(self, args: Namespace):
         loss_function = get_loss_function(args.loss)

@@ -2,8 +2,10 @@ from argparse import ArgumentParser
 from argparse import Namespace
 from src.commands.command import (
     Command,
-    add_structure_argument,
-    validate_structure_argument,
+    add_hex_only_arguments,
+    validate_hex_only_arguments,
+    add_global_arguments,
+    validate_global_arguments,
 )
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 
@@ -17,7 +19,8 @@ class ReferenceCommand(Command):
         return "Run a reference implementation of the Hexagonal Neural Network"
 
     def configure_parser(self, parser: ArgumentParser):
-        add_structure_argument(parser)
+        add_hex_only_arguments(parser)
+        add_global_arguments(parser)
 
         parser.add_argument(
             "-g",
@@ -34,6 +37,7 @@ class ReferenceCommand(Command):
             default="structure_matplotlib",
             dest="graph",
         )
+
         parser.add_argument(
             "--detail",
             help="Subtitle the graph with a detail string",
@@ -42,7 +46,8 @@ class ReferenceCommand(Command):
         )
 
     def validate_args(self, args: Namespace):
-        validate_structure_argument(args)
+        validate_hex_only_arguments(args)
+        validate_global_arguments(args)
 
     def invoke(self, args: Namespace):
         net = HexagonalNeuralNetwork(

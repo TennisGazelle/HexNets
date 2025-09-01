@@ -12,7 +12,7 @@
             "args": [
                 "ref",
                 "-n", "3",
-                "-g", "matplotlib",
+                "-g", "structure_matplotlib",
             ]
         },
         {
@@ -23,7 +23,7 @@
             "args": [
                 "ref",
                 "-n", "3",
-                "-g", "dot"
+                "-g", "structure_dot"
             ]
         },
         {
@@ -34,7 +34,7 @@
             "args": [
                 "ref",
                 "-n", "3",
-                "-g", "terminal_indices",
+                "-g", "layer_indices_terminal",
                 "-r", "1,2"
             ]
         },
@@ -50,6 +50,17 @@
                 "-t", "linear",
                 "-ds", "100",
                 "-e", "1000"
+            ]
+        },
+        {
+            "name": "MLP Net Train",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "train",
+                "-m", "mlp",
+                "-t", "identity",
             ]
         }
     ]

@@ -66,7 +66,7 @@ ref-graphs:
 
 
 .PHONY: clean-all
-clean-all: clean-venv clean-figures
+clean-all: clean-venv clean-figures clean-runs
 
 .PHONY: clean-venv
 clean-venv:
@@ -75,6 +75,10 @@ clean-venv:
 .PHONY: clean-figures
 clean-figures:
 	rm -rf figures/*
+
+.PHONY: clean-runs
+clean-runs:
+	rm -rf runs/*
 
 .PHONY: lint-check
 lint-check:
