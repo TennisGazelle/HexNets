@@ -212,7 +212,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def test(self, x_input):
         x_full = self.pad_input(x_input)
         activations = self.forward(x_full)
-        return self.unpad_output(activations[-1], self.r)
+        return self.unpad_output(activations[-1])
 
     def save(self, filepath):
         with open(filepath, "wb") as f:

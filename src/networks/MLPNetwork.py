@@ -115,11 +115,17 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self.W[i] -= self.learning_rate * self.delta_W[i]
             self.delta_W[i].fill(0)
 
-    def train(self, data):
-        pass
+    def train(self, data, epochs=1):
+        for _ in range(epochs):
+            for x_input, y_target in data:
+                activations = self.forward(x_input)
+                self.backward(activations, y_target, apply_delta_W=False)
+            self.apply_delta_W()
+            self.epochs_completed += 1
 
     def test(self, x):
-        pass
+        activations = self.forward(x)
+        return activations[-1]
 
     def show_stats(self):
         print(f"MLP Network Stats:")

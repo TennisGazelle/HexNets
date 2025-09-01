@@ -51,7 +51,7 @@ class BaseNeuralNetwork(ABC):
         pass
 
     @abstractmethod
-    def train(self, data):
+    def train(self, data, epochs: int = 1):
         pass
 
     @abstractmethod
