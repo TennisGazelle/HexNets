@@ -83,7 +83,7 @@ class RunService:
     @staticmethod
     def make_run_folder_name() -> tuple[str, str]:
         now = datetime.now().strftime("%Y-%m-%d_%H-%M")
-        return now, now + "_" + uuid.uuid4()[0:6]
+        return now, now + "_" + str(uuid.uuid4())[0:6]
 
     @staticmethod
     def get_model_hash(args: Namespace) -> str:

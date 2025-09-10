@@ -41,7 +41,6 @@ class SimulateCommand(Command):
         net = HexagonalNeuralNetwork(
             n=args.n,
             r=args.rotation,
-            random_init=True,
             learning_rate=args.learning_rate,
             activation=activation_function,
             loss=loss_function,
@@ -55,5 +54,26 @@ class SimulateCommand(Command):
             raise ValueError(f"Invalid dataset type: {args.type}")
 
         # net.graph_weights(activation_only=False, detail="untrained")
-        net.train_animated(data, epochs=args.epochs, pause=args.pause)
+
+        # alternate between rotations 0 and 1
+        for i in range(10):
+            net.rotate(0)
+            # net.graph_weights(activation_only=False, detail=f"alternate_rotation_iteration_{i}")
+            net.train_animated(data, epochs=args.epochs, pause=args.pause)
+            net.rotate(1)
+            net.train_animated(data, epochs=args.epochs, pause=args.pause)
+            net.rotate(2)
+            net.train_animated(data, epochs=args.epochs, pause=args.pause)
+
+        # net.graph_weights(activation_only=False, detail="untrained")
+        # net._graph_multi_activation(r_list=[0, 1])
+        # net.train_animated(data, epochs=args.epochs, pause=args.pause)
+
         # net.graph_weights(activation_only=False, detail="trained")
+        # net.graph_weights(activation_only=False, detail="prerotation")
+        # net.rotate(1)
+
+        # net.graph_weights(activation_only=False, detail="postrotation")
+
+        # net.train_animated(data, epochs=args.epochs, pause=args.pause)
+        # net.graph_weights(activation_only=False, detail="postrotation")

@@ -29,7 +29,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self,
         n: int = 2,
         r: int = 0,
-        random_init: bool = True,
         learning_rate: float = 0.01,
         activation: BaseActivation = Sigmoid,
         loss: BaseLoss = MeanSquaredErrorLoss,
@@ -38,7 +37,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self.n = n
         self.r = r
         self.total_nodes = self._calc_total_nodes(n)
-        self.dir_metrics = self._init_dir_metrics(random_init=random_init)
+        self.global_W = self._init_global_W()
+        self.dir_metrics = self._init_dir_metrics()
+        self._sync_global_to_dir()
         self.training_metrics = self.init_training_metrics()
         self.epochs_completed = 0
 
@@ -46,11 +47,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def _calc_total_nodes(self, n):
         return sum(l for l in self._hex_layer_sizes(n))
 
-    def _hex_layer_sizes(self, n):
+    @staticmethod
+    def _hex_layer_sizes(n):
         return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))
 
-    def _get_default_layer_indices(self, n):
-        sizes = self._hex_layer_sizes(n)
+    @staticmethod
+    def _get_default_layer_indices(n):
+        sizes = HexagonalNeuralNetwork._hex_layer_sizes(n)
         indices = []
         start = 0
         for size in sizes:
@@ -58,12 +61,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             start += size
         return indices
 
-    def _get_layer_indices(self, n, r=0):
+    @staticmethod
+    def _get_layer_indices(n, r=0):
         assert 0 <= r <= 5, f"Invalid rotation: {r}"
         max_row_size = 2 * n - 1
 
         def _get_top_down():
-            return self._get_default_layer_indices(n)
+            return HexagonalNeuralNetwork._get_default_layer_indices(n)
 
         if r == 0:
             return _get_top_down()
@@ -105,27 +109,29 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         raise ValueError(f"Invalid rotation: {r}")
 
     # --- weights ---
-    def _init_weight_matrix(self, this_r: int, random_init=True):
-        W = np.zeros((self.total_nodes, self.total_nodes))
-        layer_indices = self._get_layer_indices(self.n, r=this_r)
-        count = 1
-        for i in range(len(layer_indices) - 1):
-            for u in layer_indices[i]:
-                for v in layer_indices[i + 1]:
-                    W[u, v] = np.random.randn() if random_init else count
-                    count += 1
-        return W, layer_indices
 
-    def _init_dir_metrics(self, random_init=True) -> dict[int, dict[str, np.ndarray]]:
+    def _init_global_W(self):
+        w = np.random.random((self.total_nodes, self.total_nodes)) - 0.5
+        w += w.T  # make symmetric
+        return w
+
+    def _init_dir_metrics(self) -> dict[int, dict[str, np.ndarray]]:
         dir_metrics = {}
         for i in range(0, 6):
-            W, layer_indices = self._init_weight_matrix(i, random_init=random_init)
             dir_metrics[i] = {
-                "W": W,
-                "delta_W": np.zeros_like(W),
-                "indices": layer_indices,
+                "W": np.zeros_like(self.global_W),
+                "delta_W": np.zeros_like(self.global_W),
+                "indices": self._get_layer_indices(self.n, r=i),
             }
         return dir_metrics
+
+    def _sync_global_to_dir(self):
+        for r in range(0, 6):
+            r_layer_matrices = self.dir_metrics[r]["indices"]
+            for j in range(len(r_layer_matrices) - 1):
+                for u in r_layer_matrices[j]:
+                    for v in r_layer_matrices[j + 1]:
+                        self.dir_metrics[r]["W"][u, v] = self.global_W[u, v]
 
     # --- forward & backward ---
     def pad_input(self, x):
@@ -179,13 +185,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         # SGD update
         # print(f"[dbg] ||delta_out||={np.linalg.norm(delta):.3e}  ||grads||={np.linalg.norm(grads):.3e}")
 
-        if apply_delta_W:
-            self.dir_metrics[self.r]["delta_W"] += self.learning_rate * grads
-        else:
-            self.dir_metrics[self.r]["W"] -= self.learning_rate * grads
+        # if apply_delta_W:
+        self.dir_metrics[self.r]["delta_W"] += self.learning_rate * grads
+        # else:
+        #     self.dir_metrics[self.r]["W"] -= self.learning_rate * grads
 
     def apply_delta_W(self):
         self.dir_metrics[self.r]["W"] -= self.dir_metrics[self.r]["delta_W"]
+        self.global_W -= self.dir_metrics[self.r]["delta_W"]
         self.dir_metrics[self.r]["delta_W"].fill(0)
 
     # --- public API ---
@@ -199,7 +206,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         ss_tot = np.sum((y_target - np.mean(y_target)) ** 2)
         return 1 - ss_res / ss_tot
 
+    def rotate(self, direction):
+        assert 0 <= direction <= 5, f"Invalid rotation: {direction}"
+        self.r = direction % 6
+        self._sync_global_to_dir()
+
     def train(self, data, epochs=1):
+        print(f"Hexagonal Network Training:")
+        print(f"epochs:\t{epochs}")
+        print(f"datapoints:\t{len(data)}")
+
+        print("Training...")
         for _ in range(epochs):
             for x_input, y_target in data:
                 x_full = self.pad_input(x_input)
@@ -208,6 +225,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 self.backward(activations, y_full, apply_delta_W=False)
             self.apply_delta_W()
             self.epochs_completed += 1
+        print(f"Training complete!")
 
     def test(self, x_input):
         x_full = self.pad_input(x_input)
@@ -292,7 +310,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         plt.show()
         return filename
 
-    def _printIndices(self, r):
+    def _print_indices(self, r):
         for i, layer in enumerate(self.dir_metrics[r]["indices"]):
             print(f"layer{i}: {layer}")
 
@@ -652,6 +670,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 # print(f"Accu output: \t {fig_acc_filename}")
                 # print(f"R^2 output: \t {fig_r2_filename}")
 
+        plt.close(fig)
         return epoch_loss, epoch_acc, epoch_r2
 
     def get_metrics_json(self):

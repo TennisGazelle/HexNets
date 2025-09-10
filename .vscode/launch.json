@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Ref Graph Matplotlib (n=3)",
+            "name": "Ref Graph Hex Matplotlib (n=3)",
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
@@ -16,7 +16,7 @@
             ]
         },
         {
-            "name": "Ref Graph Dot (n=3)",
+            "name": "Ref Graph Hex Dot (n=3)",
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
@@ -27,7 +27,7 @@
             ]
         },
         {
-            "name": "Ref Graph Terminal Indices (n=3, r=1,2)",
+            "name": "Ref Graph Hex Terminal Indices (n=3, r=1,2)",
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
@@ -38,7 +38,17 @@
                 "-r", "1,2"
             ]
         },
-
+        {
+            "name": "Ref Graph MLP Matplotlib",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "ref",
+                "-m", "mlp",
+                "-g", "structure_matplotlib"
+            ]
+        },
         {
             "name": "Hex Net Simulate (n=3)",
             "type": "debugpy",
@@ -70,7 +80,7 @@
             "program": "cli.py",
             "args": [
                 "stats",
-                "runs/2025-09-01_14-06-42"
+                "runs/2025-09-04_14-04_c4989c"
             ]
         }
     ]

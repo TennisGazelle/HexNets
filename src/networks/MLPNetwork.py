@@ -3,6 +3,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
+import json
 
 from src.networks.network import BaseNeuralNetwork
 from src.networks.activation.activations import BaseActivation
@@ -142,8 +143,83 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
     def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
         pass
 
-    def graph_structure(self, detail="", output_dir: pathlib.Path = None):
-        pass
+    def graph_structure(self, detail="", output_dir: pathlib.Path = None, medium="matplotlib"):
+        if medium == "matplotlib":
+            self._graph_structure_matplotlib(detail, output_dir)
+        else:
+            raise ValueError(f"Invalid medium: {medium}")
+
+    def _graph_structure_matplotlib(
+        self,
+        output_dir: pathlib.Path = None,
+        detail="",
+        figsize=(6, 6),
+        node_radius=0.028,
+    ):
+        num_vertical_layers = [self.input_dim] + self.hidden_dims + [self.output_dim]
+        num_layers = len(num_vertical_layers)
+        smallest_vertical_spacing = max(num_vertical_layers) / (figsize[1] * 1.75)
+
+        # map node positions on [0,1]x[0,1]
+        node_positions = [
+            [
+                {
+                    "x": i / (num_layers - 1),
+                    "y": j / (num_vertical_layers[i] - 1) * smallest_vertical_spacing,
+                    "layer": i,
+                }
+                for j in range(num_vertical_layers[i])
+            ]
+            for i in range(num_layers)
+        ]
+
+        print(json.dumps(node_positions, indent=4))
+
+        fig, ax = plt.subplots(figsize=figsize)
+
+        # edges
+        for u in range(len(node_positions) - 1):
+            for v in range(len(node_positions[u])):
+                src_node = node_positions[u][v]
+                for w in range(len(node_positions[u + 1])):
+                    dst_node = node_positions[u + 1][w]
+                    ax.plot(
+                        [src_node["x"], dst_node["x"]],
+                        [src_node["y"], dst_node["y"]],
+                        linewidth=1.0,
+                        color="black",
+                        zorder=1,
+                    )
+
+        # nodes
+        for u in range(len(node_positions)):
+            for v in range(len(node_positions[u])):
+                node = node_positions[u][v]
+                circ = plt.Circle(
+                    (node["x"], node["y"]),
+                    node_radius,
+                    facecolor="white",
+                    edgecolor="black",
+                    linewidth=1.2,
+                    zorder=10,
+                )
+                ax.add_patch(circ)
+
+        # tidy margins
+        pad = 1.5 * node_radius + 0.2
+        ax.axis("off")
+        ax.set_aspect("equal")
+        ax.set_xlim(0 - pad, 1 + pad)
+        ax.set_ylim(0 - pad, 1 + pad)
+        plt.tight_layout()
+        parent_dir = output_dir if output_dir else pathlib.Path("figures")
+        filename = f"mlp_structure{'_' + detail if detail else ''}.png"
+        plt.suptitle(f"Graph Structure")
+        plt.title(f"lr={self.learning_rate}, {detail}")
+        plt.savefig(parent_dir / filename)
+        plt.show()
+
+        return filename
 
     def train_animated(
         self, data, epochs=25, pause=0.05, output_dir: pathlib.Path = None
