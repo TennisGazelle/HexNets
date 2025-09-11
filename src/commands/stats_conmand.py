@@ -30,4 +30,5 @@ class StatsCommand(Command):
     def invoke(self, args: Namespace):
         run = RunService(args)
         run.print_paths()
+        run.net.show_stats()
         run.print_last_training_metrics()

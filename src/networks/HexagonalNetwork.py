@@ -1,6 +1,8 @@
+import copy
 import math
 import os
 import pickle
+from tabulate import tabulate
 from typing import List
 import pathlib
 
@@ -9,6 +11,7 @@ import numpy as np
 from matplotlib.patches import Patch
 from matplotlib.colors import ListedColormap
 
+from src.networks.metrics import Metrics
 from src.figure_service import FigureService
 from src.networks.activation.activations import BaseActivation
 from src.networks.loss.loss import BaseLoss
@@ -41,8 +44,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self.global_W = self._init_global_W()
         self.dir_W = self._init_dir_W()
         self._sync_global_to_dir()
-        self.training_metrics = self.init_training_metrics()
-        self.epochs_completed = 0
 
     # --- structure helpers ---
     def _calc_total_nodes(self, n):
@@ -244,7 +245,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                     "r": self.r,
                     "global_W": self.global_W,
                     "dir_metrics": self.dir_W,
-                    "training_metrics": self.training_metrics,
+                    "training_metrics": self.training_metrics.as_dict(),
                     "epochs_completed": self.epochs_completed,
                 },
                 f,
@@ -258,7 +259,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.global_W = state["global_W"]
             self.total_nodes = self._calc_total_nodes(self.n)
             self.dir_W = state["dir_metrics"]
-            self.training_metrics = state["training_metrics"]
+            self.training_metrics = Metrics(state["training_metrics"])
             self.epochs_completed = state["epochs_completed"]
 
     def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
@@ -495,12 +496,15 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def show_stats(self):
         print(f"Hexagonal Network Stats:")
-        print(f"n:\t{self.n}")
-        print(f"r:\t{self.r}")
-        print(f"lr:\t{self.learning_rate}")
-        print(f"epochs completed:\t{self.epochs_completed}")
-        print(f"loss_method:\t{self.loss.display_name}")
-        print(f"activation_method:\t{self.activation.display_name}")
+        data = [
+            ['n', self.n],
+            ['r', self.r],
+            ['lr', self.learning_rate],
+            ['epochs completed', self.epochs_completed],
+            ['loss_method', self.loss.display_name],
+            ['activation_method', self.activation.display_name],
+        ]
+        print(tabulate(data, headers=['Parameter', 'Value'], tablefmt='grid'))
 
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
@@ -522,8 +526,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         figure_service = FigureService()
         figure_service.set_figures_path(output_dir)
-        training_figure = figure_service.init_training_figure(f"hexnet_training_{self.loss}_{self.activation}_{epochs}.png", f"Hexagonal Network Training {self.display_name} ({self.loss}, {self.activation})", self.loss, "RMSE", "coefficient of determination")
-        training_figure.load_training_metrics(self.training_metrics)
+        training_figure = figure_service.init_training_figure(
+            f"hexnet_training_{self.loss}_{self.activation}_{epochs}.png",
+            f"Hexagonal Network Training {self.display_name} ({self.loss}, {self.activation})",
+            self.loss,
+            "RMSE",
+            "coefficient of determination",
+            copy.deepcopy(self.training_metrics.as_dict()),
+        )
 
         # training loop
         for epoch in range(self.epochs_completed, self.epochs_completed + epochs):
@@ -535,7 +545,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             sum_y2 = 0.0
 
             for x_input, y_target in data:
-                # build padded vectors
+                # build padded vector
                 x_input_full = self.pad_input(x_input)
                 y_target_full = self.pad_output(y_target)
                 # print("--------------------------------")
@@ -597,9 +607,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             epoch_loss = total_loss / count
             epoch_acc = correct / count
             epoch_r2 = r_squared
-            self.training_metrics["loss"].append(epoch_loss)
-            self.training_metrics["accuracy"].append(epoch_acc)
-            self.training_metrics["r_squared"].append(epoch_r2)
+            self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2)
 
             training_figure.update_figure(loss=epoch_loss, accuracy=epoch_acc, r_squared=epoch_r2)
 
@@ -621,4 +629,4 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         return epoch_loss, epoch_acc, epoch_r2
 
     def get_metrics_json(self):
-        return self.training_metrics
+        return self.training_metrics.as_dict()

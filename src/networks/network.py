@@ -6,6 +6,7 @@ from src.networks.activation.activations import BaseActivation
 from src.networks.loss.loss import BaseLoss
 from src.networks.activation.Sigmoid import Sigmoid
 from src.networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
+from src.networks.metrics import Metrics
 
 
 class BaseNeuralNetwork(ABC):
@@ -18,9 +19,11 @@ class BaseNeuralNetwork(ABC):
         self.learning_rate = learning_rate
         self.activation = activation
         self.loss = loss
+        self.training_metrics = Metrics()
+        self.epochs_completed = 0
 
-    def init_training_metrics(self):
-        return {"loss": [], "accuracy": [], "r_squared": []}
+    # def init_training_metrics(self):
+    #     return {"loss": [], "accuracy": [], "r_squared": []}
 
     # @abstractmethod
     # def _init_from_file(self, filepath):

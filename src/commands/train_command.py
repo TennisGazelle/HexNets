@@ -87,7 +87,6 @@ class TrainCommand(Command):
         net.train_animated(data, epochs=args.epochs, pause=args.pause, output_dir=run.get_figures_path())
         net.graph_weights(activation_only=False, output_dir=run.get_figures_path(), detail="trained")
 
-
         run.set_training_metrics(net.get_metrics_json())
         net.save(run.get_network_weights_path())
 

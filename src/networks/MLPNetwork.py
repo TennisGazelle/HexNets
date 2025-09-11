@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
 import json
+import copy
+from tabulate import tabulate
 
 from src.figure_service import FigureService
 from src.networks.network import BaseNeuralNetwork
@@ -13,6 +15,7 @@ from src.networks.activation.Sigmoid import Sigmoid
 from src.networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
 from src.networks.activation.activations import get_activation_function
 from src.networks.loss.loss import get_loss_function
+from src.networks.metrics import Metrics
 
 
 class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
@@ -29,11 +32,8 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_dims = hidden_dims
-        self.epochs_completed = 0
         self.W = []
         self.delta_W = []
-        self.training_metrics = self.init_training_metrics()
-        self.epochs_completed = 0
 
         if len(hidden_dims) == 0:
             raise ValueError("hidden_dims must be a list of at least one integer")
@@ -58,7 +58,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                     "output_dim": self.output_dim,
                     "hidden_dims": self.hidden_dims,
                     "weights": self.W,
-                    "training_metrics": self.training_metrics,
+                    "training_metrics": self.training_metrics.as_dict(),
                     "learning_rate": self.learning_rate,
                     "activation": self.activation.display_name,
                     "loss": self.loss.display_name,
@@ -75,7 +75,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self.output_dim = data["output_dim"]
             self.hidden_dims = data["hidden_dims"]
             self.W = data["weights"]
-            self.training_metrics = data["training_metrics"]
+            self.training_metrics = Metrics(data["training_metrics"])
             self.learning_rate = data["learning_rate"]
             self.activation = get_activation_function(data["activation"])
             self.loss = get_loss_function(data["loss"])
@@ -131,11 +131,14 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
     def show_stats(self):
         print(f"MLP Network Stats:")
-        print(f"layer_sizes:\t{[self.input_dim] + self.hidden_dims + [self.output_dim]}")
-        print(f"lr:\t{self.learning_rate:.3f}")
-        print(f"epochs completed:\t{self.epochs_completed}")
-        print(f"loss_method:\t{self.loss.display_name}")
-        print(f"activation_method:\t{self.activation.display_name}")
+        data = [
+            ['layer_sizes', [self.input_dim] + self.hidden_dims + [self.output_dim]],
+            ['lr', self.learning_rate],
+            ['epochs completed', self.epochs_completed],
+            ['loss_method', self.loss.display_name],
+            ['activation_method', self.activation.display_name],
+        ]
+        print(tabulate(data, headers=['Parameter', 'Value'], tablefmt='grid'))
 
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
@@ -237,7 +240,14 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
         figure_service = FigureService()
         figure_service.set_figures_path(output_dir)
-        training_figure = figure_service.init_training_figure(f"mlp_training_{self.loss}_{self.activation}_{epochs}.png", f"MLP Training {self.display_name} ({self.loss}, {self.activation})", self.loss, "RMSE", "coefficient of determination")
+        training_figure = figure_service.init_training_figure(
+            f"mlp_training_{self.loss}_{self.activation}_{epochs}.png",
+            f"MLP Training {self.display_name} ({self.loss}, {self.activation})",
+            self.loss,
+            "RMSE",
+            "coefficient of determination",
+            copy.deepcopy(self.training_metrics.as_dict()),
+        )
 
         # training loop
         for epoch in range(self.epochs_completed, epochs + self.epochs_completed):
@@ -307,9 +317,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             epoch_loss = total_loss / count
             epoch_acc = correct / count
             epoch_r2 = r_squared
-            self.training_metrics["loss"].append(epoch_loss)
-            self.training_metrics["accuracy"].append(epoch_acc)
-            self.training_metrics["r_squared"].append(epoch_r2)
+            self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2)
 
             training_figure.update_figure(loss=epoch_loss, accuracy=epoch_acc, r_squared=epoch_r2)
 
@@ -331,4 +339,4 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return epoch_loss, epoch_acc, epoch_r2
 
     def get_metrics_json(self):
-        return self.training_metrics
+        return self.training_metrics.as_dict()

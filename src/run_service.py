@@ -11,17 +11,18 @@ from src.networks.loss.loss import get_loss_function
 from src.networks.MLPNetwork import MLPNetwork
 from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 
+
 class RunService:
     def __init__(self, args):
-        self.loss_function = get_loss_function(args.loss)
-        self.activation_function = get_activation_function(args.activation)
-
         if "run_dir" not in args or args.run_dir is None:
             timestamp, run_folder_name = RunService.make_run_folder_name()
             self.run_folder_path = pathlib.Path(f"runs/{run_folder_name}")
             self.config_path = self.run_folder_path / "config.json"
             self.manifest_path = self.run_folder_path / "manifest.json"
             self.training_metrics_path = self.run_folder_path / "training_metrics.json"
+
+            self.loss_function = get_loss_function(args.loss)
+            self.activation_function = get_activation_function(args.activation)
 
             self.config_contents = {
                 "model_type": args.model,
@@ -42,8 +43,6 @@ class RunService:
             }
 
             self.training_metrics_contents = None
-
-
 
             if args.model == "mlp":
                 self.config_contents["model_metadata"]["hidden_dims"] = [4, 5, 4]
@@ -68,8 +67,6 @@ class RunService:
             else:
                 raise ValueError(f"Invalid model: {args.model}")
 
-
-
         else:
             self.run_folder_path = args.run_dir
             self.config_path = self.run_folder_path / "config.json"
@@ -84,7 +81,6 @@ class RunService:
                     self.config_contents = json.load(f)
                 self.config_contents["model_metadata"] = self.config_contents["model_metadata"]
 
-
             if not self.manifest_path.exists():
                 raise ValueError(f"Expected manifest file missing: {self.manifest_path}")
             else:
@@ -96,7 +92,10 @@ class RunService:
             else:
                 with open(self.training_metrics_path, "r") as f:
                     self.training_metrics_contents = json.load(f)
-            
+
+            self.loss_function = get_loss_function(self.config_contents["loss_type"])
+            self.activation_function = get_activation_function(self.config_contents["activation_type"])
+
             # load the network
             if self.config_contents["model_type"] == "mlp":
                 self.net = MLPNetwork(
