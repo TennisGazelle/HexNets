@@ -5,6 +5,7 @@ import numpy as np
 import pathlib
 import json
 
+from src.figure_service import FigureService
 from src.networks.network import BaseNeuralNetwork
 from src.networks.activation.activations import BaseActivation
 from src.networks.loss.loss import BaseLoss
@@ -151,8 +152,8 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
     def _graph_structure_matplotlib(
         self,
-        output_dir: pathlib.Path = None,
         detail="",
+        output_dir: pathlib.Path = None,
         figsize=(6, 6),
         node_radius=0.028,
     ):
@@ -222,7 +223,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return filename
 
     def train_animated(
-        self, data, epochs=25, pause=0.05, output_dir: pathlib.Path = None
+        self, data, epochs=25, pause=0.05, output_dir: pathlib.Path | None = None
     ) -> tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
@@ -233,31 +234,10 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         print(f"datapoints:\t{len(data)}")
 
         print("Training...")
-        parent_dir = output_dir if output_dir else pathlib.Path("figures")
-        parent_dir.mkdir(parents=True, exist_ok=True)
 
-        # three charts in a single figure
-        fig, (ax_loss, ax_acc, ax_r2) = plt.subplots(3, 1, figsize=(6, 12))
-        fig.suptitle(f"Training {self.display_name} ({self.loss}, {self.activation})")
-
-        (line_loss,) = ax_loss.plot([], [])
-        ax_loss.set_title(f"Loss ({self.loss})")
-        # ax_loss.set_xlabel("Epoch")
-        ax_loss.set_ylabel("Loss")
-        ax_loss.grid(True)
-
-        (line_acc,) = ax_acc.plot([], [])
-        ax_acc.set_title(f"Accuracy (RMSE)")
-        # ax_acc.set_xlabel("Epoch")
-        ax_acc.set_ylabel("Accuracy")
-        ax_acc.set_ylim(0, 1)
-        ax_acc.grid(True)
-
-        (line_r2,) = ax_r2.plot([], [])
-        ax_r2.set_title(f"R^2 (coefficient of determination)")
-        ax_r2.set_xlabel("Epoch")
-        ax_r2.set_ylabel("R^2")
-        ax_r2.grid(True)
+        figure_service = FigureService()
+        figure_service.set_figures_path(output_dir)
+        training_figure = figure_service.init_training_figure(f"mlp_training_{self.loss}_{self.activation}_{epochs}.png", f"MLP Training {self.display_name} ({self.loss}, {self.activation})", self.loss, "RMSE", "coefficient of determination")
 
         # training loop
         for epoch in range(self.epochs_completed, epochs + self.epochs_completed):
@@ -330,57 +310,23 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self.training_metrics["loss"].append(epoch_loss)
             self.training_metrics["accuracy"].append(epoch_acc)
             self.training_metrics["r_squared"].append(epoch_r2)
+
+            training_figure.update_figure(loss=epoch_loss, accuracy=epoch_acc, r_squared=epoch_r2)
+
             self.apply_delta_W()
             self.epochs_completed += 1
-
-            # update plots
-            line_loss.set_data(
-                np.arange(1, len(self.training_metrics["loss"]) + 1),
-                self.training_metrics["loss"],
-            )
-            ax_loss.relim()
-            ax_loss.autoscale_view()
-            # fig_loss.canvas.draw()
-
-            line_acc.set_data(
-                np.arange(1, len(self.training_metrics["accuracy"]) + 1),
-                self.training_metrics["accuracy"],
-            )
-            ax_acc.relim()
-            ax_acc.autoscale_view()
-            # fig_acc.canvas.draw()
-
-            line_r2.set_data(
-                np.arange(1, len(self.training_metrics["r_squared"]) + 1),
-                self.training_metrics["r_squared"],
-            )
-            ax_r2.relim()
-            ax_r2.autoscale_view()
-            # fig_r2.canvas.draw()
-
-            fig.canvas.draw()
 
             plt.pause(pause)
 
             if epoch == epochs + self.epochs_completed - 1:
-                training_figure_filename = f"mlp_training_{self.loss}_{self.activation}_{epoch + 1}.png"
-                # fig_loss_filename = f"figures/hexnet_n{self.n}_r{self.r}_loss-{self.loss}_{epoch + 1}.png"
-                # fig_acc_filename = f"figures/hexnet_n{self.n}_r{self.r}_acc_{epoch + 1}.png"
-                # fig_r2_filename = f"figures/hexnet_n{self.n}_r{self.r}_r2_{epoch + 1}.png"
-                # fig_loss.savefig(fig_loss_filename)
-                # fig_acc.savefig(fig_acc_filename)
-                # fig_r2.savefig(fig_r2_filename)
-                plt.savefig(parent_dir / training_figure_filename)
+                training_figure.save_figure()
                 print("")
                 print(f"Training complete!")
                 print(f"Loss: \t\t {epoch_loss:.3f}")
                 print(f"Accu: \t\t {epoch_acc:.3f}")
                 print(f"R^2: \t\t {epoch_r2:.3f}")
                 print(f"Epochs completed: {epoch + 1}")
-                print(f"Training figure saved to: {parent_dir / training_figure_filename}")
-                # print(f"Loss output: \t {fig_loss_filename}")
-                # print(f"Accu output: \t {fig_acc_filename}")
-                # print(f"R^2 output: \t {fig_r2_filename}")
+                print(f"Training figure saved to: {training_figure.filename}")
 
         return epoch_loss, epoch_acc, epoch_r2
 

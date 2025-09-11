@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from argparse import Namespace
-from src.networks.loss.loss import get_loss_function
-from src.networks.activation.activations import get_activation_function
+import pathlib
 from src.commands.command import (
     Command,
     validate_hex_only_arguments,
@@ -12,9 +11,6 @@ from src.commands.command import (
     validate_global_arguments,
     get_dataset,
 )
-from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
-from src.networks.MLPNetwork import MLPNetwork
-from src.networks.network import BaseNeuralNetwork
 from src.run_service import RunService
 
 
@@ -49,6 +45,16 @@ class TrainCommand(Command):
         #     dest="input_dir",
         # )
 
+        parser.add_argument(
+            "-rd",
+            "--run-dir",
+            type=pathlib.Path,
+            default=None,
+            required=False,
+            help="The run to load the model from",
+            dest="run_dir",
+        )
+
     def validate_args(self, args: Namespace):
         validate_hex_only_arguments(args)
         validate_training_arguments(args)
@@ -57,9 +63,6 @@ class TrainCommand(Command):
         # make sure there's a legit run in there
 
     def invoke(self, args: Namespace):
-        loss_function = get_loss_function(args.loss)
-        activation_function = get_activation_function(args.activation)
-
         if args.type == "identity":
             data = get_dataset(args.n, args.dataset_size, type="identity")
         elif args.type == "linear":
@@ -67,40 +70,23 @@ class TrainCommand(Command):
         else:
             raise ValueError(f"Invalid dataset type: {args.type}")
 
-        net: BaseNeuralNetwork = None
-        if args.model == "mlp":
-            net = MLPNetwork(
-                input_dim=3,
-                output_dim=3,
-                hidden_dims=[4, 5, 4],
-                learning_rate=args.learning_rate,
-                activation=activation_function,
-                loss=loss_function,
-            )
-        elif args.model == "hex":
-            net = HexagonalNeuralNetwork(
-                n=args.n,
-                r=args.rotation,
-                learning_rate=args.learning_rate,
-                activation=activation_function,
-                loss=loss_function,
-            )
-        else:
-            raise ValueError(f"Invalid model: {args.model}")
-
         run = RunService(args)
+        net = run.net
+        run.print_paths()
 
         net.show_stats()
-        run.print_paths()
 
         if args.dry_run:
             print("Dry run only, none of the above files were created")
-            exit(0)
+            return
 
-        net.graph_weights(activation_only=True, output_dir=run.get_figures_path())
+        run.output_run_files()
+
+        # net.graph_structure(output_dir=run.get_figures_path())
+        net.graph_weights(activation_only=False, output_dir=run.get_figures_path())
         net.train_animated(data, epochs=args.epochs, pause=args.pause, output_dir=run.get_figures_path())
         net.graph_weights(activation_only=False, output_dir=run.get_figures_path(), detail="trained")
-        net.graph_structure(output_dir=run.get_figures_path())
+
 
         run.set_training_metrics(net.get_metrics_json())
         net.save(run.get_network_weights_path())

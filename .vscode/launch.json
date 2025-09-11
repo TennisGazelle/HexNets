@@ -74,6 +74,31 @@
             ]
         },
         {
+            "name": "Hex Net Train",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "train",
+                "-m", "hex",
+                "-t", "identity",
+                "-r", "1"
+            ]
+        },
+        {
+            "name": "Hex Net Train From Previous Run",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "args": [
+                "train",
+                "-m", "hex",
+                "-t", "identity",
+                "-r", "1",
+                "-rd", "runs/2025-09-10_01-18_c4f8ed"
+            ]
+        },
+        {
             "name": "Stats Command",
             "type": "debugpy",
             "request": "launch",
