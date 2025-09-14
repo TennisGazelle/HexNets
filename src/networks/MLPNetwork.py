@@ -66,7 +66,6 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                 },
                 f,
             )
-        print(f"Model saved to: {filepath}")
 
     def load(self, filepath):
         with open(filepath, "rb") as f:
@@ -80,7 +79,6 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self.activation = get_activation_function(data["activation"])
             self.loss = get_loss_function(data["loss"])
             self.epochs_completed = data["epochs_completed"]
-            print(f"Model loaded from: {filepath}")
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         activations = [x.copy()]

@@ -14,8 +14,8 @@ from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
 
 class RunService:
     def __init__(self, args):
-        if "run_dir" not in args or args.run_dir is None:
-            timestamp, run_folder_name = RunService.make_run_folder_name()
+        if "run_dir" not in args or args.run_dir is None or (args.run_dir and not args.run_dir.exists()):
+            timestamp, run_folder_name = RunService.make_run_folder_name(args.run_dir if args.run_dir else None)
             self.run_folder_path = pathlib.Path(f"runs/{run_folder_name}")
             self.config_path = self.run_folder_path / "config.json"
             self.manifest_path = self.run_folder_path / "manifest.json"
@@ -139,9 +139,9 @@ class RunService:
         print(f"R_2: {self.training_metrics_contents.get('r_squared')[-1]}")
 
     @staticmethod
-    def make_run_folder_name() -> tuple[str, str]:
+    def make_run_folder_name(filename: str | None = None) -> tuple[str, str]:
         now = datetime.now().strftime("%Y-%m-%d_%H-%M")
-        return now, now + "_" + str(uuid.uuid4())[0:6]
+        return now, now + "_" + str(uuid.uuid4())[0:6] if filename is None else filename
 
     @staticmethod
     def get_model_hash(args: Namespace) -> str:
