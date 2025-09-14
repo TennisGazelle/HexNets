@@ -8,8 +8,10 @@
             "name": "Ref Graph Hex Matplotlib (n=3)",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "ref",
                 "-n", "3",
@@ -20,8 +22,10 @@
             "name": "Ref Graph Hex Dot (n=3)",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "ref",
                 "-n", "3",
@@ -32,21 +36,25 @@
             "name": "Ref Graph Hex Terminal Indices (n=3, r=1,2)",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "ref",
                 "-n", "3",
                 "-g", "layer_indices_terminal",
-                "-r", "1,2"
+                "-r", "1"
             ]
         },
         {
             "name": "Ref Graph MLP Matplotlib",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "ref",
                 "-m", "mlp",
@@ -54,11 +62,27 @@
             ]
         },
         {
+            "name": "Ref Graph Hex Multi Activation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "ref",
+                "-m", "hex",
+                "-g", "multi_activation"
+            ]
+        },
+        {
             "name": "Hex Net Simulate (n=3)",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "sim",
                 "-n", "3",
@@ -71,8 +95,10 @@
             "name": "MLP Net Train",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "train",
                 "-m", "mlp",
@@ -83,8 +109,10 @@
             "name": "MLP Net Train From Previous Run",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "train",
                 "-m", "mlp",
@@ -96,8 +124,10 @@
             "name": "Hex Net Train",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "train",
                 "-m", "hex",
@@ -109,8 +139,10 @@
             "name": "Hex Net Train From Previous Run",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "train",
                 "-m", "hex",
@@ -123,8 +155,10 @@
             "name": "Stats Command",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli.py",
+            "program": "src/cli.py",
             "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "stats",
                 "runs/2025-09-10_20-09_fb76e3"

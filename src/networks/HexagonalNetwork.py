@@ -262,7 +262,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.training_metrics = Metrics(state["training_metrics"])
             self.epochs_completed = state["epochs_completed"]
 
-    def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
+    def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path | None = None):
         parent_dir = output_dir if output_dir else pathlib.Path("figures")
         parent_dir.mkdir(parents=True, exist_ok=True)
         title = "Activation Structure" if activation_only else "Weight Matrix"
@@ -321,9 +321,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def graph_structure(self, detail="", output_dir=None, medium="matplotlib"):
         if medium == "matplotlib":
-            self._graph_hex(output_dir, detail=detail)
+            return self._graph_hex(output_dir, detail=detail)
         elif medium == "dot":
-            self._graph_hex_dot(output_dir)
+            return self._graph_hex_dot(output_dir)
         else:
             raise ValueError(f"Invalid medium: {medium}")
 
@@ -480,9 +480,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         lines.append("}")
         return lines
 
-    def _graph_hex_dot(self, output_dir: pathlib.Path = None):
+    def _graph_hex_dot(self, output_dir: pathlib.Path | None = None):
         dot_string_list = self.to_dot_string()
-        parent_dir = output_dir if output_dir else "figures/"
+        parent_dir = output_dir if output_dir else pathlib.Path("figures")
         dot_file = f"hexnet_n{self.n}_r{self.r}_viewdot.dot"
 
         with open(parent_dir / dot_file, "w") as f:
