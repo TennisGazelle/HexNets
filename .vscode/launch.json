@@ -9,6 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "ref",
                 "-n", "3",
@@ -20,6 +21,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "ref",
                 "-n", "3",
@@ -31,6 +33,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "ref",
                 "-n", "3",
@@ -43,6 +46,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "ref",
                 "-m", "mlp",
@@ -54,6 +58,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "sim",
                 "-n", "3",
@@ -67,6 +72,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "train",
                 "-m", "mlp",
@@ -74,10 +80,24 @@
             ]
         },
         {
+            "name": "MLP Net Train From Previous Run",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [
+                "train",
+                "-m", "mlp",
+                "-t", "identity",
+                "-rd", "runs/2025-09-10_21-17_815bed"
+            ]
+        },
+        {
             "name": "Hex Net Train",
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "train",
                 "-m", "hex",
@@ -90,6 +110,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "train",
                 "-m", "hex",
@@ -103,6 +124,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "stats",
                 "runs/2025-09-10_20-09_fb76e3"
