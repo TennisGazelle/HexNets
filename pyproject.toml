@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools", "wheel", "pip", "build", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hexnet"
+version = "0.1.0"
+description = "Hexagonal Neural Network CLI tool"
+authors = [
+    { name = "Daniel Lopez", email = "daniellopez123456789@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "matplotlib-inline",
+    "tabulate"
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+    "pytest>=7.4.0",
+    "build",
+    "coverage",
+    "twine"
+]
+
+[project.scripts]
+hexnet = "cli:main"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]

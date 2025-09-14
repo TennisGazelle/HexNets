@@ -11,20 +11,20 @@ import numpy as np
 from matplotlib.patches import Patch
 from matplotlib.colors import ListedColormap
 
-from src.networks.metrics import Metrics
-from src.figure_service import FigureService
-from src.networks.activation.activations import BaseActivation
-from src.networks.loss.loss import BaseLoss
-from src.networks.network import BaseNeuralNetwork
+from networks.metrics import Metrics
+from figure_service import FigureService
+from networks.activation.activations import BaseActivation
+from networks.loss.loss import BaseLoss
+from networks.network import BaseNeuralNetwork
 
-from src.networks.activation.LeakyRelu import LeakyReLU
-from src.networks.activation.Relu import ReLU
-from src.networks.activation.Sigmoid import Sigmoid
+from networks.activation.LeakyRelu import LeakyReLU
+from networks.activation.Relu import ReLU
+from networks.activation.Sigmoid import Sigmoid
 
-from src.networks.loss.HuberLoss import HuberLoss
-from src.networks.loss.LogCoshLoss import LogCoshLoss
-from src.networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
-from src.networks.loss.QuantileLoss import QuantileLoss
+from networks.loss.HuberLoss import HuberLoss
+from networks.loss.LogCoshLoss import LogCoshLoss
+from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
+from networks.loss.QuantileLoss import QuantileLoss
 
 
 # === Hexagonal Neural Network ===

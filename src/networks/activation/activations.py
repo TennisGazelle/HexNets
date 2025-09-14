@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.networks.activation import ACTIVATION_FUNCTIONS
+from networks.activation import ACTIVATION_FUNCTIONS
 
 
 class BaseActivation(ABC):

@@ -4,9 +4,9 @@ import shutil
 from argparse import ArgumentParser
 from argparse import Namespace
 
-from src.commands.command import Command
+from commands.command import Command
 
-from src.run_service import RunService
+from run_service import RunService
 
 
 class StatsCommand(Command):

@@ -6,10 +6,10 @@ import pathlib
 import json
 import uuid
 
-from src.networks.activation.activations import get_activation_function
-from src.networks.loss.loss import get_loss_function
-from src.networks.MLPNetwork import MLPNetwork
-from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
+from networks.activation.activations import get_activation_function
+from networks.loss.loss import get_loss_function
+from networks.MLPNetwork import MLPNetwork
+from networks.HexagonalNetwork import HexagonalNeuralNetwork
 
 
 class RunService:

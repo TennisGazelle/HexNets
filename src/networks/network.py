@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pathlib
 
-from src.networks.activation.activations import BaseActivation
-from src.networks.loss.loss import BaseLoss
-from src.networks.activation.Sigmoid import Sigmoid
-from src.networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
-from src.networks.metrics import Metrics
+from networks.activation.activations import BaseActivation
+from networks.loss.loss import BaseLoss
+from networks.activation.Sigmoid import Sigmoid
+from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
+from networks.metrics import Metrics
 
 
 class BaseNeuralNetwork(ABC):

@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.networks.loss.loss import BaseLoss
+from networks.loss.loss import BaseLoss
 
 
 class QuantileLoss(BaseLoss, display_name="quantile"):

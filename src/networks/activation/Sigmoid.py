@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.networks.activation.activations import BaseActivation
+from networks.activation.activations import BaseActivation
 
 
 class Sigmoid(BaseActivation, display_name="sigmoid"):

@@ -3,8 +3,8 @@ from argparse import ArgumentParser, Namespace
 import random
 import numpy as np
 
-from src.networks.activation.activations import get_available_activation_functions
-from src.networks.loss.loss import get_available_loss_functions
+from networks.activation.activations import get_available_activation_functions
+from networks.loss.loss import get_available_loss_functions
 
 
 def print_header():

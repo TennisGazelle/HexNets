@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from argparse import Namespace
-from src.commands.command import (
+from commands.command import (
     Command,
     add_hex_only_arguments,
     validate_hex_only_arguments,
@@ -10,9 +10,9 @@ from src.commands.command import (
     validate_global_arguments,
     get_dataset,
 )
-from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
-from src.networks.activation.activations import get_activation_function
-from src.networks.loss.loss import get_loss_function
+from networks.HexagonalNetwork import HexagonalNeuralNetwork
+from networks.activation.activations import get_activation_function
+from networks.loss.loss import get_loss_function
 
 import numpy as np
 

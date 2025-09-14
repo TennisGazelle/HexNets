@@ -1,14 +1,14 @@
 from argparse import ArgumentParser
 from argparse import Namespace
-from src.networks.MLPNetwork import MLPNetwork
-from src.commands.command import (
+from networks.MLPNetwork import MLPNetwork
+from commands.command import (
     Command,
     add_hex_only_arguments,
     validate_hex_only_arguments,
     add_global_arguments,
     validate_global_arguments,
 )
-from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
+from networks.HexagonalNetwork import HexagonalNeuralNetwork
 
 
 class ReferenceCommand(Command):

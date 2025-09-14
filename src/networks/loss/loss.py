@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.networks.loss import LOSS_FUNCTIONS
+from networks.loss import LOSS_FUNCTIONS
 
 
 class BaseLoss(ABC):

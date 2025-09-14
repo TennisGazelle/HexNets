@@ -7,15 +7,15 @@ import json
 import copy
 from tabulate import tabulate
 
-from src.figure_service import FigureService
-from src.networks.network import BaseNeuralNetwork
-from src.networks.activation.activations import BaseActivation
-from src.networks.loss.loss import BaseLoss
-from src.networks.activation.Sigmoid import Sigmoid
-from src.networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
-from src.networks.activation.activations import get_activation_function
-from src.networks.loss.loss import get_loss_function
-from src.networks.metrics import Metrics
+from figure_service import FigureService
+from networks.network import BaseNeuralNetwork
+from networks.activation.activations import BaseActivation
+from networks.loss.loss import BaseLoss
+from networks.activation.Sigmoid import Sigmoid
+from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
+from networks.activation.activations import get_activation_function
+from networks.loss.loss import get_loss_function
+from networks.metrics import Metrics
 
 
 class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):

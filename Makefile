@@ -1,19 +1,23 @@
 SHELL := /bin/bash
 PYTHON := .venv/bin/python
+PIP := .venv/bin/pip
+BLACK := .venv/bin/black
 
+.PHONY: hexnets
 hexnets: install
 
 .PHONY: install
-install:
+install: clean-venv
 	# this should ONLY ever be python3 and not python or .venv/bin/python
 	@python3 -m venv .venv; \
 	source .venv/bin/activate; \
 	pip install --upgrade pip; \
-	pip install -r requirements.txt
+	pip install -e .; \
+	pip install -e .[dev]
 
 .PHONY: test
 test:
-	python -m unittest discover
+	${PYTHON} -m unittest discover
 
 .PHONY: run
 run:

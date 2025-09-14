@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from argparse import Namespace
 import pathlib
-from src.commands.command import (
+from commands.command import (
     Command,
     validate_hex_only_arguments,
     add_hex_only_arguments,
@@ -11,7 +11,7 @@ from src.commands.command import (
     validate_global_arguments,
     get_dataset,
 )
-from src.run_service import RunService
+from run_service import RunService
 
 
 class TrainCommand(Command):

@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.networks.activation.activations import BaseActivation
+from networks.activation.activations import BaseActivation
 
 
 class LeakyReLU(BaseActivation, display_name="leaky_relu"):
