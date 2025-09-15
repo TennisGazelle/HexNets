@@ -1,5 +1,5 @@
 import pickle
-from typing import List
+from typing import List, Union, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
@@ -224,8 +224,8 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return filename
 
     def train_animated(
-        self, data, epochs=25, pause=0.05, output_dir: pathlib.Path | None = None
-    ) -> tuple[float, float, float]:
+        self, data, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
+    ) -> Tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)

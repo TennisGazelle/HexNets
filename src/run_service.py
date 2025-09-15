@@ -5,6 +5,7 @@ import hashlib
 import pathlib
 import json
 import uuid
+from typing import Tuple, Union
 
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
@@ -139,7 +140,7 @@ class RunService:
         print(f"R_2: {self.training_metrics_contents.get('r_squared')[-1]}")
 
     @staticmethod
-    def make_run_folder_name(filename: str | None = None) -> tuple[str, str]:
+    def make_run_folder_name(filename: Union[str, None] = None) -> Tuple[str, str]:
         now = datetime.now().strftime("%Y-%m-%d_%H-%M")
         return now, now + "_" + str(uuid.uuid4())[0:6] if filename is None else filename
 

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
-
+from typing import Union
 
 class Figure(ABC):
     @abstractmethod
@@ -88,7 +88,7 @@ class FigureService:
         self.figures_path = pathlib.Path("figures")
         self.figures = {}
 
-    def set_figures_path(self, figures_path: pathlib.Path | None):
+    def set_figures_path(self, figures_path: Union[pathlib.Path, None]):
         self.figures_path = figures_path if figures_path else pathlib.Path("figures")
 
     def init_training_figure(self, filename, title, loss_detail, accuracy_detail, r2_detail, training_metrics):

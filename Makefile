@@ -9,14 +9,12 @@ hexnets: install
 
 .PHONY: install
 install: clean-venv
+	mkdir -p figures/ runs/
 	# this should ONLY ever be python3 and not python or .venv/bin/python
 	@python3 -m venv .venv; \
 	source .venv/bin/activate; \
 	pip install --upgrade pip; \
-	pip install -e .; \
-	pip install -e .[dev]
-
-	mkdir -p figures/
+	pip install -e .;
 
 .PHONY: test
 test:

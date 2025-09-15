@@ -3,7 +3,7 @@ import math
 import os
 import pickle
 from tabulate import tabulate
-from typing import List
+from typing import List, Dict, Union, Tuple
 import pathlib
 
 import matplotlib.pyplot as plt
@@ -117,7 +117,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         w += w.T  # make symmetric
         return w
 
-    def _init_dir_W(self) -> dict[int, dict[str, np.ndarray]]:
+    def _init_dir_W(self) -> Dict[int, Dict[str, np.ndarray]]:
         dir_metrics = {}
         for i in range(0, 6):
             dir_metrics[i] = {
@@ -262,7 +262,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.training_metrics = Metrics(state["training_metrics"])
             self.epochs_completed = state["epochs_completed"]
 
-    def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path | None = None):
+    def graph_weights(self, activation_only=True, detail="", output_dir: Union[pathlib.Path, None] = None):
         parent_dir = output_dir if output_dir else pathlib.Path("figures")
         parent_dir.mkdir(parents=True, exist_ok=True)
         title = "Activation Structure" if activation_only else "Weight Matrix"
@@ -480,7 +480,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         lines.append("}")
         return lines
 
-    def _graph_hex_dot(self, output_dir: pathlib.Path | None = None):
+    def _graph_hex_dot(self, output_dir: Union[pathlib.Path, None] = None):
         dot_string_list = self.to_dot_string()
         parent_dir = output_dir if output_dir else pathlib.Path("figures")
         dot_file = f"hexnet_n{self.n}_r{self.r}_viewdot.dot"
@@ -512,8 +512,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     # --- animated training ---
     def train_animated(
-        self, data, epochs=25, pause=0.05, output_dir: pathlib.Path | None = None
-    ) -> tuple[float, float, float]:
+        self, data, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
+    ) -> Tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
