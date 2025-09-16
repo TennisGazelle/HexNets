@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7'
+          python-version: '3.9'
       
       - name: Install dependencies
         run: |
@@ -25,3 +25,15 @@ jobs:
       - name: Run tests
         run: |
           python -m unittest discover
+      
+      # - name: Run streamlit app
+      #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
+      #   run: |
+      #     streamlit run src/streamlit_app.py
+
+      # - name: Deploy to Streamlit
+      #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
+      #   run: |
+      #     source .venv/bin/activate
+      #     streamlit login --token ${{ secrets.STREAMLIT_TOKEN }}
+      #     streamlit deploy
