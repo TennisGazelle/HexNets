@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 import random
+import numpy as np
 
-from src.networks.activation.activations import get_available_activation_functions
-from src.networks.loss.loss import get_available_loss_functions
+from networks.activation.activations import get_available_activation_functions
+from networks.loss.loss import get_available_loss_functions
 
 
 def print_header():
@@ -23,6 +24,18 @@ def print_header():
     /_/ /_/\___/_/|_/_/ |_/\___/\__/
     """
     print(random.choice([header1, header2]))
+
+
+def get_dataset(n, train_samples, type="identity", scale=1.0):
+    if type == "identity":
+        X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
+        Y = X.copy()
+    elif type == "linear":
+        X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
+        Y = X.copy() * scale
+    else:
+        raise ValueError(f"Invalid dataset type: {type}")
+    return list(zip(X, Y))
 
 
 class Command(ABC):
@@ -53,7 +66,7 @@ class Command(ABC):
         pass
 
 
-def add_structure_argument(parser: ArgumentParser):
+def add_hex_only_arguments(parser: ArgumentParser):
     parser.add_argument(
         "-n",
         "--nodes",
@@ -70,6 +83,27 @@ def add_structure_argument(parser: ArgumentParser):
         type=int,
         default=0,
         dest="rotation",
+    )
+
+
+def add_global_arguments(parser: ArgumentParser):
+    parser.add_argument(
+        "-m",
+        "--model",
+        help="Model to use",
+        type=str,
+        default="hex",
+        choices=["hex", "mlp"],
+        dest="model",
+    )
+
+    parser.add_argument(
+        "-s",
+        "--seed",
+        help="Seed for the random number generator",
+        type=int,
+        default=42,
+        dest="seed",
     )
 
     parser.add_argument(
@@ -121,12 +155,37 @@ def add_training_arguments(parser: ArgumentParser):
         dest="pause",
     )
 
+    parser.add_argument(
+        "-t",
+        "--type",
+        help="Type of dataset to use",
+        choices=["identity", "linear"],
+        default="identity",
+        dest="type",
+    )
 
-def validate_structure_argument(args: Namespace):
+    parser.add_argument(
+        "-ds",
+        "--dataset-size",
+        help="Number of samples in the dataset",
+        type=int,
+        default=250,
+        dest="dataset_size",
+    )
+
+    parser.add_argument(
+        "--dry-run", help="What would be run, do not create a run.", default=False, action="store_true", dest="dry_run"
+    )
+
+
+def validate_hex_only_arguments(args: Namespace):
     if args.n < 2:
         raise ValueError("Number of input nodes must be at least 2")
     if args.rotation < 0 or args.rotation > 5:
         raise ValueError(f"Invalid rotation input: {args.rotation}. Must be a value between 0 and 5.")
+
+
+def validate_global_arguments(args: Namespace):
     if args.activation not in get_available_activation_functions():
         raise ValueError(
             f"Invalid activation function: {args.activation}. Must be one of: {get_available_activation_functions()}"
@@ -142,3 +201,7 @@ def validate_training_arguments(args: Namespace):
         raise ValueError("Pause must be at least 0")
     if args.learning_rate <= 0:
         raise ValueError("Learning rate must be greater than 0")
+    if args.dataset_size < 10:
+        raise ValueError("Dataset size must be at least 10")
+    if args.type not in ["identity", "linear"]:
+        raise ValueError(f"Invalid dataset type: {args.type}. Must be one of: identity, linear")

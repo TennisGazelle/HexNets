@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-from src.networks.loss import LOSS_FUNCTIONS
+from networks.loss import LOSS_FUNCTIONS
+from typing import List
 
 
 class BaseLoss(ABC):
@@ -34,5 +35,5 @@ def get_loss_function(display_name: str, *args, **kwargs) -> BaseLoss:
     return LOSS_FUNCTIONS[display_name](*args, **kwargs)
 
 
-def get_available_loss_functions() -> list[str]:
+def get_available_loss_functions() -> List[str]:
     return list(LOSS_FUNCTIONS.keys())

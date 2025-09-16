@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import List
 
-from src.networks.activation import ACTIVATION_FUNCTIONS
+from networks.activation import ACTIVATION_FUNCTIONS
 
 
 class BaseActivation(ABC):
@@ -34,5 +35,5 @@ def get_activation_function(display_name: str, *args, **kwargs) -> BaseActivatio
     return ACTIVATION_FUNCTIONS[display_name](*args, **kwargs)
 
 
-def get_available_activation_functions() -> list[str]:
+def get_available_activation_functions() -> List[str]:
     return list(ACTIVATION_FUNCTIONS.keys())

@@ -1,17 +1,17 @@
 from argparse import ArgumentParser
 from argparse import Namespace
-from src.networks.loss.loss import get_loss_function
-from src.networks.activation.activations import get_activation_function
-from src.commands.command import (
+import pathlib
+from commands.command import (
     Command,
-    validate_structure_argument,
-    add_structure_argument,
+    validate_hex_only_arguments,
+    add_hex_only_arguments,
     add_training_arguments,
     validate_training_arguments,
+    add_global_arguments,
+    validate_global_arguments,
+    get_dataset,
 )
-from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
-from src.networks.MLPNetwork import MLPNetwork
-from src.commands.simulate_command import get_dataset
+from run_service import RunService
 
 
 class TrainCommand(Command):
@@ -22,45 +22,72 @@ class TrainCommand(Command):
         return "Train the network and save the model to a file"
 
     def configure_parser(self, parser: ArgumentParser):
-        add_structure_argument(parser)
+        add_hex_only_arguments(parser)
         add_training_arguments(parser)
-        parser.add_argument("network", type=str, help="The network to train", choices=["hexagonal", "mlp"])
-        parser.add_argument("data", type=str, help="The data to train the network on")
+        add_global_arguments(parser)
+        # parser.add_argument("data", type=str, help="The data to train the network on", choices=["identity", "linear"])
+
+        # parser.add_argument(
+        #     "-o",
+        #     "--output-name",
+        #     type=str,
+        #     help="The name of the run to save the model to (if not provided, the model will not be saved)",
+        #     default=None,
+        #     dest="output_name",
+        # )
+
+        # parser.add_argument(
+        #     "-i",
+        #     "--input-dir",
+        #     type=pathlib.Path,
+        #     help="The directory to load the model from (if provided, epoch number suffix will be updated)",
+        #     default=None,
+        #     dest="input_dir",
+        # )
+
+        parser.add_argument(
+            "-rd",
+            "--run-dir",
+            type=pathlib.Path,
+            default=None,
+            required=False,
+            help="The run to load the model from",
+            dest="run_dir",
+        )
 
     def validate_args(self, args: Namespace):
-        validate_structure_argument(args)
+        validate_hex_only_arguments(args)
         validate_training_arguments(args)
+        validate_global_arguments(args)
 
-        if args.network not in ["hex", "mlp"]:
-            raise ValueError(f"Invalid network: {args.network}")
-
-        if args.data not in ["identity", "linear"]:
-            raise ValueError(f"Invalid data: {args.data}")
+        # make sure there's a legit run in there
 
     def invoke(self, args: Namespace):
-        loss_function = get_loss_function(args.loss)
-        activation_function = get_activation_function(args.activation)
+        if args.type == "identity":
+            data = get_dataset(args.n, args.dataset_size, type="identity")
+        elif args.type == "linear":
+            data = get_dataset(args.n, args.dataset_size, type="linear", scale=2.0)
+        else:
+            raise ValueError(f"Invalid dataset type: {args.type}")
 
-        data = get_dataset(3, 250, type="identity")
+        run = RunService(args)
+        net = run.net
+        run.print_paths()
 
-        net = MLPNetwork(
-            input_dim=3,
-            output_dim=3,
-            hidden_dims=[4, 5, 4],
-            learning_rate=args.learning_rate,
-            activation=activation_function,
-            loss=loss_function,
-        )
-        net.train_animated(data, epochs=args.epochs, pause=args.pause)
+        net.show_stats()
 
-        # if args.network == "hex":
-        #     net = HexagonalNeuralNetwork(n=args.n, r=args.rotation, learning_rate=args.learning_rate, activation=args.activation, loss=args.loss)
-        # elif args.network == "mlp":
-        #     net = MLPNetwork(learning_rate=args.learning_rate, activation=args.activation, loss=args.loss)
-        # else:
-        #     raise ValueError(f"Invalid network: {args.network}")
+        if args.dry_run:
+            print("Dry run only, none of the above files were created")
+            return
 
-        # todo: make data part of training arguments
-        # make animation optional in this command only
-        #
-        # net.train_animated(data, epochs=args.epochs, pause=args.pause)
+        run.output_run_files()
+
+        # net.graph_structure(output_dir=run.get_figures_path())
+        net.graph_weights(activation_only=False, output_dir=run.get_figures_path())
+        net.train_animated(data, epochs=args.epochs, pause=args.pause, output_dir=run.get_figures_path())
+        net.graph_weights(activation_only=False, output_dir=run.get_figures_path(), detail="trained")
+
+        run.set_training_metrics(net.get_metrics_json())
+        net.save(run.get_network_weights_path())
+
+        run.output_run_files()

@@ -16,12 +16,24 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.9'
       
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          make install
       
       - name: Run tests
         run: |
           python -m unittest discover
+      
+      # - name: Run streamlit app
+      #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
+      #   run: |
+      #     streamlit run src/streamlit_app.py
+
+      # - name: Deploy to Streamlit
+      #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
+      #   run: |
+      #     source .venv/bin/activate
+      #     streamlit login --token ${{ secrets.STREAMLIT_TOKEN }}
+      #     streamlit deploy
