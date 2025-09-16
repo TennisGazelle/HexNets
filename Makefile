@@ -3,6 +3,7 @@ PYTHON := .venv/bin/python
 PIP := .venv/bin/pip
 BLACK := .venv/bin/black
 HEXNET := .venv/bin/hexnet
+STREAMLIT := .venv/bin/streamlit
 
 .PHONY: hexnets
 hexnets: install
@@ -23,6 +24,10 @@ test:
 .PHONY: run
 run:
 	@${HEXNET} sim -n 3 -lr 0.001 -t linear -e 200
+
+.PHONY: run-streamlit
+run-streamlit:
+	@${STREAMLIT} run src/streamlit_app.py
 
 .PHONY: ref-graphs
 ref-graphs:

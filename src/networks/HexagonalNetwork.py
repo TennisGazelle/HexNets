@@ -291,7 +291,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         colors = ["Blues", "Greens", "Reds", "Purples", "Oranges", "Greys"]
 
-        plt.figure(figsize=(3.5 * (self.n - 1), 3.5 * (self.n - 1)))
+        fig = plt.figure(figsize=(3.5 * (self.n - 1), 3.5 * (self.n - 1)))
 
         legend_handles = []
         for i, r in enumerate(r_list):
@@ -313,13 +313,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         plt.legend(handles=legend_handles, title="Rotation")
         plt.savefig(filename)
         plt.show()
-        return filename
+        return filename, fig
 
     def _print_indices(self, r):
         for i, layer in enumerate(self.dir_W[r]["indices"]):
             print(f"layer{i}: {layer}")
 
-    def graph_structure(self, detail="", output_dir=None, medium="matplotlib"):
+    def graph_structure(self, detail="", output_dir=None, medium="matplotlib") -> Tuple[str, plt.Figure]:
         if medium == "matplotlib":
             return self._graph_hex(output_dir, detail=detail)
         elif medium == "dot":
@@ -437,7 +437,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         plt.savefig(parent_dir / filename)
         plt.show()
 
-        return filename
+        return filename, fig
 
     def to_dot_string(self) -> List[str]:
         """
@@ -492,7 +492,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         png_file = dot_file.replace(".dot", ".png")
         os.system(f"dot -Tpng {parent_dir / dot_file} -o {parent_dir / png_file}")
 
-        return png_file
+        return png_file, None
 
     def show_stats(self):
         print(f"Hexagonal Network Stats:")

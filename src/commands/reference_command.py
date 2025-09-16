@@ -56,24 +56,24 @@ class ReferenceCommand(Command):
 
             if args.graph == "structure_dot":
                 print("This assumes you have Graphviz installed...")
-                output_file = net.graph_structure(medium="dot")
+                output_file,  = net.graph_structure(medium="dot")
                 print(f"Graph saved to {output_file}")
                 print(f"Note: Dot file outputted to {output_file.replace('.png', '.dot')}")
 
             elif args.graph == "structure_matplotlib":
-                output_file = net.graph_structure(medium="matplotlib")
+                output_file, = net.graph_structure(medium="matplotlib")
                 print(f"Graph saved to {output_file}")
 
             elif args.graph == "activation":
-                output_file = net.graph_weights(activation_only=True, detail=args.detail)
+                output_file, = net.graph_weights(activation_only=True, detail=args.detail)
                 print(f"Graph saved to {output_file}")
 
             elif args.graph == "weight":
-                output_file = net.graph_weights(activation_only=False, detail=args.detail)
+                output_file, = net.graph_weights(activation_only=False, detail=args.detail)
                 print(f"Graph saved to {output_file}")
 
             elif args.graph == "multi_activation":
-                output_file = net._graph_multi_activation(detail=args.detail)
+                output_file, = net._graph_multi_activation(detail=args.detail)
                 print(f"Graph saved to {output_file}")
 
             elif args.graph == "layer_indices_terminal":
