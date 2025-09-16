@@ -86,13 +86,13 @@ if __name__ == "__main__":
                 col_structure, col_multi_activation = st.columns(2)
 
                 with col_structure:
-                    filename, fig = net.graph_structure(medium="matplotlib")
+                    filename, fig = net.graph_structure(output_dir=".", medium="matplotlib")
                     buf = create_matplotlib_figure(fig)
                     st.image(buf, width='stretch')
                     plt.close(fig)  # Clean up memory
 
                 with col_multi_activation:
-                    filename, fig = net._graph_multi_activation(detail="")
+                    filename, fig = net._graph_multi_activation(detail="", output_dir=".")
                     buf = create_matplotlib_figure(fig)
                     st.image(buf, width='stretch')
                     plt.close(fig)  # Clean up memory

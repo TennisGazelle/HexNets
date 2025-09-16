@@ -285,9 +285,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         return filename
 
-    def _graph_multi_activation(self, detail="", r_list=list(range(0, 6))):
+    def _graph_multi_activation(self, detail="", r_list=list(range(0, 6)), output_dir: Union[pathlib.Path, None] = None):
         title = "Activation Structure"
-        filename = f"figures/hexnet_n{self.n}_multi_activation{'_' + detail if detail else ''}.png"
+        filename = f"hexnet_n{self.n}_multi_activation{'_' + detail if detail else ''}.png"
 
         colors = ["Blues", "Greens", "Reds", "Purples", "Oranges", "Greys"]
 
@@ -311,7 +311,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         plt.legend(handles=legend_handles, title="Rotation")
-        plt.savefig(filename)
+
+        if output_dir:
+            plt.savefig(pathlib.Path(output_dir) / filename)
+
         plt.show()
         return filename, fig
 
@@ -329,7 +332,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def _graph_hex(
         self,
-        output_dir,
+        output_dir: Union[pathlib.Path, None] = None,
         detail="",
         figsize=(10, 10),
         node_radius=0.28,
@@ -430,11 +433,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         ax.set_ylim(min(ys) - pad, max(ys) + pad)
 
         plt.tight_layout()
-        parent_dir = output_dir if output_dir else pathlib.Path("figures")
+        parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
         filename = f"hexnet_n{self.n}_r{self.r}_structure{'_' + detail if detail else ''}.png"
         plt.suptitle(f"Graph Structure")
         plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate}, {detail}")
-        plt.savefig(parent_dir / filename)
+        if output_dir:
+            plt.savefig(parent_dir / filename)
+
         plt.show()
 
         return filename, fig
