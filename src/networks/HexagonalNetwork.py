@@ -5,9 +5,11 @@ import pickle
 from tabulate import tabulate
 from typing import List, Dict, Union, Tuple
 import pathlib
+from utils import table_print
 
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import trange
 from matplotlib.patches import Patch
 from matplotlib.colors import ListedColormap
 
@@ -501,16 +503,28 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def show_stats(self):
         print(f"Hexagonal Network Stats:")
-        data = [
-            ['n', self.n],
-            ['r', self.r],
-            ['lr', self.learning_rate],
-            ['epochs completed', self.epochs_completed],
-            ['loss_method', self.loss.display_name],
-            ['activation_method', self.activation.display_name],
-        ]
-        print(tabulate(data, headers=['Parameter', 'Value'], tablefmt='grid'))
+        table_print(
+            ['Parameter', 'Value'],
+            [
+                ['n', self.n],
+                ['r', self.r],
+                ['lr', self.learning_rate],
+                ['epochs completed', self.epochs_completed],
+                ['loss_method', self.loss.display_name],
+                ['activation_method', self.activation.display_name],
+            ]
+        )
 
+    def show_latest_metrics(self):
+        data = [0, 0, 0] if len(self.training_metrics.loss) == 0 else [
+            self.training_metrics.loss[-1],
+            self.training_metrics.accuracy[-1],
+            self.training_metrics.r_squared[-1]
+        ]
+        table_print(
+            ['Loss', 'Accuracy', 'R^2'],
+            [data]
+        )
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
         # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
@@ -524,8 +538,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
         print(f"Hexagonal Network Training:")
-        print(f"epochs:\t{epochs}")
-        print(f"datapoints:\t{len(data)}")
+        table_print(
+            ["epochs", "num data points"],
+            [[f"{self.epochs_completed} - {self.epochs_completed + epochs}", len(data)]]
+        )
 
         print("Training...")
 
@@ -541,13 +557,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         )
 
         # training loop
-        for epoch in range(self.epochs_completed, self.epochs_completed + epochs):
+        for epoch in trange(self.epochs_completed, self.epochs_completed + epochs):
             total_loss = 0.0
-            correct = 0
-            count = 0
-            ss_res_sum = 0.0
-            sum_y = 0.0
-            sum_y2 = 0.0
+            # correct = 0
+            # count = 0
+            # ss_res_sum = 0.0
+            # sum_y = 0.0
+            # sum_y2 = 0.0
 
             for x_input, y_target in data:
                 # build padded vector
@@ -581,20 +597,22 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 # mae = np.mean(np.abs(y_pred - y_target))
                 # correct += 1.0 / (1.0 + mae)
 
-                rmse = np.sqrt(np.mean((y_pred - y_target) ** 2))
-                score = np.exp(-rmse)  # maps 0->1, larger errors decay smoothly
-                correct += score
+                # rmse = np.sqrt(np.mean((y_pred - y_target) ** 2))
+                # score = np.exp(-rmse)  # maps 0->1, larger errors decay smoothly
+                # correct += score
 
                 # scale = np.maximum(1e-8, np.mean(np.abs(y_target)))  # per-sample
                 # nmae = np.mean(np.abs(y_pred - y_target)) / scale
                 # correct += np.exp(-nmae)
 
                 # r_squared
-                ss_res_sum += float(np.sum((y_pred - y_target) ** 2))
-                sum_y += float(np.sum(y_target))
-                sum_y2 += float(np.sum(y_target**2))
+                # ss_res_sum += float(np.sum((y_pred - y_target) ** 2))
+                # sum_y += float(np.sum(y_target))
+                # sum_y2 += float(np.sum(y_target**2))
 
-                count += 1
+                # count += 1
+
+                self.training_metrics.tally_accurcy_r2(y_pred, y_target)
 
                 # backprop step
                 self.backward(activations, y_target_full, apply_delta_W=False)
@@ -606,18 +624,16 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 #     print(f"MAE before: {mae}, after: {mae_after}, delta_y={np.linalg.norm(y_pred_after - y_pred)}")
 
             # r_squared, cont'd
-            ss_tot = sum_y2 - (sum_y**2 / (count * self.n))
-            r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
+            # ss_tot = sum_y2 - (sum_y**2 / (count * self.n))
+            # r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
-            epoch_loss = total_loss / count
-            epoch_acc = correct / count
-            epoch_r2 = r_squared
+            epoch_loss = total_loss / len(data)
+
+            epoch_acc, epoch_r2 = self.training_metrics.calc_accuracy_r2(self.n)
             self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2)
-
             training_figure.update_figure(loss=epoch_loss, accuracy=epoch_acc, r_squared=epoch_r2)
 
             self.apply_delta_W()
-            self.epochs_completed += 1
 
             plt.pause(pause)
 
@@ -625,12 +641,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 training_figure.save_figure()
                 print("")
                 print(f"Training complete!")
-                print(f"Loss: \t\t {epoch_loss:.3f}")
-                print(f"Accu: \t\t {epoch_acc:.3f}")
-                print(f"R^2: \t\t {epoch_r2:.3f}")
-                print(f"Epochs completed: {epoch + 1}")
+                self.show_latest_metrics()
                 print(f"Training figure saved to: {training_figure.filename}")
 
+        self.epochs_completed += epochs
         return epoch_loss, epoch_acc, epoch_r2
 
     def get_metrics_json(self):

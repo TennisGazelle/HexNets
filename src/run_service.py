@@ -22,6 +22,8 @@ class RunService:
             self.manifest_path = self.run_folder_path / "manifest.json"
             self.training_metrics_path = self.run_folder_path / "training_metrics.json"
 
+            self.run_folder_path.mkdir(parents=True, exist_ok=True)
+
             self.loss_function = get_loss_function(args.loss)
             self.activation_function = get_activation_function(args.activation)
 
@@ -33,7 +35,7 @@ class RunService:
                 "epochs": args.epochs,
                 "dataset_type": args.type,
                 "dataset_size": args.dataset_size,
-                "run_folder_name": run_folder_name,
+                "run_folder_name": self.run_folder_path.name,
                 "model_metadata": {},
             }
 
