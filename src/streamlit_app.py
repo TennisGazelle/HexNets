@@ -2,145 +2,143 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 import io
+import pathlib
+
+from commands.command import get_dataset
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
-from networks.activation.activations import get_available_activation_functions
-from networks.loss.loss import get_available_loss_functions
+from networks.activation.activations import get_available_activation_functions, get_activation_function
+from networks.loss.loss import get_available_loss_functions, get_loss_function
 
 
-
-
-# Helper function to create matplotlib figure and convert to streamlit
+# Convert matplotlib figure to streamlit image
 def create_matplotlib_figure(fig):
-    """Convert matplotlib figure to streamlit-compatible format"""
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
+    fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
     buf.seek(0)
     return buf
 
 
+def initialize_session_state():
+    if "n" not in st.session_state:
+        st.session_state.n = 2
+    if "r" not in st.session_state:
+        st.session_state.r = 0
+    if "activation" not in st.session_state:
+        st.session_state.activation = "relu"
+    if "loss" not in st.session_state:
+        st.session_state.loss = "mse"
+    if "net" not in st.session_state:
+        st.session_state.net = HexagonalNeuralNetwork(
+            n=st.session_state.n,
+            r=st.session_state.r,
+            activation=st.session_state.activation,
+            loss=st.session_state.loss
+        )
 
+
+def update_network():
+    st.session_state.net = HexagonalNeuralNetwork(
+        n=st.session_state.n,
+        r=st.session_state.r,
+        activation=get_activation_function(st.session_state.activation),
+        loss=get_loss_function(st.session_state.loss)
+    )
+
+
+# Main
 if __name__ == "__main__":
-    # variables
-    fig = None
-    n = 2
-    r = 0
-
-    # Rendering
-    st.title("HexNet Visualizer")
-    st.subheader("Hexagonal Neural Network Visualizer")
     st.set_page_config(
-        page_title=f"HexNet Visualizer (n={n}, r={r})",
+        page_title="HexNet Visualizer",
         page_icon="🔷",
         layout="wide"
     )
 
-    # Create tabs for different n values
-    # tab_names = [f"n={i}" for i in range(2, 9)]
-    # tabs = st.tabs(tab_names)
+    initialize_session_state()
 
-    # # Create content for each tab
-    # for i, tab in enumerate(tabs):
-    #     n = i + 2  # n ranges from 2 to 8
-        
-        # with tab:
-    st.header(f"Parameters")
-    
-    # Controls section
+    st.title("HexNet Visualizer")
+    st.subheader("Hexagonal Neural Network Visualizer")
+
+    st.header("Parameters")
+
     col1, col2 = st.columns([2, 1])
-    
-    with col1:
 
-        n = st.slider(
+    with col1:
+        st.session_state.n = st.slider(
             "Number of nodes (n)", 
             min_value=2, 
             max_value=8, 
-            value=n, 
-            step=1, key=f"n_{n}",
-            help="Select number of nodes (n)"
-        )
-        
-        r = st.selectbox(
-            "Rotation (r)",
-            list(range(6)),  # 0 to 5
-            key=f"r_{r}",
-            help="Select rotation parameter (r=0 to r=5)",
+            value=st.session_state.n, 
+            step=1
         )
 
-        activation = st.selectbox(
+        st.session_state.r = st.slider(
+            "Rotation (r)",
+            min_value=0,
+            max_value=5,
+            value=st.session_state.r,
+            step=1
+        )
+
+        st.session_state.activation = st.selectbox(
             "Activation",
             get_available_activation_functions(),
-            key=f"activation_{n}",
-            help="Select activation function",
-        )
-        loss = st.selectbox(
-            "Loss",
-            get_available_loss_functions(),
-            key=f"loss_{n}",
-            help="Select loss function",
+            index=0
         )
 
-        if st.button(f"Generate Graphs (n={n}, r={r})", key=f"generate_{n}"):
-            with st.spinner(f"Generating visualization for n={n}, r={r}..."):
-                net = HexagonalNeuralNetwork(n=n, r=r, activation="relu", loss="mse")
+        st.session_state.loss = st.selectbox(
+            "Loss",
+            get_available_loss_functions(),
+            index=0
+        )
+
+        if st.button("Generate Graphs"):
+            update_network()
+            with st.spinner(f"Generating for n={st.session_state.n}, r={st.session_state.r}..."):
+                net = st.session_state.net
 
                 col_structure, col_multi_activation = st.columns(2)
 
                 with col_structure:
                     filename, fig = net.graph_structure(output_dir=".", medium="matplotlib")
                     buf = create_matplotlib_figure(fig)
-                    st.image(buf, width='stretch')
-                    plt.close(fig)  # Clean up memory
+                    st.image(buf, use_container_width=True)
+                    plt.close(fig)
 
                 with col_multi_activation:
                     filename, fig = net._graph_multi_activation(detail="", output_dir=".")
                     buf = create_matplotlib_figure(fig)
-                    st.image(buf, width='stretch')
-                    plt.close(fig)  # Clean up memory
-    
-    with col2:
-        # Display network information
-        try:
-            # Use the current rotation value from the selectbox
-            current_n = st.session_state.get(f"n_{n}", 2)
-            current_r = st.session_state.get(f"r_{r}", 0)
-            current_activation = st.session_state.get(f"activation_{n}", "relu")
-            current_loss = st.session_state.get(f"loss_{n}", "mse")
-            net = HexagonalNeuralNetwork(n=current_n, r=current_r, activation=current_activation, loss=current_loss)
-            layers = net.dir_W[current_r]["indices"]
-            
-            st.subheader("Network Information")
+                    st.image(buf, use_container_width=True)
+                    plt.close(fig)
+        
+        if st.button("Train Network"):
+            update_network()
+            with st.spinner(f"Training on linear set"):
+                data = get_dataset(st.session_state.n, 100, type="identity")
+                loss, acc, r2, fig = st.session_state.net.train_animated(data, epochs=10, pause=0, output_dir=pathlib.Path("."))
+                buf = create_matplotlib_figure(fig)
+                st.image(buf, use_container_width=True)
+                plt.close(fig)
 
+    with col2:
+        try:
+            net = st.session_state.net
+            layers = net.dir_W[st.session_state.r]["indices"]
+
+            st.subheader("Network Information")
             st.write(f"**Total nodes:** {sum(len(layer) for layer in layers)}")
             st.write(f"**Number of layers:** {len(layers)}")
             st.write(f"**Layer sizes:** {[len(layer) for layer in layers]}")
-            st.write(f"**Number of nodes (n):** {current_n}")
-            st.write(f"**Rotation (r):** {current_r}")
-            st.write(f"**Activation:** {current_activation}")
-            st.write(f"**Loss:** {current_loss}")
+            st.write(f"**n (nodes):** {st.session_state.n}")
+            st.write(f"**r (rotation):** {st.session_state.r}")
+            st.write(f"**Activation:** {st.session_state.activation}")
+            st.write(f"**Loss:** {st.session_state.loss}")
 
-            # Show layer indices
             with st.expander("Layer Indices"):
                 for i, layer in enumerate(layers):
                     st.write(f"Layer {i}: {layer}")
-                    
         except Exception as e:
-            st.error(f"Error loading network information: {str(e)}")
+            st.error(f"Error displaying network info: {e}")
 
-    # Add some basic info about the project
     st.markdown("---")
     st.markdown("### About")
     st.write("HexNets is a tool for working with hexagonal neural networks.")
-    st.write("Each tab shows a different network size (n=2 to n=8). Use the controls to generate different types of visualizations.")
-
-
-
-
-
-
-
-
-
-
-
-
-

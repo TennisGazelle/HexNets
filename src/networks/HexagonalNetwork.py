@@ -504,35 +504,37 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def show_stats(self):
         print(f"Hexagonal Network Stats:")
         table_print(
-            ['Parameter', 'Value'],
+            ['n', 'r', 'lr', 'epochs completed', 'loss method', 'activation method'],
             [
-                ['n', self.n],
-                ['r', self.r],
-                ['lr', self.learning_rate],
-                ['epochs completed', self.epochs_completed],
-                ['loss_method', self.loss.display_name],
-                ['activation_method', self.activation.display_name],
+                [
+                    self.n,
+                    self.r,
+                    self.learning_rate,
+                    self.epochs_completed,
+                    self.loss.display_name,
+                    self.activation.display_name,
+                ]
             ]
         )
 
     def show_latest_metrics(self):
-        data = [0, 0, 0] if len(self.training_metrics.loss) == 0 else [
+        data = [0, 0, 0, 0] if len(self.training_metrics.loss) == 0 else [
             self.training_metrics.loss[-1],
             self.training_metrics.accuracy[-1],
-            self.training_metrics.r_squared[-1]
+            self.training_metrics.r_squared[-1],
+            self.epochs_completed
         ]
         table_print(
-            ['Loss', 'Accuracy', 'R^2'],
+            ['Loss', 'Accuracy', 'R^2', 'Epochs'],
             [data]
         )
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
         # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
 
-    # --- animated training ---
     def train_animated(
         self, data, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
-    ) -> Tuple[float, float, float]:
+    ):
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
@@ -628,7 +630,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             # r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
             epoch_loss = total_loss / len(data)
-
             epoch_acc, epoch_r2 = self.training_metrics.calc_accuracy_r2(self.n)
             self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2)
             training_figure.update_figure(loss=epoch_loss, accuracy=epoch_acc, r_squared=epoch_r2)
@@ -645,7 +646,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 print(f"Training figure saved to: {training_figure.filename}")
 
         self.epochs_completed += epochs
-        return epoch_loss, epoch_acc, epoch_r2
+        return epoch_loss, epoch_acc, epoch_r2, training_figure.fig
 
     def get_metrics_json(self):
         return self.training_metrics.as_dict()

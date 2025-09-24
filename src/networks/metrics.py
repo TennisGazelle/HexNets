@@ -11,7 +11,7 @@ class Metrics:
         self.ss_res_sum = metrics["ss_res_sum"] if metrics else 0.0
         self.y_sum = metrics["y_sum"] if metrics else 0.0
         self.y2_sum = metrics["y2_sum"] if metrics else 0.0
-        self.count = len(self.loss)
+        self.count = metrics["count"] if metrics else 0
 
     def __str__(self):
         loss = self.loss[-1] if self.loss else "N/A"
@@ -32,6 +32,7 @@ class Metrics:
             "ss_res_sum": self.ss_res_sum,
             "y_sum": self.y_sum,
             "y2_sum": self.y2_sum,
+            "count": self.count,
         }
     
     def add_metric(self, loss: float, accuracy: float, r_squared: float):

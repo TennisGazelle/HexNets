@@ -7,17 +7,25 @@ import json
 import uuid
 from typing import Tuple, Union
 
+from utils import get_json_file_contents
+
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from networks.MLPNetwork import MLPNetwork
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
 
+def make_run_folder_name(filename: Union[str, None] = None) -> Tuple[str, str]:
+    now = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    return now, now + "_" + str(uuid.uuid4())[0:6] if filename is None else filename
+
 
 class RunService:
+    runs_dir = pathlib.Path("runs/").resolve()
+
     def __init__(self, args):
-        if "run_dir" not in args or args.run_dir is None or (args.run_dir and not args.run_dir.exists()):
-            timestamp, run_folder_name = RunService.make_run_folder_name(args.run_dir if args.run_dir else None)
-            self.run_folder_path = pathlib.Path(f"runs/{run_folder_name}")
+        if "run_dir" not in args or args.run_dir is None or ("run_name" in args and args.run_name):
+            timestamp, run_folder_name = make_run_folder_name(args.run_name if args.run_name else None)
+            self.run_folder_path = RunService.runs_dir / run_folder_name
             self.config_path = self.run_folder_path / "config.json"
             self.manifest_path = self.run_folder_path / "manifest.json"
             self.training_metrics_path = self.run_folder_path / "training_metrics.json"
@@ -48,7 +56,9 @@ class RunService:
             self.training_metrics_contents = None
 
             if args.model == "mlp":
+                self.config_contents["model_metadata"]["input_dim"] = args.n
                 self.config_contents["model_metadata"]["hidden_dims"] = [4, 5, 4]
+                self.config_contents["model_metadata"]["output_dim"] = args.n
                 self.net = MLPNetwork(
                     input_dim=args.n,
                     output_dim=args.n,
@@ -77,24 +87,9 @@ class RunService:
             self.training_metrics_path = self.run_folder_path / "training_metrics.json"
 
             # load the config, manifest, and training metrics
-            if not self.config_path.exists():
-                raise ValueError(f"Expected config file missing: {self.config_path}")
-            else:
-                with open(self.config_path, "r") as f:
-                    self.config_contents = json.load(f)
-                self.config_contents["model_metadata"] = self.config_contents["model_metadata"]
-
-            if not self.manifest_path.exists():
-                raise ValueError(f"Expected manifest file missing: {self.manifest_path}")
-            else:
-                with open(self.manifest_path, "r") as f:
-                    self.manifest_contents = json.load(f)
-
-            if not self.training_metrics_path.exists():
-                raise ValueError(f"Expected training file missing: {self.training_metrics_path}")
-            else:
-                with open(self.training_metrics_path, "r") as f:
-                    self.training_metrics_contents = json.load(f)
+            self.config_contents = get_json_file_contents(self.config_path)
+            self.manifest_contents = get_json_file_contents(self.manifest_path)
+            self.training_metrics_contents = get_json_file_contents(self.training_metrics_path)
 
             self.loss_function = get_loss_function(self.config_contents["loss_type"])
             self.activation_function = get_activation_function(self.config_contents["activation_type"])
@@ -109,7 +104,7 @@ class RunService:
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
-                self.net.load(self.get_network_weights_path())
+
             elif self.config_contents["model_type"] == "hex":
                 self.net = HexagonalNeuralNetwork(
                     n=self.config_contents["model_metadata"]["n"],
@@ -118,7 +113,8 @@ class RunService:
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
-                self.net.load(self.get_network_weights_path())
+            
+            self.net.load(self.get_network_weights_path())
 
     def set_training_metrics(self, training_metrics: dict):
         self.training_metrics_contents = training_metrics.copy()
@@ -131,20 +127,12 @@ class RunService:
 
     def print_paths(self) -> None:
         print(self.run_folder_path)
-        print("-\t", self.config_path)
-        print("-\t", self.manifest_path)
-        print("-\t", self.training_metrics_path)
+        print("-\t", self.config_path.name)
+        print("-\t", self.manifest_path.name)
+        print("-\t", self.training_metrics_path.name)
 
     def print_last_training_metrics(self) -> None:
-        print(f"After {self.config_contents.get('epochs')} epochs:")
-        print(f"Loss ({self.config_contents.get('loss_type')}): {self.training_metrics_contents.get('loss')[-1]}")
-        print(f"Accuracy (RMSE): {self.training_metrics_contents.get('accuracy')[-1]}")
-        print(f"R_2: {self.training_metrics_contents.get('r_squared')[-1]}")
-
-    @staticmethod
-    def make_run_folder_name(filename: Union[str, None] = None) -> Tuple[str, str]:
-        now = datetime.now().strftime("%Y-%m-%d_%H-%M")
-        return now, now + "_" + str(uuid.uuid4())[0:6] if filename is None else filename
+        self.net.show_latest_metrics()
 
     @staticmethod
     def get_model_hash(args: Namespace) -> str:
