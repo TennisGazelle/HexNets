@@ -47,6 +47,7 @@ def update_network():
 
 # Main
 if __name__ == "__main__":
+    streamlit_dir = pathlib.Path("./streamlit").resolve()
     st.set_page_config(
         page_title="HexNet Visualizer",
         page_icon="🔷",
@@ -99,13 +100,13 @@ if __name__ == "__main__":
                 col_structure, col_multi_activation = st.columns(2)
 
                 with col_structure:
-                    filename, fig = net.graph_structure(output_dir=".", medium="matplotlib")
+                    filename, fig = net.graph_structure(output_dir=streamlit_dir, medium="matplotlib")
                     buf = create_matplotlib_figure(fig)
                     st.image(buf, use_container_width=True)
                     plt.close(fig)
 
                 with col_multi_activation:
-                    filename, fig = net._graph_multi_activation(detail="", output_dir=".")
+                    filename, fig = net._graph_multi_activation(detail="", output_dir=streamlit_dir)
                     buf = create_matplotlib_figure(fig)
                     st.image(buf, use_container_width=True)
                     plt.close(fig)
@@ -114,7 +115,7 @@ if __name__ == "__main__":
             update_network()
             with st.spinner(f"Training on linear set"):
                 data = get_dataset(st.session_state.n, 100, type="identity")
-                loss, acc, r2, fig = st.session_state.net.train_animated(data, epochs=10, pause=0, output_dir=pathlib.Path("."))
+                loss, acc, r2, fig = st.session_state.net.train_animated(data, epochs=10, pause=0, output_dir=streamlit_dir)
                 buf = create_matplotlib_figure(fig)
                 st.image(buf, use_container_width=True)
                 plt.close(fig)
