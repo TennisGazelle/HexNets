@@ -9,21 +9,48 @@ STREAMLIT := .venv/bin/streamlit
 hexnets: install
 
 .PHONY: install
-install: clean-venv
-	mkdir -p figures/ runs/
+install:
+	@mkdir -p figures/ runs/
 	# this should ONLY ever be python3 and not python or .venv/bin/python
 	@python3 -m venv .venv; \
 	source .venv/bin/activate; \
 	pip install --upgrade pip; \
-	pip install -e .;
+	pip install -e . ; \
+	pip install -e .'[dev]' ;
 
-.PHONY: test
-test:
-	${PYTHON} -m unittest discover
+.venv/: install
+
+.PHONY: unit-test
+unit-test:
+	@${PYTHON} -m unittest discover
+
+.PHONY: e2e-test
+e2e-test:
+	# clean up any previous runs
+	rm -rf runs/e2etest-hex-train
+
+	@echo '============================|E2E Tests|============================' ; \
+	source .venv/bin/activate ; \
+
+	echo '===> ref graph, hex, n=2, r=1' ; \
+	hexnet ref -m hex -n 2 -r 1 -g structure_matplotlib ; \
+	status_ref_hex=$$? ; \
+
+	echo '===> ref graph, mlp, n=2,3,3,2' ; \
+	hexnet ref -m mlp -g structure_matplotlib ; \
+	status_ref_mlp=$$? ; \
+
+	echo '===> train, hex, n=2, r=1, e=10' ; \
+	hexnet train -m hex -n 2 -r 1 -e 10 -t identity -rn e2etest-hex-train ; \
+	status_train_hex=$$? ; \
+	
+	echo '============================|E2E Tests|============================' ; \
+	exit $$status_ref_hex || $$status_ref_mlp || $$status_train_hex
+
 
 .PHONY: run
 run:
-	@${HEXNET} sim -n 3 -lr 0.001 -t linear -e 200
+	@${HEXNET} adhoc -n 3 -lr 0.001 -t linear -e 200
 
 .PHONY: run-streamlit
 run-streamlit:
@@ -80,20 +107,20 @@ clean-all: clean-venv clean-figures clean-runs
 
 .PHONY: clean-venv
 clean-venv:
-	rm -rf .venv
+	@rm -rf .venv
 
 .PHONY: clean-figures
 clean-figures:
-	rm -rf figures/*
+	@rm -rf figures/*
 
 .PHONY: clean-runs
 clean-runs:
-	rm -rf runs/*
+	@rm -rf runs/*
 
 .PHONY: lint-check
 lint-check:
-	black --check src -l 120
+	@${BLACK} --check src -l 120
 
 .PHONY: lint-format
 lint-format:
-	black src -l 120
+	@${BLACK} src -l 120

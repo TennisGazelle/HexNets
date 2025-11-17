@@ -17,10 +17,10 @@ from networks.loss.loss import get_loss_function
 import numpy as np
 
 
-class SimulateCommand(Command):
+class AdhocCommand(Command):
 
     def name(self) -> str:
-        return "sim"
+        return "adhoc"
 
     def help(self) -> str:
         return "Ad Hoc: Mostly for testing. Simulates a Hexagonal Neural Network being trained and tested and shows figures"

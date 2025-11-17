@@ -6,7 +6,7 @@ from typing import Union
 
 class Figure(ABC):
     @abstractmethod
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         self.filename = filename
 
     @abstractmethod
@@ -20,6 +20,20 @@ class Figure(ABC):
     @abstractmethod
     def update_figure(self, *args, **kwargs):
         pass
+
+class RefFigure(Figure):
+    def __init__(self, title: str, filename: str, detail: str):
+        super().__init__(filename)
+        self.title = title
+        self.fig = plt.figure(figsize=(7,7))
+        self.fig.suptitle(self.title)
+        self.fig.title(detail)
+    
+    def save_figure(self):
+        self.fig.savefig()
+    
+    def show_figure(self):
+        self.fig.show()
 
 
 class TrainingFigure(Figure):
@@ -55,7 +69,7 @@ class TrainingFigure(Figure):
         self.fig.savefig(self.filename)
 
     def show_figure(self):
-        plt.show()
+        self.fig.show()
 
     def update_figure(self, *args, **kwargs):
         self.training_metrics["loss"].append(kwargs["loss"])
@@ -94,5 +108,11 @@ class FigureService:
     def init_training_figure(self, filename, title, loss_detail, accuracy_detail, r2_detail, training_metrics):
         self.figures[title] = TrainingFigure(
             title, self.figures_path / filename, loss_detail, accuracy_detail, r2_detail, training_metrics
+        )
+        return self.figures[title]
+
+    def init_ref_figure(self, filename, title, detail):
+        self.figures[title] = RefFigure(
+            title, filename, detail
         )
         return self.figures[title]

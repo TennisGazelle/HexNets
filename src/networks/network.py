@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import pathlib
+from typing import Tuple
+import matplotlib.pyplot as plt
 
 from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
@@ -66,7 +68,7 @@ class BaseNeuralNetwork(ABC):
         pass
 
     @abstractmethod
-    def graph_structure(self, detail="", output_dir: pathlib.Path = None):
+    def graph_structure(self, detail="", output_dir: pathlib.Path = None) -> Tuple[str, plt.Figure]:
         pass
 
     @abstractmethod

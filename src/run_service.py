@@ -23,7 +23,8 @@ class RunService:
     runs_dir = pathlib.Path("runs/").resolve()
 
     def __init__(self, args):
-        if "run_dir" not in args or args.run_dir is None or ("run_name" in args and args.run_name):
+        # if "run_dir" not in args or args.run_dir is None or ("run_name" in args and args.run_name):
+        def init_run():
             timestamp, run_folder_name = make_run_folder_name(args.run_name if args.run_name else None)
             self.run_folder_path = RunService.runs_dir / run_folder_name
             self.config_path = self.run_folder_path / "config.json"
@@ -80,7 +81,7 @@ class RunService:
             else:
                 raise ValueError(f"Invalid model: {args.model}")
 
-        else:
+        def load_run():
             self.run_folder_path = args.run_dir
             self.config_path = self.run_folder_path / "config.json"
             self.manifest_path = self.run_folder_path / "manifest.json"
@@ -115,6 +116,11 @@ class RunService:
                 )
             
             self.net.load(self.get_network_weights_path())
+
+        if "run_dir" not in args or args.run_dir is None or ("run_name" in args and args.run_name):
+            init_run()
+        else:
+            load_run()
 
     def set_training_metrics(self, training_metrics: dict):
         self.training_metrics_contents = training_metrics.copy()
