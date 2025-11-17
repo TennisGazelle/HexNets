@@ -24,7 +24,7 @@ jobs:
       
       - name: Run tests
         run: |
-          make unit-tests e2e-test
+          make unit-test e2e-test
       
       # - name: Run streamlit app
       #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
