@@ -36,6 +36,10 @@ class BaseNeuralNetwork(ABC):
         pass
 
     @abstractmethod
+    def show_latest_metrics(self):
+        pass
+
+    @abstractmethod
     def save(self, filepath) -> None:
         pass
 

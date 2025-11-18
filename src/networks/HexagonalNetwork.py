@@ -46,10 +46,38 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self.global_W = self._init_global_W()
         self.dir_W = self._init_dir_W()
         self._sync_global_to_dir()
+        self._setup_training_metrics()
+        self._init_figure_service()
 
-    # --- structure helpers ---
+
+    # --- structure helpers ---0
     def _calc_total_nodes(self, n):
         return sum(l for l in self._hex_layer_sizes(n))
+
+    def _setup_training_metrics(self):
+        self.training_metrics = {
+            i: Metrics() for i in range(0, 6)
+        }
+    
+    def get_training_metrics(self, channel: int):
+        return self.training_metrics[channel]
+    
+    def get_all_training_metrics(self):
+        return {i: self.training_metrics[i].as_dict() for i in range(0, 6)}
+    
+    def set_training_metrics(self, channel: int, metrics: Metrics):
+        self.training_metrics[channel] = metrics
+
+    def _init_figure_service(self):
+        self.figure_service = FigureService()
+        self.figure_service.set_figures_path(None)
+        self.training_figure = self.figure_service.init_training_figure(
+            f"hexnet_training_{self.loss}_{self.activation}.png",
+            f"Training {self.display_name}",
+            self.loss.display_name,
+            "RMSE",
+            "coefficient of determination",
+        )
 
     @staticmethod
     def _hex_layer_sizes(n):
@@ -247,7 +275,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                     "r": self.r,
                     "global_W": self.global_W,
                     "dir_metrics": self.dir_W,
-                    "training_metrics": self.training_metrics.as_dict(),
+                    "training_metrics": self.get_all_training_metrics(),
                     "epochs_completed": self.epochs_completed,
                 },
                 f,
@@ -261,7 +289,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.global_W = state["global_W"]
             self.total_nodes = self._calc_total_nodes(self.n)
             self.dir_W = state["dir_metrics"]
-            self.training_metrics = Metrics(state["training_metrics"])
+            self.training_metrics = {i: Metrics(state["training_metrics"][i]) for i in range(0, 6)}
             self.epochs_completed = state["epochs_completed"]
 
     def graph_weights(self, activation_only=True, detail="", output_dir: Union[pathlib.Path, None] = None):
@@ -518,19 +546,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         )
 
     def show_latest_metrics(self):
-        data = [0, 0, 0, 0] if len(self.training_metrics.loss) == 0 else [
-            self.training_metrics.loss[-1],
-            self.training_metrics.accuracy[-1],
-            self.training_metrics.r_squared[-1],
+        metrics = self.training_metrics[self.r]
+        data = [0, 0, 0, 0] if len(metrics.loss) == 0 else [
+            metrics.loss[-1],
+            metrics.accuracy[-1],
+            metrics.r_squared[-1],
             self.epochs_completed
         ]
         table_print(
-            ['Loss', 'Accuracy', 'R^2', 'Epochs'],
-            [data]
+            ['Rotation', 'Loss', 'Accuracy', 'R^2', 'Epochs'],
+            [[self.r, *data]]
         )
-        # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
-        # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
-        # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
 
     def train_animated(
         self, data, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
@@ -539,24 +565,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
-        print(f"Hexagonal Network Training:")
+        print(f"==> Training with params...")
         table_print(
-            ["epochs", "num data points"],
-            [[f"{self.epochs_completed} - {self.epochs_completed + epochs}", len(data)]]
+            ["epochs", "rotation", "num data points"],
+            [[f"{self.epochs_completed} - {self.epochs_completed + epochs}", self.r, len(data)]]
         )
 
-        print("Training...")
-
-        figure_service = FigureService()
-        figure_service.set_figures_path(output_dir)
-        training_figure = figure_service.init_training_figure(
-            f"hexnet_training_{self.loss}_{self.activation}_{epochs}.png",
-            f"Hexagonal Network Training {self.display_name} ({self.loss}, {self.activation})",
-            self.loss,
-            "RMSE",
-            "coefficient of determination",
-            copy.deepcopy(self.training_metrics.as_dict()),
-        )
+        self.figure_service.set_figures_path(output_dir)
+        self.training_figure.title = f"Hexagonal Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
+        self.training_figure.loss_detail = self.loss.display_name
+        self.training_figure.accuracy_detail = "RMSE"
+        self.training_figure.r2_detail = "coefficient of determination"
 
         # training loop
         for epoch in trange(self.epochs_completed, self.epochs_completed + epochs):
@@ -614,7 +633,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
                 # count += 1
 
-                self.training_metrics.tally_accurcy_r2(y_pred, y_target)
+                self.training_metrics[self.r].tally_accurcy_r2(y_pred, y_target)
 
                 # backprop step
                 self.backward(activations, y_target_full, apply_delta_W=False)
@@ -630,23 +649,26 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             # r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
             epoch_loss = total_loss / len(data)
-            epoch_acc, epoch_r2 = self.training_metrics.calc_accuracy_r2(self.n)
-            self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2)
-            training_figure.update_figure(loss=epoch_loss, accuracy=epoch_acc, r_squared=epoch_r2)
+            epoch_acc, epoch_r2 = self.training_metrics[self.r].calc_accuracy_r2(self.n)
+            self.training_metrics[self.r].add_metric(epoch_loss, epoch_acc, epoch_r2)
+            self.training_figure.update_figure({"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2}, self.r)
 
             self.apply_delta_W()
 
             plt.pause(pause)
 
             if epoch == self.epochs_completed + epochs - 1:
-                training_figure.save_figure()
+                self.training_figure.save_figure()
                 print("")
                 print(f"Training complete!")
                 self.show_latest_metrics()
-                print(f"Training figure saved to: {training_figure.filename}")
+                print(f"Training figure saved to: {self.training_figure.filename}")
 
-        self.epochs_completed += epochs
-        return epoch_loss, epoch_acc, epoch_r2, training_figure.fig
+        # todo: keep track of epochs completed for each rotation
+        if self.r == 0:
+            self.epochs_completed += epochs
+
+        return epoch_loss, epoch_acc, epoch_r2, self.training_figure.fig
 
     def get_metrics_json(self):
-        return self.training_metrics.as_dict()
+        return self.get_all_training_metrics()

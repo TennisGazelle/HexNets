@@ -198,6 +198,10 @@ def validate_global_arguments(args: Namespace):
 
 
 def validate_training_arguments(args: Namespace):
+    # random number generator seed
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+
     if args.epochs < 1:
         raise ValueError("Number of epochs must be at least 1")
     if args.pause < 0:
