@@ -5,7 +5,7 @@ import numpy as np
 
 from networks.activation.activations import get_available_activation_functions
 from networks.loss.loss import get_available_loss_functions
-
+from data.dataset import IdentityDataset
 
 def print_header():
     header1 = """
@@ -26,8 +26,11 @@ def print_header():
     print(random.choice([header1, header2]))
 
 
+identity_dataset = IdentityDataset()
+
 def get_dataset(n, train_samples, type="identity", scale=1.0):
     if type == "identity":
+        return identity_dataset.get_data()
         X = (np.random.rand(train_samples, n) * 2 - 1).astype(float)
         Y = X.copy()
     elif type == "linear":

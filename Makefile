@@ -22,7 +22,7 @@ install:
 
 .PHONY: unit-test
 unit-test:
-	@${PYTHON} -m unittest discover
+	@${PYTHON} -m pytest tests
 
 .PHONY: e2e-test
 e2e-test:
