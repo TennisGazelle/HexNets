@@ -76,7 +76,7 @@
             ]
         },
         {
-            "name": "Hex Net Simulate (n=3)",
+            "name": "Hex Net Adhoc (n=3)",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",
@@ -84,7 +84,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "sim",
+                "adhoc",
                 "-n", "3",
                 "-t", "linear",
                 "-ds", "100",
@@ -161,7 +161,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "stats",
-                "runs/2025-09-10_20-09_fb76e3"
+                "runs/2025-09-10_21-17_815bed"
             ]
         }
     ]

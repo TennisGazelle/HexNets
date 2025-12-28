@@ -61,7 +61,7 @@ class ReferenceCommand(Command):
                 print(f"Note: Dot file outputted to {output_file.replace('.png', '.dot')}")
 
             elif args.graph == "structure_matplotlib":
-                output_file, = net.graph_structure(medium="matplotlib", output_dir="figures")
+                output_file, _ = net.graph_structure(output_dir="figures", medium="matplotlib")
                 print(f"Graph saved to {output_file}")
 
             elif args.graph == "activation":
@@ -73,7 +73,7 @@ class ReferenceCommand(Command):
                 print(f"Graph saved to {output_file}")
 
             elif args.graph == "multi_activation":
-                output_file, = net._graph_multi_activation(detail=args.detail, output_dir="figures")
+                output_file, _ = net._graph_multi_activation(detail=args.detail, output_dir="figures")
                 print(f"Graph saved to {output_file}")
 
             elif args.graph == "layer_indices_terminal":

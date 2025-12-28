@@ -69,10 +69,10 @@ class Command(ABC):
 def add_hex_only_arguments(parser: ArgumentParser):
     parser.add_argument(
         "-n",
-        "--nodes",
+        "--num_dims",
         type=int,
         default=3,
-        help="Number of input nodes",
+        help="Number of input and output nodes",
         dest="n",
     )
 
@@ -84,7 +84,6 @@ def add_hex_only_arguments(parser: ArgumentParser):
         default=0,
         dest="rotation",
     )
-
 
 def add_global_arguments(parser: ArgumentParser):
     parser.add_argument(
@@ -174,7 +173,11 @@ def add_training_arguments(parser: ArgumentParser):
     )
 
     parser.add_argument(
-        "--dry-run", help="What would be run, do not create a run.", default=False, action="store_true", dest="dry_run"
+        "--dry-run",
+        help="What would be run, do not create a run.",
+        default=False,
+        action="store_true",
+        dest="dry_run"
     )
 
 
@@ -195,6 +198,10 @@ def validate_global_arguments(args: Namespace):
 
 
 def validate_training_arguments(args: Namespace):
+    # random number generator seed
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+
     if args.epochs < 1:
         raise ValueError("Number of epochs must be at least 1")
     if args.pause < 0:

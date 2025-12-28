@@ -1,7 +1,7 @@
 import argparse
 
 from commands.reference_command import ReferenceCommand
-from commands.simulate_command import SimulateCommand
+from commands.adhoc_command import AdhocCommand
 from commands.train_command import TrainCommand
 from commands.stats_conmand import StatsCommand
 
@@ -12,7 +12,7 @@ def parse_args():
 
     commands = [
         ReferenceCommand(),
-        SimulateCommand(),
+        AdhocCommand(),
         TrainCommand(),
         StatsCommand()
     ]

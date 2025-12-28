@@ -17,10 +17,10 @@ from networks.loss.loss import get_loss_function
 import numpy as np
 
 
-class SimulateCommand(Command):
+class AdhocCommand(Command):
 
     def name(self) -> str:
-        return "sim"
+        return "adhoc"
 
     def help(self) -> str:
         return "Ad Hoc: Mostly for testing. Simulates a Hexagonal Neural Network being trained and tested and shows figures"
@@ -57,13 +57,10 @@ class SimulateCommand(Command):
 
         # alternate between rotations 0 and 1
         for i in range(10):
-            net.rotate(0)
-            # net.graph_weights(activation_only=False, detail=f"alternate_rotation_iteration_{i}")
-            net.train_animated(data, epochs=args.epochs, pause=args.pause)
-            net.rotate(1)
-            net.train_animated(data, epochs=args.epochs, pause=args.pause)
-            net.rotate(2)
-            net.train_animated(data, epochs=args.epochs, pause=args.pause)
+            for rotation in range(2):
+                net.rotate(rotation)
+                # net.graph_weights(activation_only=False, detail=f"alternate_rotation_iteration_{i}")
+                net.train_animated(data, epochs=args.epochs, pause=args.pause)
 
         # net.graph_weights(activation_only=False, detail="untrained")
         # net._graph_multi_activation(r_list=[0, 1])

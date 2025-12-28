@@ -55,12 +55,31 @@ class TrainCommand(Command):
             dest="run_dir",
         )
 
+        parser.add_argument(
+            "-rn",
+            "--run_name",
+            type=str,
+            default=None,
+            required=False,
+            help="name of the new run",
+            dest="run_name"
+        )
+
     def validate_args(self, args: Namespace):
         validate_hex_only_arguments(args)
         validate_training_arguments(args)
         validate_global_arguments(args)
 
-        # make sure there's a legit run in there
+        if args.run_name:
+            if args.run_dir:
+                raise ValueError("Cannot define desired run_name and have a run_dir, pick one.")
+
+            if (RunService.runs_dir / args.run_name).exists():
+                raise ValueError(f"Run named '{args.run_name}' already exists")
+
+        if args.run_dir:
+            if not args.run_dir.exists():
+                raise ValueError(f"Run Dir '{args.run_dir}' does not exist, use --run_name if it's meant to be new.")
 
     def invoke(self, args: Namespace):
         if args.type == "identity":
@@ -73,7 +92,6 @@ class TrainCommand(Command):
         run = RunService(args)
         net = run.net
         run.print_paths()
-
         net.show_stats()
 
         if args.dry_run:
