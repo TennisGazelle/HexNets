@@ -6,6 +6,7 @@ import pathlib
 import json
 import copy
 from tabulate import tabulate
+from tqdm import trange
 
 from figure_service import FigureService
 from networks.network import BaseNeuralNetwork
@@ -16,6 +17,8 @@ from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from networks.metrics import Metrics
+from data.dataset import BaseDataset
+from utils import table_print
 
 
 class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
@@ -34,6 +37,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self.hidden_dims = hidden_dims
         self.W = []
         self.delta_W = []
+        self._init_figure_service()
 
         if len(hidden_dims) == 0:
             raise ValueError("hidden_dims must be a list of at least one integer")
@@ -43,6 +47,17 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         for i in range(1, len(hidden_dims)):
             self._add_layer(hidden_dims[i - 1], hidden_dims[i])
         self._add_layer(hidden_dims[-1], output_dim)
+
+    def _init_figure_service(self):
+        self.figure_service = FigureService()
+        self.figure_service.set_figures_path(None)
+        self.training_figure = self.figure_service.init_training_figure(
+            f"mlpnet_training_{self.loss}_{self.activation}.png",
+            f"Training {self.display_name}",
+            self.loss.display_name,
+            "RMSE",
+            "coefficient of determination",
+        )
 
     # --- structure helpers ---
     def _add_layer(self, incoming_dim: int, outgoing_dim: int):
@@ -142,6 +157,19 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
         # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
 
+    def show_latest_metrics(self):
+        metrics = self.training_metrics
+        data = [0.0, 0.0, 0.0, 0] if len(metrics.loss) == 0 else [
+            metrics.loss[-1],
+            metrics.accuracy[-1],
+            metrics.r_squared[-1],
+            self.epochs_completed
+        ]
+        table_print(
+            ['Loss', 'Accuracy', 'R^2', 'Epochs'],
+            [[*data]]
+        )
+
     def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
         pass
 
@@ -224,7 +252,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return filename
 
     def train_animated(
-        self, data, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
+        self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
     ) -> Tuple[float, float, float]:
         """
         Train while animating loss & accuracy over epochs.
@@ -236,19 +264,14 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
         print("Training...")
 
-        figure_service = FigureService()
-        figure_service.set_figures_path(output_dir)
-        training_figure = figure_service.init_training_figure(
-            f"mlp_training_{self.loss}_{self.activation}_{epochs}.png",
-            f"MLP Training {self.display_name} ({self.loss}, {self.activation})",
-            self.loss,
-            "RMSE",
-            "coefficient of determination",
-            copy.deepcopy(self.training_metrics.as_dict()),
-        )
+        self.figure_service.set_figures_path(None)
+        self.training_figure.title = f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
+        self.training_figure.loss_detail = self.loss.display_name
+        self.training_figure.accuracy_detail = "RMSE"
+        self.training_figure.r2_detail = "coefficient of determination"
 
         # training loop
-        for epoch in range(self.epochs_completed, epochs + self.epochs_completed):
+        for epoch in trange(self.epochs_completed, epochs + self.epochs_completed):
             total_loss = 0.0
             correct = 0
             count = 0
@@ -316,8 +339,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             epoch_acc = correct / count
             epoch_r2 = r_squared
             self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2)
-
-            training_figure.update_figure(loss=epoch_loss, accuracy=epoch_acc, r_squared=epoch_r2)
+            self.training_figure.update_figure({"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2})
 
             self.apply_delta_W()
             self.epochs_completed += 1
@@ -325,16 +347,13 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             plt.pause(pause)
 
             if epoch == epochs + self.epochs_completed - 1:
-                training_figure.save_figure()
+                self.training_figure.save_figure()
                 print("")
                 print(f"Training complete!")
-                print(f"Loss: \t\t {epoch_loss:.3f}")
-                print(f"Accu: \t\t {epoch_acc:.3f}")
-                print(f"R^2: \t\t {epoch_r2:.3f}")
-                print(f"Epochs completed: {epoch + 1}")
-                print(f"Training figure saved to: {training_figure.filename}")
+                self.show_latest_metrics()
+                print(f"Training figure saved to: {self.training_figure.filename}")
 
-        return epoch_loss, epoch_acc, epoch_r2
+        return epoch_loss, epoch_acc, epoch_r2, self.training_figure.fig
 
     def get_metrics_json(self):
         return self.training_metrics.as_dict()

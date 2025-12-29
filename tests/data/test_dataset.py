@@ -14,10 +14,16 @@ def test_linear_dataset():
 def test_randomizing_dataset():
     dataset = LinearDataset(d=2, num_samples=10, scale=1.0)
 
-    seen_indices = set()
+    iter_1 = []
     for index, (x, y) in randomized_enumerate(dataset):
-        assert index not in seen_indices
-        seen_indices.add(index)
-    
-    assert len(seen_indices) == len(dataset)
-    print(seen_indices)
+        assert index not in iter_1
+        iter_1.append(index)
+
+    iter_2 = []
+    for index, (x, y) in randomized_enumerate(dataset):
+        assert index not in iter_2
+        iter_2.append(index)
+
+    assert iter_1 != iter_2
+    assert len(iter_1) == len(dataset)
+    assert len(iter_2) == len(dataset)

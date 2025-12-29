@@ -40,14 +40,14 @@ class BaseDataset(ABC):
         return len(self.data["X"])
     
     def __getitem__(self, index: int | slice) -> Tuple[np.ndarray, np.ndarray] | Iterator[Tuple[np.ndarray, np.ndarray]]:
-        return self.data["X"][index], self.data["Y"][index]
+        return (self.data["X"][index], self.data["Y"][index])
     
 
 def randomized_enumerate(dataset: BaseDataset) -> Iterator[Tuple[int, Tuple[np.ndarray, np.ndarray]]]:
     index_array = np.arange(len(dataset))
     np.random.shuffle(index_array)
     for index in index_array:
-        yield index, dataset.__getitem__(index)
+        yield int(index), dataset.__getitem__(index)
 
 
 class LinearDataset(BaseDataset, display_name="linear"):

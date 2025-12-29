@@ -46,12 +46,7 @@ class AdhocCommand(Command):
             loss=loss_function,
         )
 
-        if args.type == "identity":
-            data = get_dataset(args.n, args.dataset_size, type="identity")
-        elif args.type == "linear":
-            data = get_dataset(args.n, args.dataset_size, type="linear", scale=2.0)
-        else:
-            raise ValueError(f"Invalid dataset type: {args.type}")
+        data = get_dataset(args.n, args.dataset_size, type=args.type, scale=2.0)
 
         # net.graph_weights(activation_only=False, detail="untrained")
 

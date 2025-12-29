@@ -92,7 +92,7 @@ class TrainingFigure(Figure):
     def show_figure(self):
         self.fig.show()
 
-    def update_figure(self, training_metrics: dict, channel: int):
+    def update_figure(self, training_metrics: dict, channel: int = 0):
         if any(not training_metrics[k] for k in ("loss", "accuracy", "r_squared")):
             return
 

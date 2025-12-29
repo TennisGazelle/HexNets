@@ -27,6 +27,7 @@ from networks.loss.HuberLoss import HuberLoss
 from networks.loss.LogCoshLoss import LogCoshLoss
 from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
 from networks.loss.QuantileLoss import QuantileLoss
+from data.dataset import BaseDataset
 
 
 # === Hexagonal Neural Network ===
@@ -547,7 +548,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def show_latest_metrics(self):
         metrics = self.training_metrics[self.r]
-        data = [0, 0, 0, 0] if len(metrics.loss) == 0 else [
+        data = [0.0, 0.0, 0.0, 0] if len(metrics.loss) == 0 else [
             metrics.loss[-1],
             metrics.accuracy[-1],
             metrics.r_squared[-1],
@@ -559,7 +560,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         )
 
     def train_animated(
-        self, data, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
+        self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
     ):
         """
         Train while animating loss & accuracy over epochs.

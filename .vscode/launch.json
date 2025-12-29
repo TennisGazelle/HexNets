@@ -88,7 +88,7 @@
                 "-n", "3",
                 "-t", "linear",
                 "-ds", "100",
-                "-e", "1000"
+                "-e", "10"
             ]
         },
         {
@@ -162,6 +162,28 @@
             "args": [
                 "stats",
                 "runs/2025-09-10_21-17_815bed"
+            ]
+        },
+        {
+            "name": "Unit Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "tests"
+            ]
+        },
+        {
+            "name": "Single Unit Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "tests/data/test_dataset.py::test_randomizing_dataset"
             ]
         }
     ]
