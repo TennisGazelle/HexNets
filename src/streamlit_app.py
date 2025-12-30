@@ -31,8 +31,9 @@ def initialize_session_state():
         st.session_state.net = HexagonalNeuralNetwork(
             n=st.session_state.n,
             r=st.session_state.r,
-            activation=st.session_state.activation,
-            loss=st.session_state.loss
+            learning_rate="constant",
+            activation=get_activation_function(st.session_state.activation),
+            loss=get_loss_function(st.session_state.loss),
         )
 
 
@@ -40,8 +41,9 @@ def update_network():
     st.session_state.net = HexagonalNeuralNetwork(
         n=st.session_state.n,
         r=st.session_state.r,
+        learning_rate="constant",
         activation=get_activation_function(st.session_state.activation),
-        loss=get_loss_function(st.session_state.loss)
+        loss=get_loss_function(st.session_state.loss),
     )
 
 

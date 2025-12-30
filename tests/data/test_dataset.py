@@ -1,10 +1,10 @@
 # a unit test for the linear dataset using pytest
 
 
-from src.data.dataset import LinearDataset, randomized_enumerate
+from src.data.dataset import LinearScaleDataset, randomized_enumerate
 
 def test_linear_dataset():
-    dataset = LinearDataset(d=2, num_samples=100, scale=1.0)
+    dataset = LinearScaleDataset(d=2, num_samples=100, scale=1.0)
     assert len(dataset) == 100
 
     for x, y in dataset:
@@ -12,7 +12,7 @@ def test_linear_dataset():
         assert x[1] == y[1]
 
 def test_randomizing_dataset():
-    dataset = LinearDataset(d=2, num_samples=10, scale=1.0)
+    dataset = LinearScaleDataset(d=2, num_samples=10, scale=1.0)
 
     iter_1 = []
     for index, (x, y) in randomized_enumerate(dataset):

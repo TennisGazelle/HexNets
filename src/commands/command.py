@@ -2,10 +2,14 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 import random
 import numpy as np
+import logging
 
 from networks.activation.activations import get_available_activation_functions
 from networks.loss.loss import get_available_loss_functions
-from data.dataset import IdentityDataset, LinearDataset
+from networks.learning_rate.learning_rate import get_available_learning_rates
+from data.dataset import IdentityDataset, LinearScaleDataset
+
+logger = logging.getLogger(__name__)
 
 def print_header():
     header1 = """
@@ -32,7 +36,7 @@ def get_dataset(n, train_samples, type="identity", scale=1.0):
     if type == "identity":
         return IdentityDataset(d=n, num_samples=train_samples)
     elif type == "linear":
-        return LinearDataset(d=n, num_samples=train_samples, scale=scale)
+        return LinearScaleDataset(d=n, num_samples=train_samples, scale=scale)
     else:
         raise ValueError(f"Invalid dataset type: {type}")
 
@@ -124,14 +128,25 @@ def add_global_arguments(parser: ArgumentParser):
         dest="loss",
     )
 
+    # parser.add_argument(
+    #     "-o",
+    #     "--optimizer",
+    #     help="Optimizer to use",
+    #     type=str,
+    #     default="constant",
+    #     choices=get_available_optimizers(),
+    #     dest="optimizer",
+    # )
+
 
 def add_training_arguments(parser: ArgumentParser):
     parser.add_argument(
         "-lr",
         "--learning-rate",
-        help="Initial learning rate for the network",
-        type=float,
-        default=0.01,
+        help="Learning rate function for the network",
+        type=str,
+        default="constant",
+        choices=get_available_learning_rates(),
         dest="learning_rate",
     )
 
@@ -195,6 +210,60 @@ def validate_global_arguments(args: Namespace):
     if args.loss not in get_available_loss_functions():
         raise ValueError(f"Invalid loss function: {args.loss}. Must be one of: {get_available_loss_functions()}")
 
+    act = args.activation.lower()
+    loss = args.loss.lower()
+
+    # --- soft warnings (behavioral) ---
+
+    # 1) Sigmoid output clamps regression to (0, 1)
+    if act == "sigmoid" and loss in {"mse", "logcosh", "huber", "quantile"}:
+        logger.warning(
+            "Sigmoid output bounds predictions to (0, 1). "
+            "If regression targets are not scaled to [0, 1], "
+            "expect saturation and biased predictions. "
+            "Recommendation: normalize targets or use a linear output."
+        )
+
+    # 2) ReLU output forbids negative predictions
+    if act == "relu" and loss in {"mse", "logcosh", "huber", "quantile"}:
+        logger.warning(
+            "ReLU output restricts predictions to [0, ∞). "
+            "If regression targets include negative values, "
+            "the model cannot represent them. "
+            "Recommendation: use a linear or LeakyReLU output."
+        )
+
+    # 3) LeakyReLU output introduces asymmetric scaling
+    if act == "leakyrelu" and loss in {"mse", "logcosh", "huber", "quantile"}:
+        logger.warning(
+            "LeakyReLU output applies asymmetric scaling to negative values. "
+            "This may bias regression if symmetry is expected. "
+            "Recommendation: use a linear output unless asymmetry is intentional."
+        )
+
+    # 4) Quantile loss without explicit quantile
+    if loss == "quantile" and not hasattr(args, "quantile"):
+        logger.warning(
+            "Quantile loss selected but no quantile (q) specified. "
+            "Default behavior may be unclear. "
+            "Recommendation: explicitly set --quantile (e.g., 0.5 for median)."
+        )
+
+    # 5) Quantile loss with nonlinear output
+    if loss == "quantile" and act in {"sigmoid", "relu"}:
+        logger.warning(
+            "Quantile loss with constrained output activation may cause "
+            "quantile estimates to clamp at output bounds. "
+            "Recommendation: use a linear output for unconstrained quantiles."
+        )
+
+    # 6) Huber loss without explicit delta
+    if loss == "huber" and not hasattr(args, "huber_delta"):
+        logger.warning(
+            "Huber loss selected without specifying delta. "
+            "Loss behavior is scale-dependent. "
+            "Recommendation: normalize targets or explicitly set --huber-delta."
+        )
 
 def validate_training_arguments(args: Namespace):
     # random number generator seed
@@ -205,8 +274,8 @@ def validate_training_arguments(args: Namespace):
         raise ValueError("Number of epochs must be at least 1")
     if args.pause < 0:
         raise ValueError("Pause must be at least 0")
-    if args.learning_rate <= 0:
-        raise ValueError("Learning rate must be greater than 0")
+    if args.learning_rate not in get_available_learning_rates():
+        raise ValueError(f"Invalid learning rate: {args.learning_rate}. Must be one of: {get_available_learning_rates()}")
     if args.dataset_size < 10:
         raise ValueError("Dataset size must be at least 10")
     if args.type not in ["identity", "linear"]:

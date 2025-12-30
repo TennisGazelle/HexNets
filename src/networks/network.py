@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 
 from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
+from networks.learning_rate.learning_rate import BaseLearningRate
 from networks.activation.Sigmoid import Sigmoid
 from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
+from networks.learning_rate.ConstantLearningRate import ConstantLearningRate
+from networks.learning_rate.learning_rate import get_learning_rate
 from networks.metrics import Metrics
 
 
@@ -16,13 +19,22 @@ class BaseNeuralNetwork(ABC):
         self.display_name = kwargs.get("display_name", self.__class__.__name__.lower())
 
     def __init__(
-        self, learning_rate: float = 0.01, activation: BaseActivation = Sigmoid, loss: BaseLoss = MeanSquaredErrorLoss
+        self, learning_rate = "constant", activation: BaseActivation = Sigmoid, loss: BaseLoss = MeanSquaredErrorLoss
     ):
-        self.learning_rate = learning_rate
+        # learning_rate can be a string (function name) or BaseLearningRate instance
+        if isinstance(learning_rate, str):
+            # Default to 0.01 for constant learning rate
+            self.learning_rate_fn = get_learning_rate(learning_rate, learning_rate=0.01)
+        elif isinstance(learning_rate, BaseLearningRate):
+            self.learning_rate_fn = learning_rate
+        else:
+            # Backward compatibility: if float, use constant with that value
+            self.learning_rate_fn = ConstantLearningRate(learning_rate=learning_rate)
         self.activation = activation
         self.loss = loss
         self.training_metrics = Metrics()
         self.epochs_completed = 0
+        self.data_iteration = 0  # Track current data element index
 
     # def init_training_metrics(self):
     #     return {"loss": [], "accuracy": [], "r_squared": []}

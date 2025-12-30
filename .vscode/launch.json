@@ -85,8 +85,8 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "adhoc",
-                "-n", "3",
-                "-t", "linear",
+                "-n", "4",
+                "-t", "identity",
                 "-ds", "100",
                 "-e", "10"
             ]

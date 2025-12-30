@@ -50,7 +50,7 @@ def randomized_enumerate(dataset: BaseDataset) -> Iterator[Tuple[int, Tuple[np.n
         yield int(index), dataset.__getitem__(index)
 
 
-class LinearDataset(BaseDataset, display_name="linear"):
+class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
     def __init__(self, d: int = 2, num_samples: int = 100, scale: float | np.float64 = 1.0):
         super().__init__()
         self.d = d
@@ -69,7 +69,26 @@ class LinearDataset(BaseDataset, display_name="linear"):
         }
         return True
 
-class IdentityDataset(LinearDataset, display_name="identity"):
+class IdentityDataset(LinearScaleDataset, display_name="identity"):
     def __init__(self, d: int = 2, num_samples: int = 100):
         super().__init__(d, num_samples)
         self.scale = 1.0
+
+class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
+    def __init__(self, d: int = 2, num_samples: int = 100):
+        super().__init__(d, num_samples)
+        self.scale = 1.0
+        self.data = None
+
+        self.load_data()
+
+    def load_data(self) -> bool:
+        X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
+        Y = X.copy()
+        for i in range(self.d):
+            Y[:, i] *= (i + 1) * self.scale
+        self.data = {
+            "X": X,
+            "Y": Y,
+        }
+        return True

@@ -1,4 +1,5 @@
 import copy
+import logging
 import math
 import os
 import pickle
@@ -6,6 +7,7 @@ from tabulate import tabulate
 from typing import List, Dict, Union, Tuple
 import pathlib
 from utils import table_print
+from logging_config import get_logger
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,10 +29,12 @@ from networks.loss.HuberLoss import HuberLoss
 from networks.loss.LogCoshLoss import LogCoshLoss
 from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
 from networks.loss.QuantileLoss import QuantileLoss
-from data.dataset import BaseDataset
+from data.dataset import BaseDataset, randomized_enumerate
 
 
 # === Hexagonal Neural Network ===
+logger = get_logger(__name__)
+
 class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def __init__(
         self,
@@ -216,18 +220,19 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                     new_delta[u] = s * self.activation.deactivate(activations[i][u])
                 delta = new_delta
         # SGD update
-        # print(f"[dbg] ||delta_out||={np.linalg.norm(delta):.3e}  ||grads||={np.linalg.norm(grads):.3e}")
+        # logger.debug(f"||delta_out||={np.linalg.norm(delta):.3e}  ||grads||={np.linalg.norm(grads):.3e}")
 
         # if apply_delta_W:
-        self.dir_W[self.r]["delta_W"] += self.learning_rate * grads
+        self.dir_W[self.r]["delta_W"] += grads
         # else:
         #     self.dir_metrics[self.r]["W"] -= self.learning_rate * grads
 
     def apply_delta_W(self):
-        self.dir_W[self.r]["W"] -= self.dir_W[self.r]["delta_W"]
+        current_rate = self.learning_rate_fn.rate_at_iteration(self.data_iteration)
+        self.dir_W[self.r]["W"] -= current_rate * self.dir_W[self.r]["delta_W"]
 
-        self.global_W -= self.dir_W[self.r]["delta_W"]
-        self.global_W -= self.dir_W[self.r]["delta_W"].T
+        self.global_W -= current_rate * self.dir_W[self.r]["delta_W"]
+        self.global_W -= current_rate * self.dir_W[self.r]["delta_W"].T
 
         self.dir_W[self.r]["delta_W"].fill(0)
 
@@ -248,20 +253,21 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self._sync_global_to_dir()
 
     def train(self, data, epochs=1):
-        print(f"Hexagonal Network Training:")
-        print(f"epochs:\t{epochs}")
-        print(f"datapoints:\t{len(data)}")
+        logger.info("Hexagonal Network Training:")
+        logger.info(f"epochs:\t{epochs}")
+        logger.info(f"datapoints:\t{len(data)}")
 
-        print("Training...")
-        for _ in range(epochs):
+        logger.info("Training...")
+        for epoch in range(epochs):
             for x_input, y_target in data:
                 x_full = self.pad_input(x_input)
                 y_full = self.pad_output(y_target)
                 activations = self.forward(x_full)
                 self.backward(activations, y_full, apply_delta_W=False)
+                self.data_iteration += 1
             self.apply_delta_W()
             self.epochs_completed += 1
-        print(f"Training complete!")
+        logger.info("Training complete!")
 
     def test(self, x_input):
         x_full = self.pad_input(x_input)
@@ -278,6 +284,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                     "dir_metrics": self.dir_W,
                     "training_metrics": self.get_all_training_metrics(),
                     "epochs_completed": self.epochs_completed,
+                    "data_iteration": self.data_iteration,
                 },
                 f,
             )
@@ -292,6 +299,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.dir_W = state["dir_metrics"]
             self.training_metrics = {i: Metrics(state["training_metrics"][i]) for i in range(0, 6)}
             self.epochs_completed = state["epochs_completed"]
+            self.data_iteration = state.get("data_iteration", 0)
 
     def graph_weights(self, activation_only=True, detail="", output_dir: Union[pathlib.Path, None] = None):
         parent_dir = output_dir if output_dir else pathlib.Path("figures")
@@ -305,7 +313,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         plt.figure(figsize=(7, 7))
         plt.imshow(matrix, cmap="Greys" if activation_only else "viridis", interpolation="none")
         plt.suptitle(title)
-        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate}, {detail}")
+        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
         # plt.grid(visible=True, color='black', linewidth=0.5)
@@ -351,7 +359,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def _print_indices(self, r):
         for i, layer in enumerate(self.dir_W[r]["indices"]):
-            print(f"layer{i}: {layer}")
+            logger.debug(f"layer{i}: {layer}")
 
     def graph_structure(self, detail="", output_dir=None, medium="matplotlib") -> Tuple[str, plt.Figure]:
         if medium == "matplotlib":
@@ -467,7 +475,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
         filename = f"hexnet_n{self.n}_r{self.r}_structure{'_' + detail if detail else ''}.png"
         plt.suptitle(f"Graph Structure")
-        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate}, {detail}")
+        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
         if output_dir:
             plt.savefig(parent_dir / filename)
 
@@ -531,14 +539,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         return png_file, None
 
     def show_stats(self):
-        print(f"Hexagonal Network Stats:")
+        logger.info("Hexagonal Network Stats:")
         table_print(
             ['n', 'r', 'lr', 'epochs completed', 'loss method', 'activation method'],
             [
                 [
                     self.n,
                     self.r,
-                    self.learning_rate,
+                    self.learning_rate_fn.display_name,
                     self.epochs_completed,
                     self.loss.display_name,
                     self.activation.display_name,
@@ -566,13 +574,20 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
-        print(f"==> Training with params...")
+        logger.info("==> Training with params...")
         table_print(
             ["epochs", "rotation", "num data points"],
             [[f"{self.epochs_completed} - {self.epochs_completed + epochs}", self.r, len(data)]]
         )
 
+        logger.debug(f"train_animated called with output_dir={output_dir}")
         self.figure_service.set_figures_path(output_dir)
+        logger.debug(f"figures_path set to {self.figure_service.figures_path}")
+        # Update the filename to use the new figures_path
+        filename_path = pathlib.Path(self.training_figure.filename) if isinstance(self.training_figure.filename, str) else self.training_figure.filename
+        filename_base = filename_path.name
+        self.training_figure.filename = self.figure_service.figures_path / filename_base
+        logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
         self.training_figure.title = f"Hexagonal Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
         self.training_figure.loss_detail = self.loss.display_name
         self.training_figure.accuracy_detail = "RMSE"
@@ -587,7 +602,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             # sum_y = 0.0
             # sum_y2 = 0.0
 
-            for x_input, y_target in data:
+            for index, (x_input, y_target) in randomized_enumerate(data):
+                self.data_iteration = index
                 # build padded vector
                 x_input_full = self.pad_input(x_input)
                 y_target_full = self.pad_output(y_target)
@@ -659,11 +675,12 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             plt.pause(pause)
 
             if epoch == self.epochs_completed + epochs - 1:
+                logger.debug(f"About to save figure at epoch {epoch}")
                 self.training_figure.save_figure()
-                print("")
-                print(f"Training complete!")
+                logger.info("")
+                logger.info("Training complete!")
                 self.show_latest_metrics()
-                print(f"Training figure saved to: {self.training_figure.filename}")
+                logger.info(f"Training figure saved to: {self.training_figure.filename}")
 
         # todo: keep track of epochs completed for each rotation
         if self.r == 0:

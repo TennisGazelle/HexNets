@@ -1,9 +1,13 @@
 from abc import ABC, abstractmethod
 import copy
+import logging
 import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Union
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 class Figure(ABC):
     @abstractmethod
@@ -87,7 +91,17 @@ class TrainingFigure(Figure):
         self.ax_r2.grid(True)
 
     def save_figure(self):
-        self.fig.savefig(self.filename)
+        # Ensure filename is a Path object
+        filename_path = pathlib.Path(self.filename) if isinstance(self.filename, str) else self.filename
+        # Create parent directory if it doesn't exist
+        filename_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Saving figure to {filename_path.absolute()}")
+        try:
+            self.fig.savefig(filename_path)
+            logger.debug(f"Successfully saved figure to {filename_path.absolute()}")
+        except Exception as e:
+            logger.error(f"Error saving figure: {e}")
+            raise
 
     def show_figure(self):
         self.fig.show()

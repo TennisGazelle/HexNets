@@ -48,13 +48,13 @@ class AdhocCommand(Command):
 
         data = get_dataset(args.n, args.dataset_size, type=args.type, scale=2.0)
 
-        # net.graph_weights(activation_only=False, detail="untrained")
+        net.graph_weights(activation_only=False, detail="untrained")
 
         # alternate between rotations 0 and 1
         for i in range(10):
-            for rotation in range(2):
+            for rotation in range(3):
                 net.rotate(rotation)
-                # net.graph_weights(activation_only=False, detail=f"alternate_rotation_iteration_{i}")
+                net.graph_weights(activation_only=False, detail=f"alternate_r{rotation}_iteration{i}")
                 net.train_animated(data, epochs=args.epochs, pause=args.pause)
 
         # net.graph_weights(activation_only=False, detail="untrained")

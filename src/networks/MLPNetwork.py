@@ -1,3 +1,4 @@
+import logging
 import pickle
 from typing import List, Union, Tuple
 import matplotlib.pyplot as plt
@@ -19,6 +20,9 @@ from networks.loss.loss import get_loss_function
 from networks.metrics import Metrics
 from data.dataset import BaseDataset
 from utils import table_print
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
@@ -74,10 +78,11 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                     "hidden_dims": self.hidden_dims,
                     "weights": self.W,
                     "training_metrics": self.training_metrics.as_dict(),
-                    "learning_rate": self.learning_rate,
+                    "learning_rate": self.learning_rate_fn.display_name,
                     "activation": self.activation.display_name,
                     "loss": self.loss.display_name,
                     "epochs_completed": self.epochs_completed,
+                    "data_iteration": self.data_iteration,
                 },
                 f,
             )
@@ -90,10 +95,21 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self.hidden_dims = data["hidden_dims"]
             self.W = data["weights"]
             self.training_metrics = Metrics(data["training_metrics"])
-            self.learning_rate = data["learning_rate"]
             self.activation = get_activation_function(data["activation"])
             self.loss = get_loss_function(data["loss"])
+            # Handle backward compatibility: if learning_rate is a float, use constant
+            learning_rate_config = data.get("learning_rate", "constant")
+            if isinstance(learning_rate_config, (int, float)):
+                from networks.learning_rate.ConstantLearningRate import ConstantLearningRate
+                self.learning_rate_fn = ConstantLearningRate(learning_rate=learning_rate_config)
+            elif isinstance(learning_rate_config, str):
+                from networks.learning_rate.learning_rate import get_learning_rate
+                self.learning_rate_fn = get_learning_rate(learning_rate_config, learning_rate=0.01)
+            else:
+                # If it's already a learning rate object
+                self.learning_rate_fn = learning_rate_config
             self.epochs_completed = data["epochs_completed"]
+            self.data_iteration = data.get("data_iteration", 0)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         activations = [x.copy()]
@@ -120,14 +136,16 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
         if apply_delta_W:
             for i in range(len(self.W)):
-                self.delta_W[i] += self.learning_rate * grads[i]
+                self.delta_W[i] += grads[i]
         else:
+            current_rate = self.learning_rate_fn.rate_at_iteration(self.data_iteration)
             for i in range(len(self.W)):
-                self.W[i] -= self.learning_rate * grads[i]
+                self.W[i] -= current_rate * grads[i]
 
     def apply_delta_W(self):
+        current_rate = self.learning_rate_fn.rate_at_iteration(self.data_iteration)
         for i in range(len(self.W)):
-            self.W[i] -= self.learning_rate * self.delta_W[i]
+            self.W[i] -= current_rate * self.delta_W[i]
             self.delta_W[i].fill(0)
 
     def train(self, data, epochs=1):
@@ -135,6 +153,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             for x_input, y_target in data:
                 activations = self.forward(x_input)
                 self.backward(activations, y_target, apply_delta_W=False)
+                self.data_iteration += 1
             self.apply_delta_W()
             self.epochs_completed += 1
 
@@ -143,15 +162,15 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return activations[-1]
 
     def show_stats(self):
-        print(f"MLP Network Stats:")
+        logger.info("MLP Network Stats:")
         data = [
             ['layer_sizes', [self.input_dim] + self.hidden_dims + [self.output_dim]],
-            ['lr', self.learning_rate],
+            ['lr', self.learning_rate_fn.display_name],
             ['epochs completed', self.epochs_completed],
             ['loss_method', self.loss.display_name],
             ['activation_method', self.activation.display_name],
         ]
-        print(tabulate(data, headers=['Parameter', 'Value'], tablefmt='grid'))
+        logger.info("\n" + tabulate(data, headers=['Parameter', 'Value'], tablefmt='grid'))
 
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
@@ -203,7 +222,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             for i in range(num_layers)
         ]
 
-        print(json.dumps(node_positions, indent=4))
+        logger.debug(json.dumps(node_positions, indent=4))
 
         fig, ax = plt.subplots(figsize=figsize)
 
@@ -245,7 +264,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         parent_dir = output_dir if output_dir else pathlib.Path("figures")
         filename = f"mlp_structure{'_' + detail if detail else ''}.png"
         plt.suptitle(f"Graph Structure")
-        plt.title(f"lr={self.learning_rate}, {detail}")
+        plt.title(f"lr={self.learning_rate_fn.display_name}, {detail}")
         plt.savefig(parent_dir / filename)
         plt.show()
 
@@ -258,13 +277,20 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
-        print(f"MLP Network Training:")
-        print(f"epochs:\t{epochs}")
-        print(f"datapoints:\t{len(data)}")
+        logger.info("MLP Network Training:")
+        logger.info(f"epochs:\t{epochs}")
+        logger.info(f"datapoints:\t{len(data)}")
 
-        print("Training...")
+        logger.info("Training...")
 
-        self.figure_service.set_figures_path(None)
+        logger.debug(f"train_animated called with output_dir={output_dir}")
+        self.figure_service.set_figures_path(output_dir)
+        logger.debug(f"figures_path set to {self.figure_service.figures_path}")
+        # Update the filename to use the new figures_path
+        filename_path = pathlib.Path(self.training_figure.filename) if isinstance(self.training_figure.filename, str) else self.training_figure.filename
+        filename_base = filename_path.name
+        self.training_figure.filename = self.figure_service.figures_path / filename_base
+        logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
         self.training_figure.title = f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
         self.training_figure.loss_detail = self.loss.display_name
         self.training_figure.accuracy_detail = "RMSE"
@@ -342,16 +368,17 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self.training_figure.update_figure({"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2})
 
             self.apply_delta_W()
-            self.epochs_completed += 1
 
             plt.pause(pause)
 
             if epoch == epochs + self.epochs_completed - 1:
+                logger.debug(f"About to save figure at epoch {epoch}")
                 self.training_figure.save_figure()
-                print("")
-                print(f"Training complete!")
+                logger.info("Training complete!")
                 self.show_latest_metrics()
-                print(f"Training figure saved to: {self.training_figure.filename}")
+                logger.info(f"Training figure saved to: {self.training_figure.filename}")
+            
+            self.epochs_completed += 1
 
         return epoch_loss, epoch_acc, epoch_r2, self.training_figure.fig
 
