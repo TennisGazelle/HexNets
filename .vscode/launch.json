@@ -76,7 +76,7 @@
             ]
         },
         {
-            "name": "Hex Net Adhoc (n=3)",
+            "name": "Hex Net Adhoc",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",
@@ -85,10 +85,12 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "adhoc",
-                "-n", "4",
+                "-n", "5",
                 "-t", "identity",
-                "-ds", "100",
-                "-e", "10"
+                "-ds", "1000",
+                "-e", "20",
+                "-a", "linear",
+                "-l", "huber"
             ]
         },
         {
