@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from argparse import Namespace
 import logging
 from pathlib import Path
+import numpy as np
 from networks.MLPNetwork import MLPNetwork
 from commands.command import (
     Command,
@@ -13,6 +14,8 @@ from commands.command import (
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
+from networks.learning_rate.learning_rate import get_learning_rate, get_available_learning_rates
+from figure_service import FigureService
 from logging_config import get_logger, setup_logging
 from utils import Colors
 
@@ -62,6 +65,10 @@ class ReferenceCommand(Command):
         )
 
     def validate_args(self, args: Namespace):
+        # Model 'none' doesn't need validation of n, r, or graph
+        if args.model == "none":
+            return
+        
         if args.generate_all:
             if args.model == "mlp":
                 raise ValueError("--all flag cannot be used with mlp model. Use hex model for batch generation.")
@@ -149,6 +156,59 @@ class ReferenceCommand(Command):
     def invoke(self, args: Namespace):
         figures_dir = Path("reference")
         figures_dir.mkdir(parents=True, exist_ok=True)
+        
+        if args.model == "none":
+            # Generate learning rate reference figures
+            learning_rates = get_available_learning_rates()
+            max_iterations = 500
+            
+            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
+            print(f"{Colors.BLUE}Generating Learning Rate Reference Figures{Colors.NC}")
+            print(f"{Colors.BLUE}  Iterations: {max_iterations}{Colors.NC}")
+            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
+            print()
+            
+            figure_service = FigureService()
+            figure_service.set_figures_path(figures_dir)
+            
+            total_generated = 0
+            for lr_name in learning_rates:
+                try:
+                    print(f"{Colors.YELLOW}  Generating: {lr_name}...{Colors.NC}")
+                    
+                    # Create learning rate instance
+                    lr_instance = get_learning_rate(lr_name, learning_rate=0.01)
+                    
+                    # Generate iterations and learning rate values
+                    iterations = np.arange(1, max_iterations + 1)
+                    lr_values = np.array([lr_instance.rate_at_iteration(i) for i in iterations])
+                    
+                    # Create figure
+                    filename = f"lr_{lr_name}_i{max_iterations}.png"
+                    title = f"Learning Rate: {lr_name}"
+                    figure = figure_service.init_learning_rate_ref_figure(
+                        filename, title, lr_name, max_iterations
+                    )
+                    
+                    # Update figure with data
+                    figure.update_figure(iterations, lr_values)
+                    
+                    # Save figure
+                    figure.save_figure()
+                    total_generated += 1
+                    print(f"{Colors.GREEN}    Saved: {filename}{Colors.NC}")
+                except Exception as e:
+                    print(f"{Colors.RED}    Error: {e}{Colors.NC}")
+                    logger.exception(f"Error generating learning rate figure for {lr_name}")
+            
+            print()
+            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
+            print(f"{Colors.GREEN}Generated {total_generated} learning rate reference figure(s)!{Colors.NC}")
+            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
+            print()
+            print(f"Files saved to: {figures_dir}")
+            print()
+            return
         
         if args.model == "mlp":
             # MLP model doesn't support iteration, just generate the single graph

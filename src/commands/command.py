@@ -95,7 +95,7 @@ def add_global_arguments(parser: ArgumentParser):
         help="Model to use",
         type=str,
         default="hex",
-        choices=["hex", "mlp"],
+        choices=["hex", "mlp", "none"],
         dest="model",
     )
 
