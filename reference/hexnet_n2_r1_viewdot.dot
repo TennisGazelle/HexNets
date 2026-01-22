@@ -1,0 +1,33 @@
+digraph HexNet {
+  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];
+  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true, zorder=10];
+  edge  [penwidth=0.5, dir="none", zorder=1];
+  { rank=same; // layer 0
+    2;
+    0;
+  }
+  { rank=same; // layer 1
+    5;
+    3;
+    1;
+  }
+  { rank=same; // layer 2
+    6;
+    4;
+  }
+  2 -> 0 [style="invis"];
+  5 -> 3 -> 1 [style="invis"];
+  6 -> 4 [style="invis"];
+  2 -> 5;
+  2 -> 3;
+  2 -> 1;
+  0 -> 5;
+  0 -> 3;
+  0 -> 1;
+  5 -> 6;
+  5 -> 4;
+  3 -> 6;
+  3 -> 4;
+  1 -> 6;
+  1 -> 4;
+}

@@ -2,6 +2,7 @@ from argparse import Namespace
 from pathlib import Path
 from datetime import date, datetime
 import hashlib
+import logging
 import pathlib
 import json
 import uuid
@@ -13,6 +14,9 @@ from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from networks.MLPNetwork import MLPNetwork
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 def make_run_folder_name(filename: Union[str, None] = None) -> Tuple[str, str]:
     now = datetime.now().strftime("%Y-%m-%d_%H-%M")
@@ -94,6 +98,10 @@ class RunService:
 
             self.loss_function = get_loss_function(self.config_contents["loss_type"])
             self.activation_function = get_activation_function(self.config_contents["activation_type"])
+            # Handle backward compatibility: if learning_rate is a float, use constant
+            learning_rate_config = self.config_contents.get("learning_rate", "constant")
+            if isinstance(learning_rate_config, (int, float)):
+                learning_rate_config = "constant"
 
             # load the network
             if self.config_contents["model_type"] == "mlp":
@@ -101,7 +109,7 @@ class RunService:
                     input_dim=self.config_contents["model_metadata"]["input_dim"],
                     output_dim=self.config_contents["model_metadata"]["output_dim"],
                     hidden_dims=self.config_contents["model_metadata"]["hidden_dims"],
-                    learning_rate=self.config_contents["learning_rate"],
+                    learning_rate=learning_rate_config,
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
@@ -110,7 +118,7 @@ class RunService:
                 self.net = HexagonalNeuralNetwork(
                     n=self.config_contents["model_metadata"]["n"],
                     r=self.config_contents["model_metadata"]["r"],
-                    learning_rate=self.config_contents["learning_rate"],
+                    learning_rate=learning_rate_config,
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
@@ -132,10 +140,10 @@ class RunService:
         return self.run_folder_path / "plots"
 
     def print_paths(self) -> None:
-        print(self.run_folder_path)
-        print("-\t", self.config_path.name)
-        print("-\t", self.manifest_path.name)
-        print("-\t", self.training_metrics_path.name)
+        logger.info(self.run_folder_path)
+        logger.info(f"-\t{self.config_path.name}")
+        logger.info(f"-\t{self.manifest_path.name}")
+        logger.info(f"-\t{self.training_metrics_path.name}")
 
     def print_last_training_metrics(self) -> None:
         self.net.show_latest_metrics()
@@ -159,7 +167,7 @@ class RunService:
         return hashlib.sha256(f"{args.type}_{args.dataset_size}".encode()).hexdigest()
 
     def output_run_files(self) -> None:
-        print(f"run data saved to {self.run_folder_path}")
+        logger.info(f"run data saved to {self.run_folder_path}")
 
         self.run_folder_path.mkdir(parents=True, exist_ok=True)
         self.get_figures_path().mkdir(parents=True, exist_ok=True)

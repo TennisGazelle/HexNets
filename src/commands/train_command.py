@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from argparse import Namespace
+import logging
 import pathlib
 from commands.command import (
     Command,
@@ -12,6 +13,9 @@ from commands.command import (
     get_dataset,
 )
 from run_service import RunService
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class TrainCommand(Command):
@@ -95,7 +99,7 @@ class TrainCommand(Command):
         net.show_stats()
 
         if args.dry_run:
-            print("Dry run only, none of the above files were created")
+            logger.info("Dry run only, none of the above files were created")
             return
 
         run.output_run_files()

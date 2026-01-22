@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Ref Graph Hex Matplotlib (n=3)",
+            "name": "Ref Graph Hex Structure Matplotlib (n=3)",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",
@@ -19,7 +19,7 @@
             ]
         },
         {
-            "name": "Ref Graph Hex Dot (n=3)",
+            "name": "Ref Graph Hex StructureDot (n=3)",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",
@@ -33,7 +33,7 @@
             ]
         },
         {
-            "name": "Ref Graph Hex Terminal Indices (n=3, r=1,2)",
+            "name": "Ref Graph Hex Layer Indices Terminal (n=3, r=1)",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",
@@ -48,7 +48,7 @@
             ]
         },
         {
-            "name": "Ref Graph MLP Matplotlib",
+            "name": "Ref Graph Hex Activation (n=3, r=0)",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",
@@ -57,8 +57,24 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "ref",
-                "-m", "mlp",
-                "-g", "structure_matplotlib"
+                "-m", "hex",
+                "-g", "activation",
+                "-r", "1"
+            ]
+        },
+        {
+            "name": "Ref Graph Hex Weight (n=3, r=0)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "ref",
+                "-m", "hex",
+                "-g", "weight",
+                "-r", "1"
             ]
         },
         {
@@ -76,7 +92,33 @@
             ]
         },
         {
-            "name": "Hex Net Adhoc (n=3)",
+            "name": "Ref Graph MLP Structure Matplotlib",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "ref",
+                "-m", "mlp",
+                "-g", "structure_matplotlib"
+            ]
+        },
+        {
+            "name": "Ref Graph All (n=2..4)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "ref", "--all"
+            ]
+        },
+        {
+            "name": "Hex Net Adhoc",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",
@@ -85,10 +127,13 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "adhoc",
-                "-n", "3",
-                "-t", "linear",
-                "-ds", "100",
-                "-e", "1000"
+                "-n", "5",
+                "-t", "identity",
+                "-ds", "1000",
+                "-e", "20",
+                "-a", "linear",
+                "-l", "huber",
+                "-lr", "constant"
             ]
         },
         {
@@ -162,6 +207,28 @@
             "args": [
                 "stats",
                 "runs/2025-09-10_21-17_815bed"
+            ]
+        },
+        {
+            "name": "Unit Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "tests"
+            ]
+        },
+        {
+            "name": "Single Unit Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "tests/data/test_dataset.py::test_randomizing_dataset"
             ]
         }
     ]

@@ -46,20 +46,16 @@ class AdhocCommand(Command):
             loss=loss_function,
         )
 
-        if args.type == "identity":
-            data = get_dataset(args.n, args.dataset_size, type="identity")
-        elif args.type == "linear":
-            data = get_dataset(args.n, args.dataset_size, type="linear", scale=2.0)
-        else:
-            raise ValueError(f"Invalid dataset type: {args.type}")
 
-        # net.graph_weights(activation_only=False, detail="untrained")
+
+        net.graph_weights(activation_only=False, detail="untrained")
 
         # alternate between rotations 0 and 1
-        for i in range(10):
-            for rotation in range(2):
+        for i in range(50):
+            data = get_dataset(args.n, args.dataset_size, type=args.type, scale=2.0)
+            for rotation in range(3):
                 net.rotate(rotation)
-                # net.graph_weights(activation_only=False, detail=f"alternate_rotation_iteration_{i}")
+                net.graph_weights(activation_only=False, detail=f"r{rotation}_i{i}")
                 net.train_animated(data, epochs=args.epochs, pause=args.pause)
 
         # net.graph_weights(activation_only=False, detail="untrained")
