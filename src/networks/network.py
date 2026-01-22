@@ -30,6 +30,7 @@ class BaseNeuralNetwork(ABC):
         else:
             # Backward compatibility: if float, use constant with that value
             self.learning_rate_fn = ConstantLearningRate(learning_rate=learning_rate)
+
         self.activation = activation
         self.loss = loss
         self.training_metrics = Metrics()

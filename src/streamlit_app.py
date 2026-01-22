@@ -66,6 +66,16 @@ def load_reference_image(n, r, image_type):
     return None
 
 
+def load_multi_activation_image(n):
+    """Load a multi-activation overlay image from the reference directory."""
+    reference_dir = pathlib.Path("reference").resolve()
+    filename = f"hexnet_n{n}_multi_activation.png"
+    image_path = reference_dir / filename
+    if image_path.exists():
+        return str(image_path)
+    return None
+
+
 def show_rotation_comparison(n=3):
     """Display the rotation comparison table similar to ROTATION_SYSTEM.md"""
     st.header("Rotation Comparison Table")
@@ -82,14 +92,16 @@ def show_rotation_comparison(n=3):
             structure_img = load_reference_image(n, r, "structure")
             activation_img = load_reference_image(n, r, "activation")
             weight_img = load_reference_image(n, r, "weight")
+            multi_activation_img = load_multi_activation_image(n)
             
             # Display images in columns
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
             
             with col1:
                 st.markdown("**Physical Structure**")
                 if structure_img:
                     st.image(structure_img, use_container_width=True)
+                    st.markdown("The physical structure of the network.")
                 else:
                     st.warning(f"Structure image not found for n={n}, r={r}")
             
@@ -97,6 +109,7 @@ def show_rotation_comparison(n=3):
                 st.markdown("**Activation Pattern**")
                 if activation_img:
                     st.image(activation_img, use_container_width=True)
+                    st.markdown("The activation pattern of the network, via bitmap")
                 else:
                     st.warning(f"Activation image not found for n={n}, r={r}")
             
@@ -104,13 +117,22 @@ def show_rotation_comparison(n=3):
                 st.markdown("**Weight Matrix**")
                 if weight_img:
                     st.image(weight_img, use_container_width=True)
+                    st.markdown("The weight matrix of an untrained network.")
                 else:
                     st.warning(f"Weight image not found for n={n}, r={r}")
+
+            with col4:
+                st.markdown("**Multi-Activation Overlay**")
+                if multi_activation_img:
+                    st.image(multi_activation_img, use_container_width=True)
+                    st.markdown("This view shows all 6 rotations overlaid on a single matrix, with each rotation shown in a different color.")
+                else:
+                    st.warning(f"Multi-activation image not found for n={n}. Generate it with: `hexnet ref --all`")
 
 
 # Main
 if __name__ == "__main__":
-    streamlit_dir = pathlib.Path("./streamlit").resolve()
+    streamlit_dir = pathlib.Path("./reference").resolve()
     st.set_page_config(
         page_title="HexNet Visualizer",
         page_icon="🔷",
