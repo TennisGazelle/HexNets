@@ -302,27 +302,31 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.data_iteration = state.get("data_iteration", 0)
 
     def graph_weights(self, activation_only=True, detail="", output_dir: Union[pathlib.Path, None] = None):
-        parent_dir = output_dir if output_dir else pathlib.Path("figures")
+        parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
         parent_dir.mkdir(parents=True, exist_ok=True)
         title = "Activation Structure" if activation_only else "Weight Matrix"
 
         filename = f"hexnet_n{self.n}_r{self.r}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
+        full_path = parent_dir / filename
 
         matrix = (self.dir_W[self.r]["W"] != 0).astype(int) if activation_only else self.dir_W[self.r]["W"]
 
-        plt.figure(figsize=(7, 7))
-        plt.imshow(matrix, cmap="Greys" if activation_only else "viridis", interpolation="none")
-        plt.suptitle(title)
-        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
-        plt.xticks(np.arange(self.total_nodes))
-        plt.yticks(np.arange(self.total_nodes))
-        # plt.grid(visible=True, color='black', linewidth=0.5)
-        if not activation_only:
-            plt.colorbar()
-        plt.savefig(parent_dir / filename)
-        plt.show()
+        fig = plt.figure(figsize=(7, 7))
+        try:
+            plt.imshow(matrix, cmap="Greys" if activation_only else "viridis", interpolation="none")
+            plt.suptitle(title)
+            plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
+            plt.xticks(np.arange(self.total_nodes))
+            plt.yticks(np.arange(self.total_nodes))
+            # plt.grid(visible=True, color='black', linewidth=0.5)
+            if not activation_only:
+                plt.colorbar()
+            plt.savefig(full_path)
+            plt.show()
+        finally:
+            plt.close(fig)
 
-        return filename
+        return str(full_path), fig
 
     def _graph_multi_activation(self, detail="", r_list=list(range(0, 6)), output_dir: Union[pathlib.Path, None] = None):
         title = "Activation Structure"
@@ -332,30 +336,35 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         fig = plt.figure(figsize=(3.5 * (self.n - 1), 3.5 * (self.n - 1)))
 
-        legend_handles = []
-        for i, r in enumerate(r_list):
-            matrix = (self.dir_W[r]["W"] != 0).astype(int)
+        try:
+            legend_handles = []
+            for i, r in enumerate(r_list):
+                matrix = (self.dir_W[r]["W"] != 0).astype(int)
 
-            # Create colors with alpha: white (transparent) for 0, colored for 1
-            base_cmap = plt.cm.get_cmap(colors[i])  # get the colormap
-            colors_with_alpha = [(1, 1, 1, 0)]  # transparent white for 0
-            colors_with_alpha.extend([(*base_cmap(0.7)[:3], 0.7)])  # colored with alpha for 1
-            custom_cmap = ListedColormap(colors_with_alpha)
+                # Create colors with alpha: white (transparent) for 0, colored for 1
+                base_cmap = plt.cm.get_cmap(colors[i])  # get the colormap
+                colors_with_alpha = [(1, 1, 1, 0)]  # transparent white for 0
+                colors_with_alpha.extend([(*base_cmap(0.7)[:3], 0.7)])  # colored with alpha for 1
+                custom_cmap = ListedColormap(colors_with_alpha)
 
-            plt.imshow(matrix, cmap=custom_cmap, interpolation="none")
-            legend_handles.append(Patch(color=base_cmap(0.7), alpha=0.7, label=f"Rotation {r}"))
+                plt.imshow(matrix, cmap=custom_cmap, interpolation="none")
+                legend_handles.append(Patch(color=base_cmap(0.7), alpha=0.7, label=f"Rotation {r}"))
 
-        plt.suptitle(title)
-        plt.title(f"n={self.n}, {detail}")
-        plt.xticks(np.arange(self.total_nodes))
-        plt.yticks(np.arange(self.total_nodes))
-        plt.legend(handles=legend_handles, title="Rotation")
+            plt.suptitle(title)
+            plt.title(f"n={self.n}, {detail}")
+            plt.xticks(np.arange(self.total_nodes))
+            plt.yticks(np.arange(self.total_nodes))
+            plt.legend(handles=legend_handles, title="Rotation")
 
-        if output_dir:
-            plt.savefig(pathlib.Path(output_dir) / filename)
+            parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
+            full_path = parent_dir / filename
+            plt.savefig(full_path)
 
-        plt.show()
-        return filename, fig
+            plt.show()
+        finally:
+            plt.close(fig)
+
+        return str(full_path), fig
 
     def _print_indices(self, r):
         for i, layer in enumerate(self.dir_W[r]["indices"]):
@@ -474,14 +483,18 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         plt.tight_layout()
         parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
         filename = f"hexnet_n{self.n}_r{self.r}_structure{'_' + detail if detail else ''}.png"
+        full_path = parent_dir / filename
         plt.suptitle(f"Graph Structure")
         plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
-        if output_dir:
-            plt.savefig(parent_dir / filename)
+        try:
+            if output_dir:
+                plt.savefig(full_path)
 
-        plt.show()
+            plt.show()
+        finally:
+            plt.close(fig)
 
-        return filename, fig
+        return str(full_path), fig
 
     def to_dot_string(self) -> List[str]:
         """
@@ -534,9 +547,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 f.write(line + "\n")
 
         png_file = dot_file.replace(".dot", ".png")
-        os.system(f"dot -Tpng {parent_dir / dot_file} -o {parent_dir / png_file}")
+        full_path = parent_dir / png_file
+        os.system(f"dot -Tpng {parent_dir / dot_file} -o {full_path}")
 
-        return png_file, None
+        return str(full_path), None
 
     def show_stats(self):
         logger.info("Hexagonal Network Stats:")

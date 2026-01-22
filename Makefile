@@ -1,3 +1,31 @@
+# ============================================================================
+# HexNets Makefile
+# ============================================================================
+# This Makefile provides convenient targets for common development tasks.
+#
+# Quick Start:
+#   make install          - Set up the virtual environment and install dependencies
+#   make run              - Run a quick adhoc training example
+#   make run-streamlit    - Launch the Streamlit web interface
+#   make streamlit-deploy - Prepare and get instructions for deploying to Streamlit Cloud
+#
+# Testing:
+#   make unit-test        - Run unit tests
+#   make e2e-test         - Run end-to-end integration tests
+#
+# Code Quality:
+#   make lint-check       - Check code formatting without making changes
+#   make lint-format      - Format code with Black
+#
+# Cleanup:
+#   make clean-ref        - Remove all reference graph files
+#   make clean-figures    - Remove all generated figure files
+#   make clean-runs       - Remove all training run directories
+#   make clean-venv       - Remove the virtual environment
+#   make clean-all        - Remove everything (venv, figures, runs, refs)
+#
+# ============================================================================
+
 SHELL := /bin/bash
 PYTHON := .venv/bin/python
 PIP := .venv/bin/pip
@@ -61,54 +89,68 @@ run:
 run-streamlit:
 	@${STREAMLIT} run src/streamlit_app.py
 
-.PHONY: ref-graphs
-ref-graphs:
-	@echo "Generating reference graphs..."
-	@echo "----------------------------------------"
-	@echo "n=2, layer_indices_terminal, multi_activation, structure_matplotlib"
-	@${HEXNET} ref -n 2 -g layer_indices_terminal
-	@${HEXNET} ref -n 2 -g multi_activation
-	@${HEXNET} ref -n 2 -g structure_matplotlib
-
-	@echo "----------------------------------------"
-	@echo "n=3, layer_indices_terminal, multi_activation, structure_matplotlib"
-	@${HEXNET} ref -n 3 -g layer_indices_terminal
-	@${HEXNET} ref -n 3 -g multi_activation
-	@${HEXNET} ref -n 3 -g structure_matplotlib
-
-	@echo "----------------------------------------"
-	@echo "n=4, layer_indices_terminal, multi_activation, structure_matplotlib"
-	@${HEXNET} ref -n 4 -g layer_indices_terminal
-	@${HEXNET} ref -n 4 -g multi_activation
-	@${HEXNET} ref -n 4 -g structure_matplotlib
-
-	@echo "----------------------------------------"
-	@echo "n=5, layer_indices_terminal, multi_activation, structure_matplotlib"
-	@${HEXNET} ref -n 5 -g layer_indices_terminal
-	@${HEXNET} ref -n 5 -g multi_activation
-	@${HEXNET} ref -n 5 -g structure_matplotlib
-
-	@echo "----------------------------------------"
-	@echo "n=6, layer_indices_terminal, multi_activation, structure_matplotlib"
-	@${HEXNET} ref -n 6 -g layer_indices_terminal
-	@${HEXNET} ref -n 6 -g multi_activation
-	@${HEXNET} ref -n 6 -g structure_matplotlib
-
-	@echo "----------------------------------------"
-	@echo "n=7, layer_indices_terminal, multi_activation, structure_matplotlib"
-	@${HEXNET} ref -n 7 -g layer_indices_terminal
-	@${HEXNET} ref -n 7 -g multi_activation
-	@${HEXNET} ref -n 7 -g structure_matplotlib
-
-	@echo "----------------------------------------"
-	@echo "n=8, layer_indices_terminal, multi_activation, structure_matplotlib"
-	@${HEXNET} ref -n 8 -g layer_indices_terminal
-	@${HEXNET} ref -n 8 -g multi_activation
-	@${HEXNET} ref -n 8 -g structure_matplotlib
-
+.PHONY: streamlit-deploy
+streamlit-deploy:
+	@echo "============================================================================"
+	@echo "Streamlit Cloud Deployment Preparation"
+	@echo "============================================================================"
+	@echo ""
+	@echo "Checking deployment prerequisites..."
+	@echo ""
+	@# Check if app file exists
+	@if [ ! -f "src/streamlit_app.py" ]; then \
+		echo "❌ ERROR: src/streamlit_app.py not found"; \
+		exit 1; \
+	else \
+		echo "✅ Streamlit app file found: src/streamlit_app.py"; \
+	fi
+	@# Check if requirements.txt exists
+	@if [ ! -f "requirements.txt" ]; then \
+		echo "⚠️  WARNING: requirements.txt not found"; \
+		echo "   Streamlit Cloud can use pyproject.toml, but requirements.txt is recommended"; \
+		echo "   Create it with: pip freeze > requirements.txt"; \
+	else \
+		echo "✅ requirements.txt found"; \
+	fi
+	@# Check if reference directory exists (for rotation comparison)
+	@if [ ! -d "reference" ]; then \
+		echo "⚠️  WARNING: reference/ directory not found"; \
+		echo "   Rotation Comparison tab will show warnings"; \
+		echo "   Generate reference graphs with: hexnet ref --all"; \
+	else \
+		echo "✅ reference/ directory found"; \
+	fi
+	@echo ""
+	@echo "============================================================================"
+	@echo "Deployment Instructions"
+	@echo "============================================================================"
+	@echo ""
+	@echo "1. Ensure your code is pushed to a GitHub repository"
+	@echo ""
+	@echo "2. Go to https://share.streamlit.io/"
+	@echo ""
+	@echo "3. Sign in with your GitHub account"
+	@echo ""
+	@echo "4. Click 'New app' and select your repository"
+	@echo ""
+	@echo "5. Configure deployment:"
+	@echo "   - Main file path: src/streamlit_app.py"
+	@echo "   - Python version: 3.9 or higher"
+	@echo "   - Requirements file: requirements.txt (or pyproject.toml)"
+	@echo ""
+	@echo "6. Click 'Deploy!'"
+	@echo ""
+	@echo "Note: Streamlit Cloud will automatically:"
+	@echo "  - Install dependencies from requirements.txt or pyproject.toml"
+	@echo "  - Run your app on their servers"
+	@echo "  - Provide a public URL"
+	@echo ""
+	@echo "For more information, visit: https://docs.streamlit.io/streamlit-community-cloud"
+	@echo ""
+	@echo "============================================================================"
 
 .PHONY: clean-all
-clean-all: clean-venv clean-figures clean-runs
+clean-all: clean-venv clean-figures clean-runs clean-ref
 
 .PHONY: clean-venv
 clean-venv:
@@ -121,6 +163,10 @@ clean-figures:
 .PHONY: clean-runs
 clean-runs:
 	@rm -rf runs/*
+
+.PHONY: clean-ref
+clean-ref:
+	@rm -rf reference/*.png
 
 .PHONY: lint-check
 lint-check:
