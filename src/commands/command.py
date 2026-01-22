@@ -69,12 +69,12 @@ class Command(ABC):
         pass
 
 
-def add_hex_only_arguments(parser: ArgumentParser):
+def add_hex_only_arguments(parser: ArgumentParser, set_defaults: bool = True):
     parser.add_argument(
         "-n",
         "--num_dims",
         type=int,
-        default=3,
+        default=3 if set_defaults else None,
         help="Number of input and output nodes",
         dest="n",
     )
@@ -84,7 +84,7 @@ def add_hex_only_arguments(parser: ArgumentParser):
         "--rotation",
         help="Value between 0 and 5, (e.g. 0,1,2,3,4,5) of which hexagon rotation to display",
         type=int,
-        default=0,
+        default=0 if set_defaults else None,
         dest="rotation",
     )
 

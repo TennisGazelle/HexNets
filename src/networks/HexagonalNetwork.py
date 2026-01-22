@@ -539,7 +539,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def _graph_hex_dot(self, output_dir: Union[pathlib.Path, None] = None):
         dot_string_list = self.to_dot_string()
-        parent_dir = output_dir if output_dir else pathlib.Path("figures")
+        parent_dir = output_dir if output_dir else pathlib.Path("reference")
         dot_file = f"hexnet_n{self.n}_r{self.r}_viewdot.dot"
 
         with open(parent_dir / dot_file, "w") as f:
