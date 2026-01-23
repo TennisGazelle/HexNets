@@ -14,8 +14,8 @@
 #   make e2e-test         - Run end-to-end integration tests
 #
 # Code Quality:
-#   make lint-check       - Check code formatting without making changes
-#   make lint-format      - Format code with Black
+#   make lint             - Format code with Black (line length 120)
+#   make lint-check       - Check code formatting without making changes (fails if formatting needed)
 #
 # Cleanup:
 #   make clean-ref        - Remove all reference graph files
@@ -168,10 +168,10 @@ clean-runs:
 clean-ref:
 	@rm -rf reference/*.png
 
+.PHONY: lint
+lint:
+	@${BLACK} src -l 120
+
 .PHONY: lint-check
 lint-check:
-	@${BLACK} --check src -l 120
-
-.PHONY: lint-format
-lint-format:
-	@${BLACK} src -l 120
+	@${BLACK} --check src -l 120 || (echo "❌ Linting failed. Run 'make lint' to fix formatting issues." && exit 1)

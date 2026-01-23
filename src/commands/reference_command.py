@@ -4,20 +4,20 @@ import logging
 from pathlib import Path
 import numpy as np
 from networks.MLPNetwork import MLPNetwork
-from commands.command import (
+from src.commands.command import (
     Command,
     add_hex_only_arguments,
     validate_hex_only_arguments,
     add_global_arguments,
     validate_global_arguments,
 )
-from networks.HexagonalNetwork import HexagonalNeuralNetwork
-from networks.activation.activations import get_activation_function
-from networks.loss.loss import get_loss_function
-from networks.learning_rate.learning_rate import get_learning_rate, get_available_learning_rates
-from figure_service import FigureService
-from logging_config import get_logger, setup_logging
-from utils import Colors
+from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
+from src.networks.activation.activations import get_activation_function
+from src.networks.loss.loss import get_loss_function
+from src.networks.learning_rate.learning_rate import get_learning_rate, get_available_learning_rates
+from src.figure_service import FigureService
+from src.logging_config import get_logger, setup_logging
+from src.utils import Colors
 
 logger = get_logger(__name__)
 
@@ -62,6 +62,13 @@ class ReferenceCommand(Command):
             help="Generate all reference graphs for n=2..8 and r=0..5. Ignores -n and -r arguments.",
             action="store_true",
             dest="generate_all",
+        )
+
+        parser.add_argument(
+            "--dry-run",
+            help="Show what would be generated without actually creating figures.",
+            action="store_true",
+            dest="dry_run",
         )
 
     def validate_args(self, args: Namespace):
@@ -131,6 +138,14 @@ class ReferenceCommand(Command):
     
     def _generate_graph(self, net, graph_type: str, args: Namespace, figures_dir: Path):
         """Generate a single graph of the specified type."""
+        if args.dry_run:
+            # In dry-run mode, just log what would be generated
+            if graph_type == "layer_indices_terminal":
+                logger.info(f"[DRY-RUN] Would print layer indices for r={args.rotation}")
+            else:
+                logger.info(f"[DRY-RUN] Would generate {graph_type} graph for n={net.n}, r={net.r}")
+            return
+        
         if graph_type == "structure_dot":
             logger.info("This assumes you have Graphviz installed...")
             output_file, _ = net.graph_structure(output_dir=figures_dir, medium="dot")
@@ -174,6 +189,11 @@ class ReferenceCommand(Command):
             total_generated = 0
             for lr_name in learning_rates:
                 try:
+                    if args.dry_run:
+                        print(f"{Colors.YELLOW}  [DRY-RUN] Would generate: {lr_name}...{Colors.NC}")
+                        total_generated += 1
+                        continue
+                    
                     print(f"{Colors.YELLOW}  Generating: {lr_name}...{Colors.NC}")
                     
                     # Create learning rate instance

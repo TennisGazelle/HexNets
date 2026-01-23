@@ -26,6 +26,9 @@ jobs:
         run: |
           make unit-test e2e-test
       
+      - name: Run lint check
+        run: make lint-check
+      
       # - name: Run streamlit app
       #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
       #   run: |

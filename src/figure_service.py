@@ -39,6 +39,10 @@ class RefFigure(Figure):
     
     def show_figure(self):
         self.fig.show()
+    
+    def update_figure(self, *args, **kwargs):
+        """Update the figure with new data. Placeholder implementation."""
+        pass
 
 
 class LearningRateRefFigure(Figure):
@@ -187,7 +191,7 @@ class FigureService:
         self.figures = {}
 
     def set_figures_path(self, figures_path: Union[pathlib.Path, None] = None):
-        self.figures_path = figures_path if figures_path else pathlib.Path("figures")
+        self.figures_path = pathlib.Path(figures_path) if figures_path else pathlib.Path("figures")
 
     def init_training_figure(self, filename, title, loss_detail, accuracy_detail, r2_detail):
         self.figures[title] = TrainingFigure(
