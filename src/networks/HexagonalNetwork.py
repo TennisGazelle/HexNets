@@ -31,9 +31,9 @@ from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
 from networks.loss.QuantileLoss import QuantileLoss
 from data.dataset import BaseDataset, randomized_enumerate
 
-
 # === Hexagonal Neural Network ===
 logger = get_logger(__name__)
+
 
 class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def __init__(
@@ -54,22 +54,19 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self._setup_training_metrics()
         self._init_figure_service()
 
-
     # --- structure helpers ---0
     def _calc_total_nodes(self, n):
         return sum(l for l in self._hex_layer_sizes(n))
 
     def _setup_training_metrics(self):
-        self.training_metrics = {
-            i: Metrics() for i in range(0, 6)
-        }
-    
+        self.training_metrics = {i: Metrics() for i in range(0, 6)}
+
     def get_training_metrics(self, channel: int):
         return self.training_metrics[channel]
-    
+
     def get_all_training_metrics(self):
         return {i: self.training_metrics[i].as_dict() for i in range(0, 6)}
-    
+
     def set_training_metrics(self, channel: int, metrics: Metrics):
         self.training_metrics[channel] = metrics
 
@@ -328,7 +325,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         return str(full_path), fig
 
-    def _graph_multi_activation(self, detail="", r_list=list(range(0, 6)), output_dir: Union[pathlib.Path, None] = None):
+    def _graph_multi_activation(
+        self, detail="", r_list=list(range(0, 6)), output_dir: Union[pathlib.Path, None] = None
+    ):
         title = "Activation Structure"
         filename = f"hexnet_n{self.n}_multi_activation{'_' + detail if detail else ''}.png"
 
@@ -555,7 +554,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def show_stats(self):
         logger.info("Hexagonal Network Stats:")
         table_print(
-            ['n', 'r', 'lr', 'epochs completed', 'loss method', 'activation method'],
+            ["n", "r", "lr", "epochs completed", "loss method", "activation method"],
             [
                 [
                     self.n,
@@ -565,25 +564,19 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                     self.loss.display_name,
                     self.activation.display_name,
                 ]
-            ]
+            ],
         )
 
     def show_latest_metrics(self):
         metrics = self.training_metrics[self.r]
-        data = [0.0, 0.0, 0.0, 0] if len(metrics.loss) == 0 else [
-            metrics.loss[-1],
-            metrics.accuracy[-1],
-            metrics.r_squared[-1],
-            self.epochs_completed
-        ]
-        table_print(
-            ['Rotation', 'Loss', 'Accuracy', 'R^2', 'Epochs'],
-            [[self.r, *data]]
+        data = (
+            [0.0, 0.0, 0.0, 0]
+            if len(metrics.loss) == 0
+            else [metrics.loss[-1], metrics.accuracy[-1], metrics.r_squared[-1], self.epochs_completed]
         )
+        table_print(["Rotation", "Loss", "Accuracy", "R^2", "Epochs"], [[self.r, *data]])
 
-    def train_animated(
-        self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
-    ):
+    def train_animated(self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None):
         """
         Train while animating loss & accuracy over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
@@ -591,14 +584,18 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         logger.info("==> Training with params...")
         table_print(
             ["epochs", "rotation", "num data points"],
-            [[f"{self.epochs_completed} - {self.epochs_completed + epochs}", self.r, len(data)]]
+            [[f"{self.epochs_completed} - {self.epochs_completed + epochs}", self.r, len(data)]],
         )
 
         logger.debug(f"train_animated called with output_dir={output_dir}")
         self.figure_service.set_figures_path(output_dir)
         logger.debug(f"figures_path set to {self.figure_service.figures_path}")
         # Update the filename to use the new figures_path
-        filename_path = pathlib.Path(self.training_figure.filename) if isinstance(self.training_figure.filename, str) else self.training_figure.filename
+        filename_path = (
+            pathlib.Path(self.training_figure.filename)
+            if isinstance(self.training_figure.filename, str)
+            else self.training_figure.filename
+        )
         filename_base = filename_path.name
         self.training_figure.filename = self.figure_service.figures_path / filename_base
         logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
@@ -682,7 +679,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             epoch_loss = total_loss / len(data)
             epoch_acc, epoch_r2 = self.training_metrics[self.r].calc_accuracy_r2(self.n)
             self.training_metrics[self.r].add_metric(epoch_loss, epoch_acc, epoch_r2)
-            self.training_figure.update_figure({"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2}, self.r)
+            self.training_figure.update_figure(
+                {"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2}, self.r
+            )
 
             self.apply_delta_W()
 

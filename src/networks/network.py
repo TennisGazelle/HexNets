@@ -19,7 +19,7 @@ class BaseNeuralNetwork(ABC):
         self.display_name = kwargs.get("display_name", self.__class__.__name__.lower())
 
     def __init__(
-        self, learning_rate = "constant", activation: BaseActivation = Sigmoid, loss: BaseLoss = MeanSquaredErrorLoss
+        self, learning_rate="constant", activation: BaseActivation = Sigmoid, loss: BaseLoss = MeanSquaredErrorLoss
     ):
         # learning_rate can be a string (function name) or BaseLearningRate instance
         if isinstance(learning_rate, str):

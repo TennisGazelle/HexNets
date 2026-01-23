@@ -101,9 +101,11 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             learning_rate_config = data.get("learning_rate", "constant")
             if isinstance(learning_rate_config, (int, float)):
                 from networks.learning_rate.ConstantLearningRate import ConstantLearningRate
+
                 self.learning_rate_fn = ConstantLearningRate(learning_rate=learning_rate_config)
             elif isinstance(learning_rate_config, str):
                 from networks.learning_rate.learning_rate import get_learning_rate
+
                 self.learning_rate_fn = get_learning_rate(learning_rate_config, learning_rate=0.01)
             else:
                 # If it's already a learning rate object
@@ -164,13 +166,13 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
     def show_stats(self):
         logger.info("MLP Network Stats:")
         data = [
-            ['layer_sizes', [self.input_dim] + self.hidden_dims + [self.output_dim]],
-            ['lr', self.learning_rate_fn.display_name],
-            ['epochs completed', self.epochs_completed],
-            ['loss_method', self.loss.display_name],
-            ['activation_method', self.activation.display_name],
+            ["layer_sizes", [self.input_dim] + self.hidden_dims + [self.output_dim]],
+            ["lr", self.learning_rate_fn.display_name],
+            ["epochs completed", self.epochs_completed],
+            ["loss_method", self.loss.display_name],
+            ["activation_method", self.activation.display_name],
         ]
-        logger.info("\n" + tabulate(data, headers=['Parameter', 'Value'], tablefmt='grid'))
+        logger.info("\n" + tabulate(data, headers=["Parameter", "Value"], tablefmt="grid"))
 
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
@@ -178,16 +180,12 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
     def show_latest_metrics(self):
         metrics = self.training_metrics
-        data = [0.0, 0.0, 0.0, 0] if len(metrics.loss) == 0 else [
-            metrics.loss[-1],
-            metrics.accuracy[-1],
-            metrics.r_squared[-1],
-            self.epochs_completed
-        ]
-        table_print(
-            ['Loss', 'Accuracy', 'R^2', 'Epochs'],
-            [[*data]]
+        data = (
+            [0.0, 0.0, 0.0, 0]
+            if len(metrics.loss) == 0
+            else [metrics.loss[-1], metrics.accuracy[-1], metrics.r_squared[-1], self.epochs_completed]
         )
+        table_print(["Loss", "Accuracy", "R^2", "Epochs"], [[*data]])
 
     def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
         pass
@@ -287,11 +285,17 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self.figure_service.set_figures_path(output_dir)
         logger.debug(f"figures_path set to {self.figure_service.figures_path}")
         # Update the filename to use the new figures_path
-        filename_path = pathlib.Path(self.training_figure.filename) if isinstance(self.training_figure.filename, str) else self.training_figure.filename
+        filename_path = (
+            pathlib.Path(self.training_figure.filename)
+            if isinstance(self.training_figure.filename, str)
+            else self.training_figure.filename
+        )
         filename_base = filename_path.name
         self.training_figure.filename = self.figure_service.figures_path / filename_base
         logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
-        self.training_figure.title = f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
+        self.training_figure.title = (
+            f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
+        )
         self.training_figure.loss_detail = self.loss.display_name
         self.training_figure.accuracy_detail = "RMSE"
         self.training_figure.r2_detail = "coefficient of determination"
@@ -377,7 +381,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                 logger.info("Training complete!")
                 self.show_latest_metrics()
                 logger.info(f"Training figure saved to: {self.training_figure.filename}")
-            
+
             self.epochs_completed += 1
 
         return epoch_loss, epoch_acc, epoch_r2, self.training_figure.fig

@@ -60,13 +60,7 @@ class TrainCommand(Command):
         )
 
         parser.add_argument(
-            "-rn",
-            "--run_name",
-            type=str,
-            default=None,
-            required=False,
-            help="name of the new run",
-            dest="run_name"
+            "-rn", "--run_name", type=str, default=None, required=False, help="name of the new run", dest="run_name"
         )
 
     def validate_args(self, args: Namespace):

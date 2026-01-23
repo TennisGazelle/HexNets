@@ -23,11 +23,12 @@ class BaseLearningRate(ABC):
     def __repr__(self):
         return self.display_name
 
+
 def get_learning_rate(display_name: str, *args, **kwargs) -> BaseLearningRate:
     if display_name not in LEARNING_RATES:
         raise ValueError(f"Learning rate {display_name} not found")
     return LEARNING_RATES[display_name](*args, **kwargs)
 
+
 def get_available_learning_rates() -> List[str]:
     return list(LEARNING_RATES.keys())
-

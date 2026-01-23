@@ -9,6 +9,7 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
+
 class Figure(ABC):
     @abstractmethod
     def __init__(self, filename: str):
@@ -26,20 +27,21 @@ class Figure(ABC):
     def update_figure(self, *args, **kwargs):
         pass
 
+
 class RefFigure(Figure):
     def __init__(self, title: str, filename: str, detail: str):
         super().__init__(filename)
         self.title = title
-        self.fig = plt.figure(figsize=(7,7))
+        self.fig = plt.figure(figsize=(7, 7))
         self.fig.suptitle(self.title)
         self.fig.title(detail)
-    
+
     def save_figure(self):
         self.fig.savefig()
-    
+
     def show_figure(self):
         self.fig.show()
-    
+
     def update_figure(self, *args, **kwargs):
         """Update the figure with new data. Placeholder implementation."""
         pass
@@ -61,7 +63,7 @@ class LearningRateRefFigure(Figure):
         self.ax.grid(True)
         self.ax.set_xlim(0, max_iterations)
 
-        self.line, = self.ax.plot([], [], label=f"LR: {self.learning_rate_name}")
+        (self.line,) = self.ax.plot([], [], label=f"LR: {self.learning_rate_name}")
         self.ax.legend()
 
     def save_figure(self):
@@ -95,13 +97,7 @@ class TrainingFigure(Figure):
 
         self.channels = list(range(6))
 
-        self.training_metrics = {
-            channel: {
-                "loss": [],
-                "accuracy": [],
-                "r_squared": []
-            } for channel in self.channels
-        }
+        self.training_metrics = {channel: {"loss": [], "accuracy": [], "r_squared": []} for channel in self.channels}
 
         self.fig, (self.ax_loss, self.ax_acc, self.ax_r2) = plt.subplots(3, 1, figsize=(6, 12))
         self.fig.suptitle(f"{self.title}")
@@ -113,9 +109,9 @@ class TrainingFigure(Figure):
         colors = plt.cm.tab10(np.linspace(0, 1, len(self.channels)))
 
         for channel in self.channels:
-            self.lines_loss[channel], = self.ax_loss.plot([], [], label=f"Channel {channel}", color=colors[channel])
-            self.lines_acc[channel], = self.ax_acc.plot([], [], label=f"Channel {channel}", color=colors[channel])
-            self.lines_r2[channel], = self.ax_r2.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_loss[channel],) = self.ax_loss.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_acc[channel],) = self.ax_acc.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_r2[channel],) = self.ax_r2.plot([], [], label=f"Channel {channel}", color=colors[channel])
 
         self.ax_loss.legend()
         self.ax_loss.set_title(f"Loss ({self.loss_detail})")
@@ -200,9 +196,7 @@ class FigureService:
         return self.figures[title]
 
     def init_ref_figure(self, filename, title, detail):
-        self.figures[title] = RefFigure(
-            title, filename, detail
-        )
+        self.figures[title] = RefFigure(title, filename, detail)
         return self.figures[title]
 
     def init_learning_rate_ref_figure(self, filename, title, learning_rate_name, max_iterations=500):

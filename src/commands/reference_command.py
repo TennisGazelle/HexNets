@@ -75,7 +75,7 @@ class ReferenceCommand(Command):
         # Model 'none' doesn't need validation of n, r, or graph
         if args.model == "none":
             return
-        
+
         if args.generate_all:
             if args.model == "mlp":
                 raise ValueError("--all flag cannot be used with mlp model. Use hex model for batch generation.")
@@ -105,10 +105,10 @@ class ReferenceCommand(Command):
 
     def _determine_iteration_ranges(self, args: Namespace):
         """Determine which variables to iterate over based on what's specified.
-        
+
         Subtractive approach: if a variable is specified, fix it and iterate the others.
         All three parameters (n, r, graph) can be None if not specified.
-        
+
         Returns: (n_range, r_range, graph_types)
         """
         all_graph_types = [
@@ -119,23 +119,23 @@ class ReferenceCommand(Command):
             "multi_activation",
             "layer_indices_terminal",
         ]
-        
+
         if args.generate_all:
             # Iterate through all possibilities
             return (range(2, 9), range(6), all_graph_types)
-        
+
         # Fix what's specified, iterate what's not
         # n: if specified, fix to [args.n], otherwise iterate range(2, 9)
         n_range = [args.n] if args.n is not None else range(2, 9)
-        
+
         # r: if specified, fix to [args.rotation], otherwise iterate range(6)
         r_range = [args.rotation] if args.rotation is not None else range(6)
-        
+
         # graph: if specified, fix to [args.graph], otherwise iterate all_graph_types
         graph_types = [args.graph] if args.graph is not None else all_graph_types
-        
+
         return (n_range, r_range, graph_types)
-    
+
     def _generate_graph(self, net, graph_type: str, args: Namespace, figures_dir: Path):
         """Generate a single graph of the specified type."""
         if args.dry_run:
@@ -145,7 +145,7 @@ class ReferenceCommand(Command):
             else:
                 logger.info(f"[DRY-RUN] Would generate {graph_type} graph for n={net.n}, r={net.r}")
             return
-        
+
         if graph_type == "structure_dot":
             logger.info("This assumes you have Graphviz installed...")
             output_file, _ = net.graph_structure(output_dir=figures_dir, medium="dot")
@@ -171,21 +171,21 @@ class ReferenceCommand(Command):
     def invoke(self, args: Namespace):
         figures_dir = Path("reference")
         figures_dir.mkdir(parents=True, exist_ok=True)
-        
+
         if args.model == "none":
             # Generate learning rate reference figures
             learning_rates = get_available_learning_rates()
             max_iterations = 500
-            
+
             print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
             print(f"{Colors.BLUE}Generating Learning Rate Reference Figures{Colors.NC}")
             print(f"{Colors.BLUE}  Iterations: {max_iterations}{Colors.NC}")
             print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
             print()
-            
+
             figure_service = FigureService()
             figure_service.set_figures_path(figures_dir)
-            
+
             total_generated = 0
             for lr_name in learning_rates:
                 try:
@@ -193,26 +193,24 @@ class ReferenceCommand(Command):
                         print(f"{Colors.YELLOW}  [DRY-RUN] Would generate: {lr_name}...{Colors.NC}")
                         total_generated += 1
                         continue
-                    
+
                     print(f"{Colors.YELLOW}  Generating: {lr_name}...{Colors.NC}")
-                    
+
                     # Create learning rate instance
                     lr_instance = get_learning_rate(lr_name, learning_rate=0.01)
-                    
+
                     # Generate iterations and learning rate values
                     iterations = np.arange(1, max_iterations + 1)
                     lr_values = np.array([lr_instance.rate_at_iteration(i) for i in iterations])
-                    
+
                     # Create figure
                     filename = f"lr_{lr_name}_i{max_iterations}.png"
                     title = f"Learning Rate: {lr_name}"
-                    figure = figure_service.init_learning_rate_ref_figure(
-                        filename, title, lr_name, max_iterations
-                    )
-                    
+                    figure = figure_service.init_learning_rate_ref_figure(filename, title, lr_name, max_iterations)
+
                     # Update figure with data
                     figure.update_figure(iterations, lr_values)
-                    
+
                     # Save figure
                     figure.save_figure()
                     total_generated += 1
@@ -220,7 +218,7 @@ class ReferenceCommand(Command):
                 except Exception as e:
                     print(f"{Colors.RED}    Error: {e}{Colors.NC}")
                     logger.exception(f"Error generating learning rate figure for {lr_name}")
-            
+
             print()
             print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
             print(f"{Colors.GREEN}Generated {total_generated} learning rate reference figure(s)!{Colors.NC}")
@@ -229,7 +227,7 @@ class ReferenceCommand(Command):
             print(f"Files saved to: {figures_dir}")
             print()
             return
-        
+
         if args.model == "mlp":
             # MLP model doesn't support iteration, just generate the single graph
             if args.graph is None:
@@ -253,10 +251,10 @@ class ReferenceCommand(Command):
 
         # Hex model: determine iteration ranges
         n_range, r_range, graph_types = self._determine_iteration_ranges(args)
-        
+
         activation_function = get_activation_function(args.activation)
         loss_function = get_loss_function(args.loss)
-        
+
         # Print header if iterating
         is_iterating = len(n_range) > 1 or len(r_range) > 1 or len(graph_types) > 1
         if is_iterating:
@@ -268,16 +266,16 @@ class ReferenceCommand(Command):
                 print(f"{Colors.BLUE}  Mode: Iterating over unspecified parameters{Colors.NC}")
             print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
             print()
-        
+
         total_generated = 0
-        
+
         # Iterate through the determined ranges
         for n in n_range:
             if is_iterating and len(n_range) > 1:
                 print(f"{Colors.GREEN}{'=' * 40}{Colors.NC}")
                 print(f"{Colors.GREEN}n={n}{Colors.NC}")
                 print(f"{Colors.GREEN}{'=' * 40}{Colors.NC}")
-            
+
             for r in r_range:
                 # Create network for this n, r combination
                 net = HexagonalNeuralNetwork(
@@ -287,29 +285,29 @@ class ReferenceCommand(Command):
                     activation=activation_function,
                     loss=loss_function,
                 )
-                
+
                 # Update args.rotation for this iteration (needed for layer_indices_terminal)
                 current_rotation = args.rotation
                 args.rotation = r
-                
+
                 for graph_type in graph_types:
                     try:
                         if is_iterating:
                             if len(r_range) > 1 or len(graph_types) > 1:
                                 print(f"{Colors.YELLOW}  Generating: r={r}, graph={graph_type}...{Colors.NC}")
-                        
+
                         self._generate_graph(net, graph_type, args, figures_dir)
                         total_generated += 1
                     except Exception as e:
                         print(f"{Colors.RED}    Error: {e}{Colors.NC}")
                         logger.exception(f"Error generating graph for n={n}, r={r}, graph={graph_type}")
-                
+
                 # Restore original rotation
                 args.rotation = current_rotation
-            
+
             if is_iterating and len(n_range) > 1:
                 print()
-        
+
         if is_iterating:
             print()
             print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")

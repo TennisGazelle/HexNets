@@ -9,17 +9,13 @@ from logging_config import setup_logging, get_logger
 
 logger = get_logger(__name__)
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Hexagonal Neural Network CLI tool")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
-    commands = [
-        ReferenceCommand(),
-        AdhocCommand(),
-        TrainCommand(),
-        StatsCommand()
-    ]
+    commands = [ReferenceCommand(), AdhocCommand(), TrainCommand(), StatsCommand()]
 
     for command in commands:
         subparser = subparsers.add_parser(command.name(), help=command.help())
@@ -27,21 +23,23 @@ def parse_args():
         command.configure_parser(subparser)
 
     args = parser.parse_args()
-    
+
     if "command" not in args or args.command is None:
         parser.print_help()
-        logger.error('Command not provided')
+        logger.error("Command not provided")
         exit(1)
-    
+
     command = args.command
 
     return args, command
+
 
 def main():
     # Initialize logging
     setup_logging(level=logging.DEBUG)
     args, command = parse_args()
     command(args)
+
 
 if __name__ == "__main__":
     main()

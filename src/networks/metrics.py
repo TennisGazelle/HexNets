@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Tuple
 
+
 class Metrics:
     def __init__(self, metrics: dict = None):
         self.loss = metrics["loss"] if metrics else []
@@ -22,7 +23,7 @@ class Metrics:
 
     def __repr__(self):
         return self.__str__()
-    
+
     def as_dict(self):
         return {
             "loss": self.loss,
@@ -34,12 +35,12 @@ class Metrics:
             "y2_sum": self.y2_sum,
             "count": self.count,
         }
-    
+
     def add_metric(self, loss: float, accuracy: float, r_squared: float):
         self.loss.append(loss)
         self.accuracy.append(accuracy)
         self.r_squared.append(r_squared)
-    
+
     def tally_accurcy_r2(self, y_pred: np.ndarray, y_target: np.ndarray):
         diff_squared = (y_pred - y_target) ** 2
         rmse = np.sqrt(np.mean(diff_squared))
@@ -48,12 +49,12 @@ class Metrics:
 
         self.ss_res_sum += float(np.sum(diff_squared))
         self.y_sum += float(np.sum(y_target))
-        self.y2_sum += float(np.sum(y_target ** 2))
+        self.y2_sum += float(np.sum(y_target**2))
 
         self.count += 1
 
     def calc_accuracy_r2(self, n: int) -> Tuple[float, float]:
-        ss_tot = self.y2_sum - (self.y_sum ** 2 / (self.count * n))
+        ss_tot = self.y2_sum - (self.y_sum**2 / (self.count * n))
         r_squared = 1 - (self.ss_res_sum / (ss_tot + 1e-12))
 
         return self.correct / self.count, r_squared

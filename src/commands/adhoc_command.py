@@ -46,8 +46,6 @@ class AdhocCommand(Command):
             loss=loss_function,
         )
 
-
-
         net.graph_weights(activation_only=False, detail="untrained")
 
         # alternate between rotations 0 and 1
