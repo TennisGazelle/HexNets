@@ -137,7 +137,7 @@ def show_rotation_comparison(n=3):
 # Main
 if __name__ == "__main__":
     streamlit_dir = pathlib.Path("./reference").resolve()
-    st.set_page_config(page_title="HexNet Visualizer", page_icon="🔷", layout="wide")
+    st.set_page_config(page_title="HexNet Visualizer", page_icon=None, layout="wide")
 
     initialize_session_state()
 

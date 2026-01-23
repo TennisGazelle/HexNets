@@ -99,26 +99,26 @@ streamlit-deploy:
 	@echo ""
 	@# Check if app file exists
 	@if [ ! -f "src/streamlit_app.py" ]; then \
-		echo "❌ ERROR: src/streamlit_app.py not found"; \
+		echo "ERROR: src/streamlit_app.py not found"; \
 		exit 1; \
 	else \
-		echo "✅ Streamlit app file found: src/streamlit_app.py"; \
+		echo "Streamlit app file found: src/streamlit_app.py"; \
 	fi
 	@# Check if requirements.txt exists
 	@if [ ! -f "requirements.txt" ]; then \
-		echo "⚠️  WARNING: requirements.txt not found"; \
+		echo "WARNING: requirements.txt not found"; \
 		echo "   Streamlit Cloud can use pyproject.toml, but requirements.txt is recommended"; \
 		echo "   Create it with: pip freeze > requirements.txt"; \
 	else \
-		echo "✅ requirements.txt found"; \
+		echo "requirements.txt found"; \
 	fi
 	@# Check if reference directory exists (for rotation comparison)
 	@if [ ! -d "reference" ]; then \
-		echo "⚠️  WARNING: reference/ directory not found"; \
+		echo "WARNING: reference/ directory not found"; \
 		echo "   Rotation Comparison tab will show warnings"; \
 		echo "   Generate reference graphs with: hexnet ref --all"; \
 	else \
-		echo "✅ reference/ directory found"; \
+		echo "reference/ directory found"; \
 	fi
 	@echo ""
 	@echo "============================================================================"
@@ -174,4 +174,4 @@ lint:
 
 .PHONY: lint-check
 lint-check:
-	@${BLACK} --check src -l 120 || (echo "❌ Linting failed. Run 'make lint' to fix formatting issues." && exit 1)
+	@${BLACK} --check src -l 120 || (echo "Linting failed. Run 'make lint' to fix formatting issues." && exit 1)
