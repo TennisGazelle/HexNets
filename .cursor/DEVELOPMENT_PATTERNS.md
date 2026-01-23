@@ -70,6 +70,17 @@ fig = service.init_training_figure(...)
 
 **Note:** Currently only used for training figures. Reference figures use direct matplotlib.
 
+### Training Figure Structure
+
+`TrainingFigure` displays training progress with **4 subplots** arranged vertically:
+
+1. **Loss** - Training loss over epochs
+2. **Accuracy** - Training accuracy (RMSE-based score) over epochs
+3. **R²** - Coefficient of determination over epochs
+4. **Adjusted R²** - Adjusted coefficient of determination over epochs
+
+The figure supports up to 6 channels (for hexagonal network rotations), with each channel displayed as a separate line on each subplot. The figure is updated in real-time during training via `update_figure()`.
+
 ### Graph Methods
 
 Network graph methods return `(filepath, figure)` tuple:

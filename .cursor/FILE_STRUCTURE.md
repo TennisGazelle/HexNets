@@ -49,7 +49,7 @@ src/
 │   ├── learning_rate/     # Learning rate schedules (plugin dir)
 │   │   ├── learning_rate.py  # Base learning rate class
 │   │   └── ConstantLearningRate.py
-│   ├── metrics.py         # Training metrics
+│   ├── metrics.py         # Training metrics (loss, accuracy, r_squared, adjusted_r_squared)
 │   └── optimizer/          # Optimizers (future)
 ├── data/                  # Dataset implementations
 │   └── dataset.py         # Base dataset and implementations
@@ -90,6 +90,14 @@ Component directories (`activation/`, `loss/`, `learning_rate/`) contain base cl
 
 - **`src/run_service.py`**: `RunService` class handles run creation, loading, and persistence. **For details, see [CLI_PATTERNS.md](./CLI_PATTERNS.md#run-management)**
 
+### Training Metrics
+
+- **`src/networks/metrics.py`**: `Metrics` class tracks training progress
+  - Tracks per-epoch: `loss`, `accuracy`, `r_squared`, `adjusted_r_squared`
+  - Stores intermediate values for R² calculation: `ss_res_sum`, `y_sum`, `y2_sum`, `count`
+  - Methods: `add_metric()`, `calc_accuracy_r2()`, `tally_accurcy_r2()`
+  - Serialized to `training_metrics.json` in run directories
+
 ### Utilities
 
 - **`src/utils.py`**: Helper functions
@@ -112,7 +120,7 @@ runs/
   YYYY-MM-DD_HH-MM_<uuid>/
     config.json              # Hyperparameters
     manifest.json            # Hashes and metadata
-    training_metrics.json    # Training history
+    training_metrics.json    # Training history (loss, accuracy, r_squared, adjusted_r_squared arrays)
     model.pkl               # Saved weights
     plots/                  # Generated figures
       *.png
