@@ -201,13 +201,15 @@ class TestTrainingFigure:
             mock_ax_loss = Mock()
             mock_ax_acc = Mock()
             mock_ax_r2 = Mock()
-            mock_subplots.return_value = (mock_fig, (mock_ax_loss, mock_ax_acc, mock_ax_r2))
+            mock_ax_adj_r2 = Mock()
+            mock_subplots.return_value = (mock_fig, (mock_ax_loss, mock_ax_acc, mock_ax_r2, mock_ax_adj_r2))
             
             # Mock plot lines
             mock_line = Mock()
             mock_ax_loss.plot.return_value = (mock_line,)
             mock_ax_acc.plot.return_value = (mock_line,)
             mock_ax_r2.plot.return_value = (mock_line,)
+            mock_ax_adj_r2.plot.return_value = (mock_line,)
             
             self.filename = "test_training.png"
             self.title = "Test Training"
@@ -223,6 +225,7 @@ class TestTrainingFigure:
             self.figure.ax_loss = mock_ax_loss
             self.figure.ax_acc = mock_ax_acc
             self.figure.ax_r2 = mock_ax_r2
+            self.figure.ax_adj_r2 = mock_ax_adj_r2
 
     def test_init(self):
         """Test that TrainingFigure initializes correctly"""
@@ -240,6 +243,7 @@ class TestTrainingFigure:
             assert "loss" in self.figure.training_metrics[channel]
             assert "accuracy" in self.figure.training_metrics[channel]
             assert "r_squared" in self.figure.training_metrics[channel]
+            assert "adjusted_r_squared" in self.figure.training_metrics[channel]
 
     def test_save_figure(self):
         """Test saving training figure"""
@@ -258,7 +262,8 @@ class TestTrainingFigure:
         training_metrics = {
             "loss": 0.5,
             "accuracy": 0.8,
-            "r_squared": 0.9
+            "r_squared": 0.9,
+            "adjusted_r_squared": 0.85
         }
         channel = 0
         
@@ -267,9 +272,11 @@ class TestTrainingFigure:
         assert len(self.figure.training_metrics[channel]["loss"]) == 1
         assert len(self.figure.training_metrics[channel]["accuracy"]) == 1
         assert len(self.figure.training_metrics[channel]["r_squared"]) == 1
+        assert len(self.figure.training_metrics[channel]["adjusted_r_squared"]) == 1
         assert self.figure.training_metrics[channel]["loss"][0] == 0.5
         assert self.figure.training_metrics[channel]["accuracy"][0] == 0.8
         assert self.figure.training_metrics[channel]["r_squared"][0] == 0.9
+        assert self.figure.training_metrics[channel]["adjusted_r_squared"][0] == 0.85
 
     def test_update_figure_incomplete_metrics(self):
         """Test updating figure with incomplete metrics (should not update)"""
@@ -308,12 +315,14 @@ class TestTrainingFigure:
         training_metrics_0 = {
             "loss": 0.5,
             "accuracy": 0.8,
-            "r_squared": 0.9
+            "r_squared": 0.9,
+            "adjusted_r_squared": 0.85
         }
         training_metrics_1 = {
             "loss": 0.3,
             "accuracy": 0.9,
-            "r_squared": 0.95
+            "r_squared": 0.95,
+            "adjusted_r_squared": 0.92
         }
         
         self.figure.update_figure(training_metrics_0, channel=0)
@@ -329,12 +338,14 @@ class TestTrainingFigure:
         training_metrics_1 = {
             "loss": 0.5,
             "accuracy": 0.8,
-            "r_squared": 0.9
+            "r_squared": 0.9,
+            "adjusted_r_squared": 0.85
         }
         training_metrics_2 = {
             "loss": 0.4,
             "accuracy": 0.85,
-            "r_squared": 0.92
+            "r_squared": 0.92,
+            "adjusted_r_squared": 0.88
         }
         
         self.figure.update_figure(training_metrics_1, channel=0)

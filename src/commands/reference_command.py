@@ -4,20 +4,20 @@ import logging
 from pathlib import Path
 import numpy as np
 from networks.MLPNetwork import MLPNetwork
-from src.commands.command import (
+from commands.command import (
     Command,
     add_hex_only_arguments,
     validate_hex_only_arguments,
     add_global_arguments,
     validate_global_arguments,
 )
-from src.networks.HexagonalNetwork import HexagonalNeuralNetwork
-from src.networks.activation.activations import get_activation_function
-from src.networks.loss.loss import get_loss_function
-from src.networks.learning_rate.learning_rate import get_learning_rate, get_available_learning_rates
-from src.figure_service import FigureService
-from src.logging_config import get_logger, setup_logging
-from src.utils import Colors
+from networks.HexagonalNetwork import HexagonalNeuralNetwork
+from networks.activation.activations import get_activation_function
+from networks.loss.loss import get_loss_function
+from networks.learning_rate.learning_rate import get_learning_rate, get_available_learning_rates
+from figure_service import FigureService
+from logging_config import get_logger, setup_logging
+from utils import Colors
 
 logger = get_logger(__name__)
 

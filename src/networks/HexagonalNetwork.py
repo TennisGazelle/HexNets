@@ -570,11 +570,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def show_latest_metrics(self):
         metrics = self.training_metrics[self.r]
         data = (
-            [0.0, 0.0, 0.0, 0]
+            [0.0, 0.0, 0.0, 0.0, 0]
             if len(metrics.loss) == 0
-            else [metrics.loss[-1], metrics.accuracy[-1], metrics.r_squared[-1], self.epochs_completed]
+            else [
+                metrics.loss[-1],
+                metrics.accuracy[-1],
+                metrics.r_squared[-1],
+                metrics.adjusted_r_squared[-1] if metrics.adjusted_r_squared else 0.0,
+                self.epochs_completed,
+            ]
         )
-        table_print(["Rotation", "Loss", "Accuracy", "R^2", "Epochs"], [[self.r, *data]])
+        table_print(["Rotation", "Loss", "Accuracy", "R^2", "Adjusted R^2", "Epochs"], [[self.r, *data]])
 
     def train_animated(self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None):
         """
@@ -677,10 +683,11 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             # r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
             epoch_loss = total_loss / len(data)
-            epoch_acc, epoch_r2 = self.training_metrics[self.r].calc_accuracy_r2(self.n)
-            self.training_metrics[self.r].add_metric(epoch_loss, epoch_acc, epoch_r2)
+            epoch_acc, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_accuracy_r2(self.n, p=self.n)
+            self.training_metrics[self.r].add_metric(epoch_loss, epoch_acc, epoch_r2, epoch_adj_r2)
             self.training_figure.update_figure(
-                {"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2}, self.r
+                {"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2},
+                self.r,
             )
 
             self.apply_delta_W()

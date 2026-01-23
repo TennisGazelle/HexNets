@@ -97,14 +97,18 @@ class TrainingFigure(Figure):
 
         self.channels = list(range(6))
 
-        self.training_metrics = {channel: {"loss": [], "accuracy": [], "r_squared": []} for channel in self.channels}
+        self.training_metrics = {
+            channel: {"loss": [], "accuracy": [], "r_squared": [], "adjusted_r_squared": []}
+            for channel in self.channels
+        }
 
-        self.fig, (self.ax_loss, self.ax_acc, self.ax_r2) = plt.subplots(3, 1, figsize=(6, 12))
+        self.fig, (self.ax_loss, self.ax_acc, self.ax_r2, self.ax_adj_r2) = plt.subplots(4, 1, figsize=(6, 16))
         self.fig.suptitle(f"{self.title}")
 
         self.lines_loss = {}
         self.lines_acc = {}
         self.lines_r2 = {}
+        self.lines_adj_r2 = {}
 
         colors = plt.cm.tab10(np.linspace(0, 1, len(self.channels)))
 
@@ -112,6 +116,9 @@ class TrainingFigure(Figure):
             (self.lines_loss[channel],) = self.ax_loss.plot([], [], label=f"Channel {channel}", color=colors[channel])
             (self.lines_acc[channel],) = self.ax_acc.plot([], [], label=f"Channel {channel}", color=colors[channel])
             (self.lines_r2[channel],) = self.ax_r2.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_adj_r2[channel],) = self.ax_adj_r2.plot(
+                [], [], label=f"Channel {channel}", color=colors[channel]
+            )
 
         self.ax_loss.legend()
         self.ax_loss.set_title(f"Loss ({self.loss_detail})")
@@ -126,9 +133,14 @@ class TrainingFigure(Figure):
 
         self.ax_r2.legend()
         self.ax_r2.set_title(f"R^2 ({self.r2_detail})")
-        self.ax_r2.set_xlabel("Epoch")
         self.ax_r2.set_ylabel("R^2")
         self.ax_r2.grid(True)
+
+        self.ax_adj_r2.legend()
+        self.ax_adj_r2.set_title(f"Adjusted R^2 ({self.r2_detail})")
+        self.ax_adj_r2.set_xlabel("Epoch")
+        self.ax_adj_r2.set_ylabel("Adjusted R^2")
+        self.ax_adj_r2.grid(True)
 
     def save_figure(self):
         # Ensure filename is a Path object
@@ -147,12 +159,15 @@ class TrainingFigure(Figure):
         self.fig.show()
 
     def update_figure(self, training_metrics: dict, channel: int = 0):
-        if any(not training_metrics[k] for k in ("loss", "accuracy", "r_squared")):
+        required_keys = ("loss", "accuracy", "r_squared")
+        if any(not training_metrics.get(k) for k in required_keys):
             return
 
         self.training_metrics[channel]["loss"].append(training_metrics["loss"])
         self.training_metrics[channel]["accuracy"].append(training_metrics["accuracy"])
         self.training_metrics[channel]["r_squared"].append(training_metrics["r_squared"])
+        if "adjusted_r_squared" in training_metrics:
+            self.training_metrics[channel]["adjusted_r_squared"].append(training_metrics["adjusted_r_squared"])
 
         # loss
         self.lines_loss[channel].set_data(
@@ -177,6 +192,14 @@ class TrainingFigure(Figure):
         )
         self.ax_r2.relim()
         self.ax_r2.autoscale_view()
+
+        # adjusted r^2
+        self.lines_adj_r2[channel].set_data(
+            np.arange(1, len(self.training_metrics[channel]["adjusted_r_squared"]) + 1),
+            self.training_metrics[channel]["adjusted_r_squared"],
+        )
+        self.ax_adj_r2.relim()
+        self.ax_adj_r2.autoscale_view()
 
         self.fig.canvas.draw()
 

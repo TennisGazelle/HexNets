@@ -181,11 +181,17 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
     def show_latest_metrics(self):
         metrics = self.training_metrics
         data = (
-            [0.0, 0.0, 0.0, 0]
+            [0.0, 0.0, 0.0, 0.0, 0]
             if len(metrics.loss) == 0
-            else [metrics.loss[-1], metrics.accuracy[-1], metrics.r_squared[-1], self.epochs_completed]
+            else [
+                metrics.loss[-1],
+                metrics.accuracy[-1],
+                metrics.r_squared[-1],
+                metrics.adjusted_r_squared[-1] if metrics.adjusted_r_squared else 0.0,
+                self.epochs_completed,
+            ]
         )
-        table_print(["Loss", "Accuracy", "R^2", "Epochs"], [[*data]])
+        table_print(["Loss", "Accuracy", "R^2", "Adjusted R^2", "Epochs"], [[*data]])
 
     def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
         pass
@@ -365,11 +371,21 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             ss_tot = sum_y2 - (sum_y**2 / (num_elems))
             r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
+            # Calculate adjusted R-squared
+            p = self.input_dim  # Number of features/parameters
+            if num_elems > p + 1:
+                adjusted_r_squared = 1 - (1 - r_squared) * (num_elems - 1) / (num_elems - p - 1)
+            else:
+                adjusted_r_squared = r_squared  # Fallback if insufficient samples
+
             epoch_loss = total_loss / count
             epoch_acc = correct / count
             epoch_r2 = r_squared
-            self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2)
-            self.training_figure.update_figure({"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2})
+            epoch_adj_r2 = adjusted_r_squared
+            self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2, epoch_adj_r2)
+            self.training_figure.update_figure(
+                {"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2}
+            )
 
             self.apply_delta_W()
 
