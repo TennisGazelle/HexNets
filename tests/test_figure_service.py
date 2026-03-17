@@ -1,6 +1,7 @@
 """Unit tests for figure_service.py"""
 
 import pytest
+import sys
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 import numpy as np
@@ -13,6 +14,11 @@ from services.figure_service import (
     TrainingFigure,
     RefFigure,
 )
+
+# Patch the module where FigureService is defined (FigureService.py). The package
+# re-exports the class as FigureService, so 'services.figure_service.FigureService'
+# resolves to the class on GHA (Python 3.10), not the module — use the module explicitly.
+FIGURE_SERVICE_MODULE = sys.modules["services.figure_service.FigureService"]
 
 
 class TestFigureService:
@@ -39,7 +45,7 @@ class TestFigureService:
         self.service.set_figures_path(None)
         assert self.service.figures_path == Path("figures")
 
-    @patch('services.figure_service.FigureService.LearningRateRefFigure')
+    @patch.object(FIGURE_SERVICE_MODULE, "LearningRateRefFigure")
     def test_init_learning_rate_ref_figure(self, mock_figure_class):
         """Test initializing learning rate reference figure"""
         mock_figure = Mock()
@@ -63,7 +69,7 @@ class TestFigureService:
         )
         assert self.service.figures[title] == mock_figure
 
-    @patch('services.figure_service.FigureService.TrainingFigure')
+    @patch.object(FIGURE_SERVICE_MODULE, "TrainingFigure")
     def test_init_training_figure(self, mock_figure_class):
         """Test initializing training figure"""
         mock_figure = Mock()
@@ -89,7 +95,7 @@ class TestFigureService:
         )
         assert self.service.figures[title] == mock_figure
 
-    @patch('services.figure_service.FigureService.RefFigure')
+    @patch.object(FIGURE_SERVICE_MODULE, "RefFigure")
     def test_init_ref_figure(self, mock_figure_class):
         """Test initializing reference figure"""
         mock_figure = Mock()
@@ -399,7 +405,7 @@ class TestFigureServiceEdgeCases:
         """Test that creating multiple figures with same title overwrites"""
         service = FigureService()
         
-        with patch('services.figure_service.FigureService.LearningRateRefFigure') as mock_figure_class:
+        with patch.object(FIGURE_SERVICE_MODULE, "LearningRateRefFigure") as mock_figure_class:
             mock_figure1 = Mock()
             mock_figure2 = Mock()
             mock_figure_class.side_effect = [mock_figure1, mock_figure2]
