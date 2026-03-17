@@ -1,7 +1,7 @@
 # a unit test for the linear dataset using pytest
 
 
-from src.data.dataset import LinearScaleDataset, randomized_enumerate
+from data.dataset import LinearScaleDataset, randomized_enumerate
 
 def test_linear_dataset():
     dataset = LinearScaleDataset(d=2, num_samples=100, scale=1.0)

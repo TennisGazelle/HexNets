@@ -14,9 +14,10 @@ from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from networks.MLPNetwork import MLPNetwork
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
-from logging_config import get_logger
+from services.logging_config import get_logger
 
 logger = get_logger(__name__)
+
 
 def make_run_folder_name(filename: Union[str, None] = None) -> Tuple[str, str]:
     now = datetime.now().strftime("%Y-%m-%d_%H-%M")
@@ -122,7 +123,7 @@ class RunService:
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
-            
+
             self.net.load(self.get_network_weights_path())
 
         if "run_dir" not in args or args.run_dir is None or ("run_name" in args and args.run_name):

@@ -4,8 +4,10 @@ import numpy as np
 
 DATASET_FUNCTIONS = {}
 
+
 class BaseDataset(ABC):
     "this class should be subscriptable"
+
     def __init__(self):
         self.data = None
         self.index_array = None
@@ -17,7 +19,7 @@ class BaseDataset(ABC):
             raise ValueError(f"Dataset function {self.display_name} already exists")
 
         DATASET_FUNCTIONS[self.display_name] = self
-    
+
     # each class will have:
 
     def name(self) -> str:
@@ -26,7 +28,7 @@ class BaseDataset(ABC):
     @abstractmethod
     def load_data(self) -> bool:
         raise NotImplementedError("load_data not implemented")
-    
+
     def get_data(self) -> dict:
         return self.data
 
@@ -35,13 +37,15 @@ class BaseDataset(ABC):
 
     def __iter__(self):
         return iter(zip(self.data["X"], self.data["Y"]))
-    
+
     def __len__(self):
         return len(self.data["X"])
-    
-    def __getitem__(self, index: int | slice) -> Tuple[np.ndarray, np.ndarray] | Iterator[Tuple[np.ndarray, np.ndarray]]:
+
+    def __getitem__(
+        self, index: int | slice
+    ) -> Tuple[np.ndarray, np.ndarray] | Iterator[Tuple[np.ndarray, np.ndarray]]:
         return (self.data["X"][index], self.data["Y"][index])
-    
+
 
 def randomized_enumerate(dataset: BaseDataset) -> Iterator[Tuple[int, Tuple[np.ndarray, np.ndarray]]]:
     index_array = np.arange(len(dataset))
@@ -69,10 +73,12 @@ class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
         }
         return True
 
+
 class IdentityDataset(LinearScaleDataset, display_name="identity"):
     def __init__(self, d: int = 2, num_samples: int = 100):
         super().__init__(d, num_samples)
         self.scale = 1.0
+
 
 class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
     def __init__(self, d: int = 2, num_samples: int = 100):

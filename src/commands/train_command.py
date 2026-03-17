@@ -12,8 +12,8 @@ from commands.command import (
     validate_global_arguments,
     get_dataset,
 )
-from run_service import RunService
-from logging_config import get_logger
+from services.run_service import RunService
+from services.logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -60,13 +60,7 @@ class TrainCommand(Command):
         )
 
         parser.add_argument(
-            "-rn",
-            "--run_name",
-            type=str,
-            default=None,
-            required=False,
-            help="name of the new run",
-            dest="run_name"
+            "-rn", "--run_name", type=str, default=None, required=False, help="name of the new run", dest="run_name"
         )
 
     def validate_args(self, args: Namespace):

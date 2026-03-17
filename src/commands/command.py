@@ -11,6 +11,7 @@ from data.dataset import IdentityDataset, LinearScaleDataset
 
 logger = logging.getLogger(__name__)
 
+
 def print_header():
     header1 = """
                          __     _ 
@@ -28,8 +29,6 @@ def print_header():
     /_/ /_/\___/_/|_/_/ |_/\___/\__/
     """
     print(random.choice([header1, header2]))
-
-
 
 
 def get_dataset(n, train_samples, type="identity", scale=1.0):
@@ -87,6 +86,7 @@ def add_hex_only_arguments(parser: ArgumentParser, set_defaults: bool = True):
         default=0 if set_defaults else None,
         dest="rotation",
     )
+
 
 def add_global_arguments(parser: ArgumentParser):
     parser.add_argument(
@@ -187,11 +187,7 @@ def add_training_arguments(parser: ArgumentParser):
     )
 
     parser.add_argument(
-        "--dry-run",
-        help="What would be run, do not create a run.",
-        default=False,
-        action="store_true",
-        dest="dry_run"
+        "--dry-run", help="What would be run, do not create a run.", default=False, action="store_true", dest="dry_run"
     )
 
 
@@ -265,6 +261,7 @@ def validate_global_arguments(args: Namespace):
             "Recommendation: normalize targets or explicitly set --huber-delta."
         )
 
+
 def validate_training_arguments(args: Namespace):
     # random number generator seed
     random.seed(args.seed)
@@ -275,7 +272,9 @@ def validate_training_arguments(args: Namespace):
     if args.pause < 0:
         raise ValueError("Pause must be at least 0")
     if args.learning_rate not in get_available_learning_rates():
-        raise ValueError(f"Invalid learning rate: {args.learning_rate}. Must be one of: {get_available_learning_rates()}")
+        raise ValueError(
+            f"Invalid learning rate: {args.learning_rate}. Must be one of: {get_available_learning_rates()}"
+        )
     if args.dataset_size < 10:
         raise ValueError("Dataset size must be at least 10")
     if args.type not in ["identity", "linear"]:

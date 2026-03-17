@@ -50,7 +50,7 @@ def update_network():
 def load_reference_image(n, r, image_type):
     """Load a reference image from the reference directory."""
     reference_dir = pathlib.Path("reference").resolve()
-    
+
     if image_type == "structure":
         filename = f"hexnet_n{n}_r{r}_structure.png"
     elif image_type == "activation":
@@ -59,7 +59,7 @@ def load_reference_image(n, r, image_type):
         filename = f"hexnet_n{n}_r{r}_Weight_Matrix.png"
     else:
         return None
-    
+
     image_path = reference_dir / filename
     if image_path.exists():
         return str(image_path)
@@ -79,24 +79,26 @@ def load_multi_activation_image(n):
 def show_rotation_comparison(n=3):
     """Display the rotation comparison table similar to ROTATION_SYSTEM.md"""
     st.header("Rotation Comparison Table")
-    st.markdown(f"Showing all rotations for **n={n}**. This table recreates the visualization from ROTATION_SYSTEM.md documentation.")
-    
+    st.markdown(
+        f"Showing all rotations for **n={n}**. This table recreates the visualization from ROTATION_SYSTEM.md documentation."
+    )
+
     # Create tabs for each rotation
     rotation_tabs = st.tabs([f"Rotation {r}" for r in range(6)])
-    
+
     for r, tab in enumerate(rotation_tabs):
         with tab:
             st.subheader(f"Rotation {r}")
-            
+
             # Load images for this rotation
             structure_img = load_reference_image(n, r, "structure")
             activation_img = load_reference_image(n, r, "activation")
             weight_img = load_reference_image(n, r, "weight")
             multi_activation_img = load_multi_activation_image(n)
-            
+
             # Display images in columns
             col1, col2, col3, col4 = st.columns(4)
-            
+
             with col1:
                 st.markdown("**Physical Structure**")
                 if structure_img:
@@ -104,7 +106,7 @@ def show_rotation_comparison(n=3):
                     st.markdown("The physical structure of the network.")
                 else:
                     st.warning(f"Structure image not found for n={n}, r={r}")
-            
+
             with col2:
                 st.markdown("**Activation Pattern**")
                 if activation_img:
@@ -112,7 +114,7 @@ def show_rotation_comparison(n=3):
                     st.markdown("The activation pattern of the network, via bitmap")
                 else:
                     st.warning(f"Activation image not found for n={n}, r={r}")
-            
+
             with col3:
                 st.markdown("**Weight Matrix**")
                 if weight_img:
@@ -125,7 +127,9 @@ def show_rotation_comparison(n=3):
                 st.markdown("**Multi-Activation Overlay**")
                 if multi_activation_img:
                     st.image(multi_activation_img, use_container_width=True)
-                    st.markdown("This view shows all 6 rotations overlaid on a single matrix, with each rotation shown in a different color.")
+                    st.markdown(
+                        "This view shows all 6 rotations overlaid on a single matrix, with each rotation shown in a different color."
+                    )
                 else:
                     st.warning(f"Multi-activation image not found for n={n}. Generate it with: `hexnet ref --all`")
 
@@ -133,11 +137,7 @@ def show_rotation_comparison(n=3):
 # Main
 if __name__ == "__main__":
     streamlit_dir = pathlib.Path("./reference").resolve()
-    st.set_page_config(
-        page_title="HexNet Visualizer",
-        page_icon="🔷",
-        layout="wide"
-    )
+    st.set_page_config(page_title="HexNet Visualizer", page_icon=None, layout="wide")
 
     initialize_session_state()
 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     # Page-level tabs
     tab1, tab2 = st.tabs(["Network Explorer", "Rotation Comparison"])
-    
+
     with tab1:
         st.header("Parameters")
 
@@ -154,32 +154,14 @@ if __name__ == "__main__":
 
         with col1:
             st.session_state.n = st.slider(
-                "Number of nodes (n)", 
-                min_value=2, 
-                max_value=8, 
-                value=st.session_state.n, 
-                step=1
+                "Number of nodes (n)", min_value=2, max_value=8, value=st.session_state.n, step=1
             )
 
-            st.session_state.r = st.slider(
-                "Rotation (r)",
-                min_value=0,
-                max_value=5,
-                value=st.session_state.r,
-                step=1
-            )
+            st.session_state.r = st.slider("Rotation (r)", min_value=0, max_value=5, value=st.session_state.r, step=1)
 
-            st.session_state.activation = st.selectbox(
-                "Activation",
-                get_available_activation_functions(),
-                index=0
-            )
+            st.session_state.activation = st.selectbox("Activation", get_available_activation_functions(), index=0)
 
-            st.session_state.loss = st.selectbox(
-                "Loss",
-                get_available_loss_functions(),
-                index=0
-            )
+            st.session_state.loss = st.selectbox("Loss", get_available_loss_functions(), index=0)
 
             if st.button("Generate Graphs"):
                 update_network()
@@ -199,12 +181,14 @@ if __name__ == "__main__":
                         buf = create_matplotlib_figure(fig)
                         st.image(buf, use_container_width=True)
                         plt.close(fig)
-            
+
             if st.button("Train Network"):
                 update_network()
                 with st.spinner(f"Training on linear set"):
                     data = get_dataset(st.session_state.n, 100, type="identity")
-                    loss, acc, r2, fig = st.session_state.net.train_animated(data, epochs=10, pause=0, output_dir=streamlit_dir)
+                    loss, acc, r2, fig = st.session_state.net.train_animated(
+                        data, epochs=10, pause=0, output_dir=streamlit_dir
+                    )
                     buf = create_matplotlib_figure(fig)
                     st.image(buf, use_container_width=True)
                     plt.close(fig)
@@ -232,12 +216,12 @@ if __name__ == "__main__":
         st.markdown("---")
         st.markdown("### About")
         st.write("HexNets is a tool for working with hexagonal neural networks.")
-    
+
     with tab2:
         n_selector = st.selectbox(
             "Select n (dimension) for rotation comparison",
             options=[2, 3, 4, 5, 6, 7, 8],
             index=1,  # Default to n=3
-            key="rotation_comparison_n"
+            key="rotation_comparison_n",
         )
         show_rotation_comparison(n=n_selector)

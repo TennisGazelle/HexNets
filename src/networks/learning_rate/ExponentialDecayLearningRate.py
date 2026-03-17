@@ -11,4 +11,4 @@ class ExponentialDecayLearningRate(BaseLearningRate, display_name="exponential_d
         self.decay_rate = decay_rate
 
     def rate_at_iteration(self, iteration: int) -> float:
-        return self.initial_learning_rate * (self.decay_rate ** iteration)
+        return self.initial_learning_rate * (self.decay_rate**iteration)

@@ -1,11 +1,13 @@
 import numpy as np
 from typing import Tuple
 
+
 class Metrics:
     def __init__(self, metrics: dict = None):
         self.loss = metrics["loss"] if metrics else []
         self.accuracy = metrics["accuracy"] if metrics else []
         self.r_squared = metrics["r_squared"] if metrics else []
+        self.adjusted_r_squared = metrics["adjusted_r_squared"] if metrics else []
 
         self.correct = metrics["correct"] if metrics else 0.0
         self.ss_res_sum = metrics["ss_res_sum"] if metrics else 0.0
@@ -17,29 +19,32 @@ class Metrics:
         loss = self.loss[-1] if self.loss else "N/A"
         accuracy = self.accuracy[-1] if self.accuracy else "N/A"
         r_squared = self.r_squared[-1] if self.r_squared else "N/A"
+        adjusted_r_squared = self.adjusted_r_squared[-1] if self.adjusted_r_squared else "N/A"
 
-        return f"Loss: {loss}, Accuracy: {accuracy}, R^2: {r_squared}"
+        return f"Loss: {loss}, Accuracy: {accuracy}, R^2: {r_squared}, Adjusted R^2: {adjusted_r_squared}"
 
     def __repr__(self):
         return self.__str__()
-    
+
     def as_dict(self):
         return {
             "loss": self.loss,
             "accuracy": self.accuracy,
             "r_squared": self.r_squared,
+            "adjusted_r_squared": self.adjusted_r_squared,
             "correct": self.correct,
             "ss_res_sum": self.ss_res_sum,
             "y_sum": self.y_sum,
             "y2_sum": self.y2_sum,
             "count": self.count,
         }
-    
-    def add_metric(self, loss: float, accuracy: float, r_squared: float):
+
+    def add_metric(self, loss: float, accuracy: float, r_squared: float, adjusted_r_squared: float):
         self.loss.append(loss)
         self.accuracy.append(accuracy)
         self.r_squared.append(r_squared)
-    
+        self.adjusted_r_squared.append(adjusted_r_squared)
+
     def tally_accurcy_r2(self, y_pred: np.ndarray, y_target: np.ndarray):
         diff_squared = (y_pred - y_target) ** 2
         rmse = np.sqrt(np.mean(diff_squared))
@@ -48,12 +53,31 @@ class Metrics:
 
         self.ss_res_sum += float(np.sum(diff_squared))
         self.y_sum += float(np.sum(y_target))
-        self.y2_sum += float(np.sum(y_target ** 2))
+        self.y2_sum += float(np.sum(y_target**2))
 
         self.count += 1
 
-    def calc_accuracy_r2(self, n: int) -> Tuple[float, float]:
-        ss_tot = self.y2_sum - (self.y_sum ** 2 / (self.count * n))
+    def calc_accuracy_r2(self, n: int, p: int = None) -> Tuple[float, float, float]:
+        """
+        Calculate accuracy, r_squared, and adjusted_r_squared.
+
+        Args:
+            n: Number of dimensions/features
+            p: Number of parameters (defaults to n if not provided)
+
+        Returns:
+            Tuple of (accuracy, r_squared, adjusted_r_squared)
+        """
+        ss_tot = self.y2_sum - (self.y_sum**2 / (self.count * n))
         r_squared = 1 - (self.ss_res_sum / (ss_tot + 1e-12))
 
-        return self.correct / self.count, r_squared
+        # Calculate adjusted R-squared
+        if p is None:
+            p = n  # Default to number of features if not specified
+        num_samples = self.count * n
+        if num_samples > p + 1:
+            adjusted_r_squared = 1 - (1 - r_squared) * (num_samples - 1) / (num_samples - p - 1)
+        else:
+            adjusted_r_squared = r_squared  # Fallback if insufficient samples
+
+        return self.correct / self.count, r_squared, adjusted_r_squared
