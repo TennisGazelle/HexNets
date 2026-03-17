@@ -53,9 +53,17 @@ src/
 │   └── optimizer/          # Optimizers (future)
 ├── data/                  # Dataset implementations
 │   └── dataset.py         # Base dataset and implementations
-├── run_service.py         # Run management and persistence
-├── figure_service.py      # Figure management
-├── logging_config.py      # Logging configuration
+├── services/              # Service modules
+│   ├── figure_service/    # Figure management
+│   │   ├── figure.py      # Abstract base class
+│   │   ├── RefFigure.py
+│   │   ├── LearningRateRefFigure.py
+│   │   ├── TrainingFigure.py
+│   │   └── FigureService.py
+│   ├── run_service/       # Run management and persistence
+│   │   └── RunService.py
+│   └── logging_config/   # Logging configuration
+│       └── logging_config.py
 ├── utils.py               # Utility functions
 ├── streamlit_app.py       # Streamlit web interface (see [QUICK_REFERENCE.md](./QUICK_REFERENCE.md#running-the-streamlit-web-interface))
 └── obsolete/              # Old/unused code (for reference)
@@ -88,7 +96,7 @@ Component directories (`activation/`, `loss/`, `learning_rate/`) contain base cl
 
 ### Run Management
 
-- **`src/run_service.py`**: `RunService` class handles run creation, loading, and persistence. **For details, see [CLI_PATTERNS.md](./CLI_PATTERNS.md#run-management)**
+- **`src/services/run_service/RunService.py`**: `RunService` class handles run creation, loading, and persistence. **For details, see [CLI_PATTERNS.md](./CLI_PATTERNS.md#run-management)**
 
 ### Training Metrics
 
@@ -105,9 +113,16 @@ Component directories (`activation/`, `loss/`, `learning_rate/`) contain base cl
   - `get_json_file_contents()` - JSON file reading
   - `Colors` - Terminal color codes
 
-- **`src/logging_config.py`**: Logging setup
+- **`src/services/logging_config/logging_config.py`**: Logging setup
   - `setup_logging()` - Configure logging
   - `get_logger()` - Get module logger
+
+- **`src/services/figure_service/`**: Figure management
+  - `Figure` - Abstract base class for figures
+  - `RefFigure` - Reference figure implementation
+  - `LearningRateRefFigure` - Learning rate visualization
+  - `TrainingFigure` - Training progress visualization
+  - `FigureService` - Service class for managing figures
 
 ## Runtime Directories
 
@@ -204,6 +219,9 @@ Use relative imports (no `src.` prefix):
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from commands.command import Command
 from data.dataset import IdentityDataset
+from services.figure_service import FigureService
+from services.run_service import RunService
+from services.logging_config import get_logger
 ```
 
 ### Entry Point

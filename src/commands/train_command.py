@@ -12,8 +12,8 @@ from commands.command import (
     validate_global_arguments,
     get_dataset,
 )
-from run_service import RunService
-from logging_config import get_logger
+from services.run_service import RunService
+from services.logging_config import get_logger
 
 logger = get_logger(__name__)
 

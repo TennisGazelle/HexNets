@@ -75,7 +75,7 @@ See [DEVELOPMENT_PATTERNS.md#common-gotchas](./DEVELOPMENT_PATTERNS.md#common-go
 ### Key Files
 - **CLI Entry**: `src/cli.py` - [CLI_PATTERNS.md](./CLI_PATTERNS.md)
 - **Command Base**: `src/commands/command.py` - [CLI_PATTERNS.md#command-interface](./CLI_PATTERNS.md#command-interface)
-- **Run Service**: `src/run_service.py` - [CLI_PATTERNS.md#run-management](./CLI_PATTERNS.md#run-management)
+- **Run Service**: `src/services/run_service/RunService.py` - [CLI_PATTERNS.md#run-management](./CLI_PATTERNS.md#run-management)
 - **Network Base**: `src/networks/network.py` - [ARCHITECTURE.md#base-network-class](./ARCHITECTURE.md#base-network-class)
 
 ### Validation

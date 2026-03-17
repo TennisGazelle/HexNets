@@ -9,7 +9,7 @@ import copy
 from tabulate import tabulate
 from tqdm import trange
 
-from figure_service import FigureService
+from services.figure_service.FigureService import FigureService
 from networks.network import BaseNeuralNetwork
 from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
@@ -20,7 +20,7 @@ from networks.loss.loss import get_loss_function
 from networks.metrics import Metrics
 from data.dataset import BaseDataset
 from utils import table_print
-from logging_config import get_logger
+from services.logging_config import get_logger
 
 logger = get_logger(__name__)
 

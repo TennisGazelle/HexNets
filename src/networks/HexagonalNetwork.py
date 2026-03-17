@@ -7,7 +7,7 @@ from tabulate import tabulate
 from typing import List, Dict, Union, Tuple
 import pathlib
 from utils import table_print
-from logging_config import get_logger
+from services.logging_config import get_logger
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +16,7 @@ from matplotlib.patches import Patch
 from matplotlib.colors import ListedColormap
 
 from networks.metrics import Metrics
-from figure_service import FigureService
+from services.figure_service import FigureService
 from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
 from networks.network import BaseNeuralNetwork

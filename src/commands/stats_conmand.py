@@ -6,7 +6,7 @@ from argparse import Namespace
 
 from commands.command import Command
 
-from run_service import RunService
+from services.run_service import RunService
 
 
 class StatsCommand(Command):

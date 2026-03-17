@@ -243,7 +243,7 @@ class MyNetwork(BaseNeuralNetwork):
 ```
 
 ### Step 2: Update RunService
-Add your network type to `RunService.__init__()` in `src/run_service.py`:
+Add your network type to `RunService.__init__()` in `src/services/run_service/RunService.py`:
 
 ```python
 elif args.model == "my_network":

@@ -61,7 +61,7 @@ This document outlines important patterns, conventions, and gotchas that develop
 `FigureService` provides a unified interface for figure management:
 
 ```python
-from figure_service import FigureService
+from services.figure_service import FigureService
 
 service = FigureService()
 service.set_figures_path(run.get_figures_path())
@@ -140,7 +140,7 @@ for r in range(6):
 Always use the project's logging config:
 
 ```python
-from logging_config import get_logger
+from services.logging_config import get_logger
 
 logger = get_logger(__name__)
 ```
@@ -163,7 +163,7 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger("PIL").setLevel(logging.WARNING)
 ```
 
-**See:** `src/logging_config.py`.
+**See:** `src/services/logging_config/logging_config.py`.
 
 ## Common Gotchas
 

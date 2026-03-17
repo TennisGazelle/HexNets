@@ -15,8 +15,8 @@ from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from networks.learning_rate.learning_rate import get_learning_rate, get_available_learning_rates
-from figure_service import FigureService
-from logging_config import get_logger, setup_logging
+from services.figure_service import FigureService
+from services.logging_config import get_logger, setup_logging
 from utils import Colors
 
 logger = get_logger(__name__)

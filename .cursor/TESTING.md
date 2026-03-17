@@ -152,7 +152,7 @@ Test end-to-end workflows:
 ```python
 # tests/integration/test_training_workflow.py
 import pytest
-from run_service import RunService
+from services.run_service import RunService
 from argparse import Namespace
 
 def test_training_creates_run():

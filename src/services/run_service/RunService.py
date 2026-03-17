@@ -14,7 +14,7 @@ from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from networks.MLPNetwork import MLPNetwork
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
-from logging_config import get_logger
+from services.logging_config import get_logger
 
 logger = get_logger(__name__)
 

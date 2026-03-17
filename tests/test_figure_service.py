@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tempfile
 
-from src.figure_service import (
+from services.figure_service import (
     FigureService,
     LearningRateRefFigure,
     TrainingFigure,
@@ -39,7 +39,7 @@ class TestFigureService:
         self.service.set_figures_path(None)
         assert self.service.figures_path == Path("figures")
 
-    @patch('src.figure_service.LearningRateRefFigure')
+    @patch('services.figure_service.LearningRateRefFigure')
     def test_init_learning_rate_ref_figure(self, mock_figure_class):
         """Test initializing learning rate reference figure"""
         mock_figure = Mock()
@@ -63,7 +63,7 @@ class TestFigureService:
         )
         assert self.service.figures[title] == mock_figure
 
-    @patch('src.figure_service.TrainingFigure')
+    @patch('services.figure_service.TrainingFigure')
     def test_init_training_figure(self, mock_figure_class):
         """Test initializing training figure"""
         mock_figure = Mock()
@@ -89,7 +89,7 @@ class TestFigureService:
         )
         assert self.service.figures[title] == mock_figure
 
-    @patch('src.figure_service.RefFigure')
+    @patch('services.figure_service.RefFigure')
     def test_init_ref_figure(self, mock_figure_class):
         """Test initializing reference figure"""
         mock_figure = Mock()
@@ -111,7 +111,7 @@ class TestLearningRateRefFigure:
 
     def setup_method(self):
         """Set up test fixtures"""
-        with patch('src.figure_service.plt.subplots') as mock_subplots:
+        with patch('matplotlib.pyplot.subplots') as mock_subplots:
             mock_fig = Mock()
             mock_ax = Mock()
             mock_line = Mock()
@@ -196,7 +196,7 @@ class TestTrainingFigure:
 
     def setup_method(self):
         """Set up test fixtures"""
-        with patch('src.figure_service.plt.subplots') as mock_subplots:
+        with patch('matplotlib.pyplot.subplots') as mock_subplots:
             mock_fig = Mock()
             mock_ax_loss = Mock()
             mock_ax_acc = Mock()
@@ -366,7 +366,7 @@ class TestRefFigure:
 
     def setup_method(self):
         """Set up test fixtures"""
-        with patch('src.figure_service.plt.figure') as mock_figure:
+        with patch('matplotlib.pyplot.figure') as mock_figure:
             mock_fig = Mock()
             mock_figure.return_value = mock_fig
             
@@ -402,7 +402,7 @@ class TestFigureServiceEdgeCases:
         """Test that creating multiple figures with same title overwrites"""
         service = FigureService()
         
-        with patch('src.figure_service.LearningRateRefFigure') as mock_figure_class:
+        with patch('services.figure_service.LearningRateRefFigure') as mock_figure_class:
             mock_figure1 = Mock()
             mock_figure2 = Mock()
             mock_figure_class.side_effect = [mock_figure1, mock_figure2]
