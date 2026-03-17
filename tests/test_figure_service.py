@@ -39,7 +39,7 @@ class TestFigureService:
         self.service.set_figures_path(None)
         assert self.service.figures_path == Path("figures")
 
-    @patch('services.figure_service.LearningRateRefFigure')
+    @patch('services.figure_service.FigureService.LearningRateRefFigure')
     def test_init_learning_rate_ref_figure(self, mock_figure_class):
         """Test initializing learning rate reference figure"""
         mock_figure = Mock()
@@ -63,7 +63,7 @@ class TestFigureService:
         )
         assert self.service.figures[title] == mock_figure
 
-    @patch('services.figure_service.TrainingFigure')
+    @patch('services.figure_service.FigureService.TrainingFigure')
     def test_init_training_figure(self, mock_figure_class):
         """Test initializing training figure"""
         mock_figure = Mock()
@@ -89,7 +89,7 @@ class TestFigureService:
         )
         assert self.service.figures[title] == mock_figure
 
-    @patch('services.figure_service.RefFigure')
+    @patch('services.figure_service.FigureService.RefFigure')
     def test_init_ref_figure(self, mock_figure_class):
         """Test initializing reference figure"""
         mock_figure = Mock()
@@ -282,17 +282,14 @@ class TestTrainingFigure:
         """Test updating figure with incomplete metrics (should not update)"""
         training_metrics = {
             "loss": 0.5,
-            # Missing accuracy and r_squared - accessing missing keys will raise KeyError
+            # Missing accuracy and r_squared - implementation returns early without updating
         }
         channel = 0
-        
+
         initial_length = len(self.figure.training_metrics[channel]["loss"])
-        # The code will raise KeyError when trying to access missing keys
-        # This is expected behavior - incomplete metrics should not be processed
-        with pytest.raises(KeyError):
-            self.figure.update_figure(training_metrics, channel)
-        
-        # Should not have updated
+        self.figure.update_figure(training_metrics, channel)
+
+        # Should not have updated (implementation returns early when required keys are missing)
         assert len(self.figure.training_metrics[channel]["loss"]) == initial_length
 
     def test_update_figure_empty_metrics(self):
@@ -402,7 +399,7 @@ class TestFigureServiceEdgeCases:
         """Test that creating multiple figures with same title overwrites"""
         service = FigureService()
         
-        with patch('services.figure_service.LearningRateRefFigure') as mock_figure_class:
+        with patch('services.figure_service.FigureService.LearningRateRefFigure') as mock_figure_class:
             mock_figure1 = Mock()
             mock_figure2 = Mock()
             mock_figure_class.side_effect = [mock_figure1, mock_figure2]

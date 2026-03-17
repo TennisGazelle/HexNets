@@ -1,29 +1,36 @@
-# """Pytest configuration file for hexnets tests.
+"""Pytest configuration file for hexnets tests."""
 
-# This file sets up the Python path so that imports work correctly.
-# The source files use imports like 'from commands.command import' which
-# expects the 'src' directory to be in the Python path.
-# """
+import sys
+import importlib
+from pathlib import Path
 
-# import sys
-# from pathlib import Path
+# Get our src directory path (conftest.py is in tests/, so project root is parent of tests/)
+project_root = Path(__file__).resolve().parent.parent
+our_src = str(project_root / "src")
 
-# def pytest_configure(config):
-#     """Configure pytest - runs before test collection."""
-#     # Get the absolute path to this project's src directory
-#     project_root = Path(__file__).parent.parent
-#     src_path_abs = (project_root / "src").resolve()
+def pytest_configure(config):
+    """Configure pytest - runs before test collection."""
+    # Remove conflicting paths (from other projects)
+    sys.path = [p for p in sys.path if "/arbor" not in p and "/solve-for-x" not in p]
+
+    # Clear ALL cached modules that might conflict
+    modules_to_clear = []
+    for name in list(sys.modules.keys()):
+        if (name.startswith('commands') or 
+            name.startswith('services') or 
+            name.startswith('networks') or
+            name.startswith('data')):
+            modules_to_clear.append(name)
     
-#     # Remove any other 'src' directories from path to avoid conflicts
-#     sys.path = [p for p in sys.path if not (Path(p).name == 'src' and Path(p).resolve() != src_path_abs)]
+    for name in modules_to_clear:
+        del sys.modules[name]
     
-#     # Add our src directory at the beginning of the path
-#     if str(src_path_abs) not in sys.path:
-#         sys.path.insert(0, str(src_path_abs))
+    # Ensure our src is first
+    if our_src in sys.path:
+        sys.path.remove(our_src)
+    sys.path.insert(0, our_src)
 
-# # Also set it up at module import time as a fallback
-# project_root = Path(__file__).parent.parent
-# src_path_abs = (project_root / "src").resolve()
-# sys.path = [p for p in sys.path if not (Path(p).name == 'src' and Path(p).resolve() != src_path_abs)]
-# if str(src_path_abs) not in sys.path:
-#     sys.path.insert(0, str(src_path_abs))
+# Do it at import time too (runs when conftest is imported)
+sys.path = [p for p in sys.path if '/arbor' not in p and '/solve-for-x' not in p]
+if our_src not in sys.path:
+    sys.path.insert(0, our_src)

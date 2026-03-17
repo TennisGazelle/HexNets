@@ -8,7 +8,8 @@ class RefFigure(Figure):
         self.title = title
         self.fig = plt.figure(figsize=(7, 7))
         self.fig.suptitle(self.title)
-        self.fig.title(detail)
+        ax = self.fig.add_subplot(111)
+        ax.set_title(detail)
 
     def save_figure(self):
         self.fig.savefig()

@@ -1,12 +1,24 @@
 """Unit tests for reference_command.py"""
 
+import sys
+from pathlib import Path
+
+# Ensure src is first on path (pytest prepends the test dir, so we must put src first for imports)
+_src = Path(__file__).resolve().parent.parent.parent / "src"
+_src_str = str(_src)
+if _src_str in sys.path:
+    sys.path.remove(_src_str)
+sys.path.insert(0, _src_str)
 import pytest
 from argparse import Namespace
-from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock, call
 import numpy as np
 
-from src.commands.reference_command import ReferenceCommand
+# Clear only the app's commands package (not test module names); tests/conftest can load before path is fixed
+for key in list(sys.modules):
+    if key == "commands" or (key.startswith("commands.") and "test_" not in key):
+        del sys.modules[key]
+from commands.reference_command import ReferenceCommand
 
 
 class TestReferenceCommand:
@@ -199,10 +211,10 @@ class TestReferenceCommand:
         assert list(r_range) == [1]
         assert graph_types == ["weight"]
 
-    @patch('src.commands.reference_command.HexagonalNeuralNetwork')
-    @patch('src.commands.reference_command.get_activation_function')
-    @patch('src.commands.reference_command.get_loss_function')
-    @patch('src.commands.reference_command.Path')
+    @patch('commands.reference_command.HexagonalNeuralNetwork')
+    @patch('commands.reference_command.get_activation_function')
+    @patch('commands.reference_command.get_loss_function')
+    @patch('commands.reference_command.Path')
     def test_invoke_hex_dry_run(self, mock_path, mock_loss, mock_activation, mock_network_class):
         """Test invoke with dry-run mode for hex model"""
         # Setup mocks
@@ -231,9 +243,9 @@ class TestReferenceCommand:
         assert not mock_net.graph_weights.called
         assert not mock_net.graph_structure.called
 
-    @patch('src.commands.reference_command.HexagonalNeuralNetwork')
-    @patch('src.commands.reference_command.get_activation_function')
-    @patch('src.commands.reference_command.get_loss_function')
+    @patch('commands.reference_command.HexagonalNeuralNetwork')
+    @patch('commands.reference_command.get_activation_function')
+    @patch('commands.reference_command.get_loss_function')
     def test_invoke_hex_generate_graph(self, mock_loss, mock_activation, mock_network_class):
         """Test invoke generates graph for hex model"""
         # Setup mocks
@@ -274,10 +286,10 @@ class TestReferenceCommand:
         assert isinstance(output_dir, Path)
         assert str(output_dir) == "reference"
 
-    @patch('src.commands.reference_command.get_available_learning_rates')
-    @patch('src.commands.reference_command.get_learning_rate')
-    @patch('src.commands.reference_command.FigureService')
-    @patch('src.commands.reference_command.Path')
+    @patch('commands.reference_command.get_available_learning_rates')
+    @patch('commands.reference_command.get_learning_rate')
+    @patch('commands.reference_command.FigureService')
+    @patch('commands.reference_command.Path')
     def test_invoke_none_model_dry_run(self, mock_path, mock_figure_service, mock_get_lr, mock_get_available):
         """Test invoke with dry-run mode for model='none'"""
         mock_get_available.return_value = ["constant", "exponential_decay"]
@@ -296,10 +308,10 @@ class TestReferenceCommand:
         # In dry-run mode, figure service should not be used
         assert not mock_figure_service.return_value.init_learning_rate_ref_figure.called
 
-    @patch('src.commands.reference_command.get_available_learning_rates')
-    @patch('src.commands.reference_command.get_learning_rate')
-    @patch('src.commands.reference_command.FigureService')
-    @patch('src.commands.reference_command.Path')
+    @patch('commands.reference_command.get_available_learning_rates')
+    @patch('commands.reference_command.get_learning_rate')
+    @patch('commands.reference_command.FigureService')
+    @patch('commands.reference_command.Path')
     def test_invoke_none_model_generate(self, mock_path, mock_figure_service, mock_get_lr, mock_get_available):
         """Test invoke generates learning rate figures for model='none'"""
         mock_get_available.return_value = ["constant"]
@@ -323,9 +335,9 @@ class TestReferenceCommand:
         mock_figure.update_figure.assert_called()
         mock_figure.save_figure.assert_called()
 
-    @patch('src.commands.reference_command.MLPNetwork')
-    @patch('src.commands.reference_command.get_activation_function')
-    @patch('src.commands.reference_command.get_loss_function')
+    @patch('commands.reference_command.MLPNetwork')
+    @patch('commands.reference_command.get_activation_function')
+    @patch('commands.reference_command.get_loss_function')
     def test_invoke_mlp_requires_graph(self, mock_loss, mock_activation, mock_mlp_class):
         """Test that MLP model requires graph to be specified"""
         args = Namespace(
@@ -341,9 +353,9 @@ class TestReferenceCommand:
         with pytest.raises(ValueError, match="MLP model requires"):
             self.command.invoke(args)
 
-    @patch('src.commands.reference_command.MLPNetwork')
-    @patch('src.commands.reference_command.get_activation_function')
-    @patch('src.commands.reference_command.get_loss_function')
+    @patch('commands.reference_command.MLPNetwork')
+    @patch('commands.reference_command.get_activation_function')
+    @patch('commands.reference_command.get_loss_function')
     def test_invoke_mlp_generate_graph(self, mock_loss, mock_activation, mock_mlp_class):
         """Test invoke generates graph for MLP model"""
         mock_net = Mock()
@@ -380,10 +392,10 @@ class TestReferenceCommand:
         with pytest.raises(ValueError, match="Invalid graph type"):
             self.command._generate_graph(mock_net, "invalid_type", args, figures_dir)
 
-    @patch('src.commands.reference_command.HexagonalNeuralNetwork')
-    @patch('src.commands.reference_command.get_activation_function')
-    @patch('src.commands.reference_command.get_loss_function')
-    @patch('src.commands.reference_command.Path')
+    @patch('commands.reference_command.HexagonalNeuralNetwork')
+    @patch('commands.reference_command.get_activation_function')
+    @patch('commands.reference_command.get_loss_function')
+    @patch('commands.reference_command.Path')
     def test_invoke_iterates_over_ranges(self, mock_path, mock_loss, mock_activation, mock_network_class):
         """Test that invoke iterates over all combinations when parameters are not specified"""
         mock_net = Mock()
@@ -414,10 +426,10 @@ class TestReferenceCommand:
         # So 6 * 6 = 36 calls
         assert mock_network_class.call_count == 6  # One for each r value
 
-    @patch('src.commands.reference_command.HexagonalNeuralNetwork')
-    @patch('src.commands.reference_command.get_activation_function')
-    @patch('src.commands.reference_command.get_loss_function')
-    @patch('src.commands.reference_command.Path')
+    @patch('commands.reference_command.HexagonalNeuralNetwork')
+    @patch('commands.reference_command.get_activation_function')
+    @patch('commands.reference_command.get_loss_function')
+    @patch('commands.reference_command.Path')
     def test_invoke_all_flag(self, mock_path, mock_loss, mock_activation, mock_network_class):
         """Test that --all flag generates all combinations"""
         mock_net = Mock()

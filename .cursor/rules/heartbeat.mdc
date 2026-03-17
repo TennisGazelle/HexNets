@@ -1,0 +1,30 @@
+---
+description: Keep heartbeat.md updated with project state and last work
+alwaysApply: true
+---
+
+# Heartbeat (project state)
+
+The file **heartbeat.md** at the project root is the single source of truth for "what was last asked" and current project state. Always keep it updated.
+
+## When to update
+
+- **After every user request**: Set or update the "Last thing asked / in progress" (or equivalent) so it reflects the most recent thing the user asked to be worked on. This gives the user and the agent quick context on where the project stands.
+
+## Required sections in heartbeat.md
+
+1. **Last thing asked / in progress**  
+   Short line or bullet: what was most recently requested or is currently being worked on.
+
+2. **Active development**  
+   - Current workstreams, branches, or focus areas.  
+   - Link any related **GitHub issues** and **PRs** (e.g. `[#7](https://github.com/.../issues/7)`).
+
+3. **Future work**  
+   - Planned or backlog items.  
+   - Link potential **GitHub issues** where relevant.
+
+## Conventions
+
+- Use real GitHub issue/PR links (e.g. `[#5](https://github.com/TennisGazelle/HexNets/issues/5)`).
+- If heartbeat.md is missing, create it at the project root with these three sections and fill them from the repo (e.g. `gh issue list`, `gh pr list`) when empty.
