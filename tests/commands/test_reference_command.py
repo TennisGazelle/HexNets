@@ -3,21 +3,21 @@
 import sys
 from pathlib import Path
 
-# Ensure src is first on path (pytest prepends the test dir, so we must put src first for imports)
-_src = Path(__file__).resolve().parent.parent.parent / "src"
-_src_str = str(_src)
-if _src_str in sys.path:
-    sys.path.remove(_src_str)
-sys.path.insert(0, _src_str)
+# Pytest can prepend tests/commands/ before conftest runs; ensure app src is first.
+_src = str(Path(__file__).resolve().parent.parent.parent / "src")
+if _src in sys.path:
+    sys.path.remove(_src)
+sys.path.insert(0, _src)
+# Clear app 'commands' from cache so we load from src (skip names with 'test_' for pytest).
+for _k in list(sys.modules):
+    if _k == "commands" or (_k.startswith("commands.") and "test_" not in _k):
+        del sys.modules[_k]
+
 import pytest
 from argparse import Namespace
 from unittest.mock import Mock, patch, MagicMock, call
 import numpy as np
 
-# Clear only the app's commands package (not test module names); tests/conftest can load before path is fixed
-for key in list(sys.modules):
-    if key == "commands" or (key.startswith("commands.") and "test_" not in key):
-        del sys.modules[key]
 from commands.reference_command import ReferenceCommand
 
 
