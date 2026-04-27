@@ -4,13 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Implemented run persistence for paper traceability: manifest/config schema v1 (git SHA, seed, dataset block, trainable parameter count, optional note/tags), JSON ingest errors, and CLI `hexnet train --run-note` / `--run-tags`.
-
----
-
-## Active development
-
-- Regression-metrics correctness for **[#8](https://github.com/TennisGazelle/HexNets/issues/8)** — R² / adjusted R² covered by toy-backed tests; Streamlit metrics explainer and glossary shipped.
+- RunService refactor: `get_parameter_count` on Hex/MLP networks, `resolve_git_commit` in `utils`, RunService static helpers + member ordering, Cursor rule `python-class-member-order.mdc`, and targeted repo-wide class reorder (ABCs, datasets, networks).
 
 ---
 

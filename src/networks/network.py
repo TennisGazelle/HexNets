@@ -15,11 +15,11 @@ from networks.metrics import Metrics
 
 
 class BaseNeuralNetwork(ABC):
-    def __init_subclass__(self, **kwargs):
-        self.display_name = kwargs.get("display_name", self.__class__.__name__.lower())
-
     def __init__(
-        self, learning_rate="constant", activation: BaseActivation = Sigmoid, loss: BaseLoss = MeanSquaredErrorLoss
+        self,
+        learning_rate="constant",
+        activation: BaseActivation = Sigmoid,
+        loss: BaseLoss = MeanSquaredErrorLoss,
     ):
         # learning_rate can be a string (function name) or BaseLearningRate instance
         if isinstance(learning_rate, str):
@@ -36,6 +36,9 @@ class BaseNeuralNetwork(ABC):
         self.training_metrics = Metrics()
         self.epochs_completed = 0
         self.data_iteration = 0  # Track current data element index
+
+    def __init_subclass__(self, **kwargs):
+        self.display_name = kwargs.get("display_name", self.__class__.__name__.lower())
 
     # def init_training_metrics(self):
     #     return {"loss": [], "regression_score": [], "r_squared": []}
@@ -65,7 +68,9 @@ class BaseNeuralNetwork(ABC):
         pass
 
     @abstractmethod
-    def backward(self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True):
+    def backward(
+        self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True
+    ):
         pass
 
     @abstractmethod
@@ -81,11 +86,15 @@ class BaseNeuralNetwork(ABC):
         pass
 
     @abstractmethod
-    def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
+    def graph_weights(
+        self, activation_only=True, detail="", output_dir: pathlib.Path = None
+    ):
         pass
 
     @abstractmethod
-    def graph_structure(self, detail="", output_dir: pathlib.Path = None) -> Tuple[str, plt.Figure]:
+    def graph_structure(
+        self, detail="", output_dir: pathlib.Path = None
+    ) -> Tuple[str, plt.Figure]:
         pass
 
     @abstractmethod

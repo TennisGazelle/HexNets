@@ -20,7 +20,16 @@ class BaseDataset(ABC):
 
         DATASET_FUNCTIONS[self.display_name] = self
 
-    # each class will have:
+    def __iter__(self):
+        return iter(zip(self.data["X"], self.data["Y"]))
+
+    def __len__(self):
+        return len(self.data["X"])
+
+    def __getitem__(
+        self, index: int | slice
+    ) -> Tuple[np.ndarray, np.ndarray] | Iterator[Tuple[np.ndarray, np.ndarray]]:
+        return (self.data["X"][index], self.data["Y"][index])
 
     def name(self) -> str:
         return self.display_name
@@ -35,19 +44,10 @@ class BaseDataset(ABC):
     def is_data_loaded(self) -> bool:
         return self.data is not None
 
-    def __iter__(self):
-        return iter(zip(self.data["X"], self.data["Y"]))
 
-    def __len__(self):
-        return len(self.data["X"])
-
-    def __getitem__(
-        self, index: int | slice
-    ) -> Tuple[np.ndarray, np.ndarray] | Iterator[Tuple[np.ndarray, np.ndarray]]:
-        return (self.data["X"][index], self.data["Y"][index])
-
-
-def randomized_enumerate(dataset: BaseDataset) -> Iterator[Tuple[int, Tuple[np.ndarray, np.ndarray]]]:
+def randomized_enumerate(
+    dataset: BaseDataset,
+) -> Iterator[Tuple[int, Tuple[np.ndarray, np.ndarray]]]:
     index_array = np.arange(len(dataset))
     np.random.shuffle(index_array)
     for index in index_array:
@@ -55,7 +55,9 @@ def randomized_enumerate(dataset: BaseDataset) -> Iterator[Tuple[int, Tuple[np.n
 
 
 class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
-    def __init__(self, d: int = 2, num_samples: int = 100, scale: float | np.float64 = 1.0):
+    def __init__(
+        self, d: int = 2, num_samples: int = 100, scale: float | np.float64 = 1.0
+    ):
         super().__init__()
         self.d = d
         self.num_samples = num_samples

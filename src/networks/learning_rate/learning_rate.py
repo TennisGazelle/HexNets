@@ -13,15 +13,15 @@ class BaseLearningRate(ABC):
 
         LEARNING_RATES[self.display_name] = self
 
-    @abstractmethod
-    def rate_at_iteration(self, iteration: int) -> float:
-        raise NotImplementedError("rate_at_iteration not implemented")
-
     def __str__(self):
         return self.display_name
 
     def __repr__(self):
         return self.display_name
+
+    @abstractmethod
+    def rate_at_iteration(self, iteration: int) -> float:
+        raise NotImplementedError("rate_at_iteration not implemented")
 
 
 def get_learning_rate(display_name: str, *args, **kwargs) -> BaseLearningRate:

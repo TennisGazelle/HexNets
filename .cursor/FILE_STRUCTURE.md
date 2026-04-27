@@ -96,7 +96,7 @@ Component directories (`activation/`, `loss/`, `learning_rate/`) contain base cl
 
 ### Run Management
 
-- **`src/services/run_service/RunService.py`**: `RunService` class handles run creation, loading, and persistence. **For details, see [CLI_PATTERNS.md](./CLI_PATTERNS.md#run-management)**
+- **`src/services/run_service/RunService.py`**: `RunService` handles run creation, loading, and persistence (`@staticmethod` helpers include `make_run_folder_name`, `get_model_hash`, `get_data_hash`, dataset normalization/validation). Git SHA for manifests comes from **`resolve_git_commit()` in [`src/utils.py`](../src/utils.py)**. **For details, see [CLI_PATTERNS.md](./CLI_PATTERNS.md#run-management)**. **Class member order:** [`.cursor/rules/python-class-member-order.mdc`](./rules/python-class-member-order.mdc).
 
 ### Training Metrics
 
@@ -111,6 +111,7 @@ Component directories (`activation/`, `loss/`, `learning_rate/`) contain base cl
 - **`src/utils.py`**: Helper functions
   - `table_print()` - Pretty table printing
   - `read_json_from_path()` / `read_json_object()` - JSON file reading with actionable errors for run ingestion
+  - `resolve_git_commit()` - Git `HEAD` SHA for run manifests
   - `get_json_file_contents()` - Thin wrapper around `read_json_object` (dict-only JSON)
   - `Colors` - Terminal color codes
 

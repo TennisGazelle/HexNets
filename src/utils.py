@@ -1,7 +1,10 @@
 import json
 import pathlib
-from typing import Any, List
+import subprocess
+from typing import Any, List, Optional, Tuple
 from tabulate import tabulate
+
+_REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 def table_print(headers: List[str], data: List[List]):
@@ -26,7 +29,9 @@ def read_json_from_path(fileref: pathlib.Path, description: str) -> Any:
             "Repair or replace the run directory."
         ) from e
     except UnicodeDecodeError as e:
-        raise ValueError(f"Cannot load {description}: file is not valid UTF-8:\n  {abs_path}\n  {e}") from e
+        raise ValueError(
+            f"Cannot load {description}: file is not valid UTF-8:\n  {abs_path}\n  {e}"
+        ) from e
 
 
 def read_json_object(fileref: pathlib.Path, description: str) -> dict:
@@ -43,6 +48,28 @@ def read_json_object(fileref: pathlib.Path, description: str) -> dict:
 def get_json_file_contents(fileref: pathlib.Path) -> dict:
     """Deprecated for run files; prefer :func:`read_json_object`. Kept for callers expecting dict-only JSON."""
     return read_json_object(fileref, fileref.name)
+
+
+def resolve_git_commit(
+    repo_root: Optional[pathlib.Path] = None,
+) -> Tuple[Optional[str], Optional[str]]:
+    """Return ``(full_sha, error_message)``; SHA is ``None`` if unavailable."""
+    root = repo_root if repo_root is not None else _REPO_ROOT
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return None, str(e)
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout or "").strip() or f"exit {proc.returncode}"
+        return None, err[:500]
+    sha = proc.stdout.strip()
+    return (sha or None), None
 
 
 class Colors:

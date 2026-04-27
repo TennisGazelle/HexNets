@@ -1,0 +1,20 @@
+---
+description: Canonical order for methods inside Python classes (HexNets)
+alwaysApply: true
+---
+
+# Python class member order
+
+When creating or editing a `class` in this repo, order members as follows:
+
+1. **`__init__`**
+2. **Other dunder methods** (`__repr__`, `__len__`, `__init_subclass__`, …) — immediately after `__init__` when reshuffling.
+3. **`@staticmethod`**
+4. **`@classmethod`** — use when `cls` is needed; prefer `@staticmethod` when not.
+5. **Ordinary instance methods** (including `@abstractmethod` definitions on ABCs).
+
+**Labeling:** For large classes, optional short section comments (e.g. `# --- static methods ---`, `# --- instance methods ---`) improve scanability; keep them minimal.
+
+**Rationale:** Predictable layout for reviews, diffs, and AI-assisted edits; easy to find constructors vs helpers.
+
+**Exceptions:** If Python semantics or a framework requires a specific placement (rare), note it in a one-line comment and stay as close to this order as possible.
