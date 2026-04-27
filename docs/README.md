@@ -9,7 +9,7 @@
 | [math/learning_rates.md](math/learning_rates.md) | LR schedules ↔ `src/networks/learning_rate/` |
 | [math/metrics.md](math/metrics.md) | Training metrics ↔ `src/networks/metrics.py` |
 | [math/datasets.md](math/datasets.md) | Datasets ↔ `src/data/dataset.py` + CLI `-t` |
-| [streamlit_app.md](streamlit_app.md) | Streamlit UI and `src/streamlit_app.py` |
+| [streamlit_app.md](streamlit_app.md) | Streamlit UI (`src/streamlit_main.py`, `src/streamlit_app/`) |
 
 **Agent-oriented detail:** `.cursor/` (architecture, CLI patterns, file layout).
 

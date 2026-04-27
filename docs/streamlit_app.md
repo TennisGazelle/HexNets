@@ -2,23 +2,24 @@
 
 ## Summary (for quick orientation)
 
-* **Entry:** `src/streamlit_app.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_app.py`.
-* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train) and **Rotation Comparison** (loads `reference/*.png`; needs `hexnet ref --all` for full grid).
+* **Entry:** `src/streamlit_main.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_main.py`.
+* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, metrics explainer expander), **Rotation Comparison** (loads `reference/*.png`; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; data in `src/streamlit_app/glossary_data.py`, UI in `glossary_tab.py` / `metrics_explainer.py`).
 * **Rotation tab layout:** per rotation `r`, shows structure + activation + weight images; a fourth column loads `hexnet_n{n}_multi_activation.png` (same file for each `r` when present).
 * **Defaults:** `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error` (see `initialize_session_state()`).
 
 ## Overview
 
-The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers two main features:
+The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers three main features:
 
-1. **Network Explorer**: Interactive parameter controls to generate and visualize networks on-demand
+1. **Network Explorer**: Interactive parameter controls to generate and visualize networks on-demand, plus a collapsible training metrics explainer
 2. **Rotation Comparison**: Side-by-side comparison of all 6 rotations for a given network dimension
+3. **Glossary**: Filterable definitions (including nested entries) aligned with metrics and datasets used in the app
 
 ## Architecture
 
 ### Application Structure
 
-The Streamlit app (`src/streamlit_app.py`) is built using the Streamlit framework and integrates with the HexagonalNetwork class to generate visualizations dynamically.
+The Streamlit app is launched from `src/streamlit_main.py` and implemented under the `src/streamlit_app/` package: `main.py` wires tabs; each tab has its own module (`network_explorer.py`, `rotation_comparison.py`, `glossary_tab.py`); shared helpers include `session.py`, `figures.py`, and `references.py`.
 
 ### Key Components
 
@@ -127,13 +128,13 @@ make run-streamlit
 
 **Direct Streamlit Command**:
 ```bash
-streamlit run src/streamlit_app.py
+streamlit run src/streamlit_main.py
 ```
 
 **With Virtual Environment**:
 ```bash
 source .venv/bin/activate
-streamlit run src/streamlit_app.py
+streamlit run src/streamlit_main.py
 ```
 
 ### Application Behavior
@@ -141,9 +142,10 @@ streamlit run src/streamlit_app.py
 When launched, the Streamlit app:
 1. Initializes session state with default values (n=2, r=0, activation=relu, loss=mean_squared_error)
 2. Creates a network instance and caches it in session state
-3. Displays the main interface with two tabs:
+3. Displays the main interface with three tabs:
    - **Network Explorer**: Interactive controls and on-demand graph generation
    - **Rotation Comparison**: Pre-generated reference image viewer
+   - **Glossary**: Search field filters top-level and nested glossary entries (substring match, case-insensitive); top-level expanders are shown in two columns when multiple entries match
 
 ### Network Explorer Tab
 
@@ -162,6 +164,8 @@ When launched, the Streamlit app:
   - Displays network statistics (total nodes, layer count, layer sizes)
   - Shows current parameter values
   - Expandable layer indices view
+
+- **Training metrics expander** (collapsed by default): formulas and caveats for loss, regression score (mean exp(−RMSE)), R², and adjusted R² (see `docs/math/metrics.md` and `src/networks/metrics.py`). Includes a toy numeric example. After **Train Network**, the last epoch’s four metrics appear under “Last run (this session)” via `st.session_state.last_metrics`.
 
 **Graph Generation**:
 - Graphs are generated dynamically using `HexagonalNetwork` methods
@@ -184,6 +188,12 @@ When launched, the Streamlit app:
 - Shows warnings if images are missing
 - Gracefully handles missing files without crashing
 
+### Glossary Tab
+
+- **Search**: `st.text_input` with case-insensitive substring filtering. Each entry’s index includes its nested children so terms like “identity” match under **Datasets**.
+- **Layout**: Top-level entries use two columns of expanders when multiple roots are visible; nested definitions stay inside their parent expander.
+- **Content**: Plain-language explanations with optional `st.latex` formulas and examples; glossary tree in `src/streamlit_app/glossary_data.py`, tab renderer in `glossary_tab.py`.
+
 ## Deployment to Streamlit Cloud
 
 ### Prerequisites
@@ -200,7 +210,7 @@ make streamlit-deploy
 ```
 
 This command:
-- Validates that `src/streamlit_app.py` exists
+- Validates that `src/streamlit_main.py` exists
 - Checks for `requirements.txt` (warns if missing)
 - Verifies `reference/` directory exists (warns if missing)
 - Provides step-by-step deployment instructions
@@ -212,7 +222,7 @@ This command:
 3. **Sign in**: Use your GitHub account
 4. **Create New App**: Click "New app" and select your repository
 5. **Configure**:
-   - **Main file path**: `src/streamlit_app.py`
+   - **Main file path**: `src/streamlit_main.py`
    - **Python version**: 3.9 or higher
    - **Requirements file**: `requirements.txt` (or `pyproject.toml`)
 6. **Deploy**: Click "Deploy!"
@@ -304,6 +314,7 @@ hexnet ref --all
 ## Future Enhancements
 
 Potential improvements:
+- Externalize glossary entries (e.g. YAML) for easier editing without code changes
 - Generate reference images on-demand if missing
 - Add more visualization types
 - Support for custom network configurations
