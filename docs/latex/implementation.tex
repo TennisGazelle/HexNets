@@ -1,0 +1,157 @@
+\section{Implementation}
+
+\subsection{Hexagonal Neural Network}
+A hexagonal neural network is a multilayer perceptron network whose layer sizes increase and then decrease symmetrically, forming a hexagon-like outline if it were to be drawn in 2D.
+
+As expected from feed-forward networks, all neurons in any given layer are fully connected to all neurons in the adjacent layers, but this is not just true in one direction.
+Due to the hexagonal nature of the framework, there are six distinct directions in which one could perform traditional forward and backward neural network propagation.
+This renders the structure to contain a unique corresponding arrangement of connections and shared weights given the direction.
+These shared weights may potentially influence the internal network's representation of data in their high-dimensional embedding from one propagation direction to another.
+In other words, training the network with training data from one of these directions could potentially help training the same network with the same data from another angle to escape local optima encountered during gradient descent or other optimization methods.
+
+Below, we present a mathematical generalization of this architecture, show adjacency matrices that will hopefully showcase the patterns that emerge as $n$ grows, optimize memory allocation for arbitrarily large $n$ values, and see the effects of loss and accuracy that training in one direction can have on other directions.
+
+\subsection{Hexagonal Connectivity and Spatial Directions}
+
+A key property of this network is its hexagonal symmetry.  
+Unlike a traditional MLP with strict linearity from left to right, the hexagonal network, $H$, has connections that can be interpreted in three unique spatial directions.
+Although we do have six unique networks, we call these three directions, since forward propagation of one network, say $H_1$, can be interpreted as the backward propagation of the network 3 rotations away; in this example, $H_4$.
+To be explicit, if we visualize the network with the layers centered and stacked vertically (i.e. with the smallest layers at the top and bottom, widest in the middle), then we have the following directions:
+\begin{itemize}
+    \item \textbf{Vertical Direction:} Connections that go straight "down" from one layer to the next.  For simplicity, straight-down propagation can be represented as $H_1$ and its backward propagation as $H_4$.  Note that although $H_1$ and $H_4$ are the same neural network, they are mirror opposites of forward and back propagation.
+    \item \textbf{Down-Right Direction:} Connections that start from one "hexagonal rotation" clockwise from the vertical $H_1$.  These are $H_2$ and its inverse $H_5$
+    \item \textbf{Down-Left Direction:} Connections that start from one hexagonal rotation counter clockwise from $H_1$.  These are $H_3$ and $H_6$.
+\end{itemize}
+
+The layer sizes of N follow an explicit pattern:
+
+\[L = [n, n+1, ... 2n-1, ..., n+1, n]\]
+
+This gives the total number of layers $N_L = 2n - 1$.
+The total number of nodes in a network, however, is:
+
+\[T = \sum_{k=0}^{2n-2} (n + min(k, 2n-2-k))\]
+For the next few mathematical definitions, let the \textbf{Vertical Direction} orientation of the network, $H_1$, be the assumed direction.
+Furthermore, let's assume the numbering of the network to start from the top left index, traverse left to right, and then top to bottom.
+Let:
+\begin{itemize}
+    \item $A^{i} \in \{0, 1\}^{TxT}$ be the binary adjacency matrix for arbitrary direction $H_i$
+    \item For an neuron, $n$, at $i \in [0, T-1]$, or $n_i$, let $layer(i)$ map it to its layer number $l \in [0, N_{L}-1]$
+    \item $S_{l}$ be the set of indices in layer $l$
+\end{itemize}
+
+Then, the $H_1$, the only non-zero entries in $A$ are defined as:
+
+\[A_{ij}=\begin{cases}
+    1 & $i \in S_{l}, j \in S_{l+1},$ for some $l \in [0, N_L-2]$\\
+    0 & otherwise
+\end{cases}\]
+
+A symptom of this definition for $H_1$ is a block structure that gets created inside $A^1$.
+Each block $(l, l+1)$ is a dense matrix of ones with size $\left|S_l\right| \times \left| S_{l+1}\right|$
+Thus, $A^1$ can be visualized as:
+
+\[
+A^1 =
+\begin{bmatrix}
+    0 & B_0 & 0 & \dots & 0 \\
+    0 & 0 & B_1 & \dots & 0 \\
+    \vdots & \vdots &\vdots & \ddots & \vdots \\
+    0 & 0 & \dots & 0 & B_{N_{L}-2} \\
+    0 & 0 & \dots & 0 & 0
+\end{bmatrix}
+\]
+
+where every $B_k \in \{0,1\}^{\left|S_k\right| \times \left|S_{k+1}\right|}$ is a matrix of all 1s.
+We can see this pattern hold as $n$ grows for $H_1$ in \ref{fig:adj-matrix-n234}
+
+\begin{figure}
+    % \centering
+    \includegraphics[width=1\linewidth]{adj-matrix-for-h1-on-n234.png}
+    \caption{Adjacency Matrix showcasing the Block structure for $H_1$}
+    \label{fig:adj-matrix-n234}
+\end{figure}
+
+\subsubsection{Rotations}
+
+As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{i+3\mod6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can be reused.
+
+
+%
+% TODO: add information about rotation
+%
+
+\subsection{Traditional Neural Network Operations}
+
+The connections between nodes in any neural network serve as weights, and thus the adjacency matrix $A^i$ can be $W^{i} \in \mathbb{R}^{T \times T}$ where all values that are not zero as previously defined are now a real number.
+
+Thus, for forward propagation, you can just iteratively compute:
+
+\[x^{t+1} = f(W^T \times x^t)\]
+
+where $f$ is a typical activation function for neural networks, and $x$ is the padded form of the input vector.
+This padding brings $x$ from $n$ dimensions to $T$ dimensions for ease of multiplication with $W$.
+
+\subsubsection{Example Flow with $n=2$}
+
+In a network with $n=2$,
+\begin{itemize}
+    \item The layer sizes are $[2, 3, 2]$
+    \item The total number of nodes is $T = 7$
+    \item The Weight and Adjacency matrices $A, W \in \mathbb{R}^{7 \times 7}$
+    \item The padded input vector $x$ is
+
+    \[x = \begin{bmatrix}
+        x_0 \\
+        x_1 \\
+        0 \\
+        0 \\
+        0 \\
+        0 \\
+        0 \\
+    \end{bmatrix}\]
+    \item Computation is simply:
+    
+\end{itemize}
+
+% While this emergent sparse-style network lends itself cleanly for memory optimization, this paper will not focus on that since there are \footnote{come back and add more as we see later} mathematical utilization of the all zero matrices.
+% For example, a full forward propagation through $H_1$ can be mathematically equivalent to projecting your feature network from $n$ dimensions to $T$ (front padded by $n$ zeros, and then the remaining back padding with zeros as well), and multiplying the resultant vector by $W^1$ a total of $2(n-1)$ times to get the output vector.
+
+\subsection{Network Variance}
+
+If we interpret six co-dependent multi layer perceptrons as an ensemble with parameter tying, here are a few variants that we could try finding baselines within the guidance of ensemble based learning.
+
+We will establish some baseline models, and their expected outputs.
+Then we will try five variants of these baselines that are based on exploits and manipulations that we can do exclusively because of hexagonal nature of the graph.
+To these five, we will then be testing some orthogonal knobs.  We will establish what are the independent and dependent  and testing variables that we will be fine tuning and sweeping through to test.
+
+First, let's establish some baselines.
+
+\subsubsection{Baselines}
+
+A single model, without sharing, standard training
+Deep ensemble, six separate networks, no sharing, independent seeds.
+Snapshot ensemble / SWA: 1 network, multi snapshot averaging
+MC-Dropout: 1 net, inference-time dropout
+
+\subsubsection{Variants 1 - 5: Hex Ensemble Variants}
+Variant 1: Hard Rotation Sharing:
+One backbone tensor bank, each member 'applies a hex rotation' to filters adjacency before its forward.
+Only small member-specific heads (and optional tiny offsets) are unique.
+Combines group equivariance with ensembling
+
+Variant 2: Soft sharing via low-rank delta (LoRA-style)
+Shared backbone $\theta$; each member has $\Delta_i = A_iB_i$ (rank-r) on selected layers.
+Control r to trade diversity vs. parameters
+Optimal: permember BN/Layer Norm
+
+Variant 3: Masked weight reuse
+Shared tensor bank W; each member uses a binary/ternary mask $M_i$ (learned or fixed) such that $W \circ M_i$
+Encourages orthogonal subspaces with negligble memory
+
+Variant 4: Shared backbone, member heads only
+Classic multi head: 100 percent sahred feature extractor; six heads (Acts as lower bound on diversity)
+
+Variant 5: Optimizer state-sharing vs isolatioin
+Same weights but either (i) one optimizer for all members (cotraining) or (ii) per member optimizers on their delta/heads only.
+

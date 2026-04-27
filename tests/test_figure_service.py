@@ -78,11 +78,11 @@ class TestFigureService:
         filename = "test_training.png"
         title = "Test Training"
         loss_detail = "MSE"
-        accuracy_detail = "RMSE"
+        regression_score_detail = "RMSE"
         r2_detail = "R^2"
         
         result = self.service.init_training_figure(
-            filename, title, loss_detail, accuracy_detail, r2_detail
+            filename, title, loss_detail, regression_score_detail, r2_detail
         )
         
         assert result == mock_figure
@@ -90,7 +90,7 @@ class TestFigureService:
             title,
             self.service.figures_path / filename,
             loss_detail,
-            accuracy_detail,
+            regression_score_detail,
             r2_detail
         )
         assert self.service.figures[title] == mock_figure
@@ -205,31 +205,31 @@ class TestTrainingFigure:
         with patch('matplotlib.pyplot.subplots') as mock_subplots:
             mock_fig = Mock()
             mock_ax_loss = Mock()
-            mock_ax_acc = Mock()
+            mock_ax_reg_score = Mock()
             mock_ax_r2 = Mock()
             mock_ax_adj_r2 = Mock()
-            mock_subplots.return_value = (mock_fig, (mock_ax_loss, mock_ax_acc, mock_ax_r2, mock_ax_adj_r2))
+            mock_subplots.return_value = (mock_fig, (mock_ax_loss, mock_ax_reg_score, mock_ax_r2, mock_ax_adj_r2))
             
             # Mock plot lines
             mock_line = Mock()
             mock_ax_loss.plot.return_value = (mock_line,)
-            mock_ax_acc.plot.return_value = (mock_line,)
+            mock_ax_reg_score.plot.return_value = (mock_line,)
             mock_ax_r2.plot.return_value = (mock_line,)
             mock_ax_adj_r2.plot.return_value = (mock_line,)
             
             self.filename = "test_training.png"
             self.title = "Test Training"
             self.loss_detail = "MSE"
-            self.accuracy_detail = "RMSE"
+            self.regression_score_detail = "RMSE"
             self.r2_detail = "R^2"
             
             self.figure = TrainingFigure(
                 self.title, self.filename, self.loss_detail,
-                self.accuracy_detail, self.r2_detail
+                self.regression_score_detail, self.r2_detail
             )
             self.figure.fig = mock_fig
             self.figure.ax_loss = mock_ax_loss
-            self.figure.ax_acc = mock_ax_acc
+            self.figure.ax_reg_score = mock_ax_reg_score
             self.figure.ax_r2 = mock_ax_r2
             self.figure.ax_adj_r2 = mock_ax_adj_r2
 
@@ -238,7 +238,7 @@ class TestTrainingFigure:
         assert self.figure.filename == self.filename
         assert self.figure.title == self.title
         assert self.figure.loss_detail == self.loss_detail
-        assert self.figure.accuracy_detail == self.accuracy_detail
+        assert self.figure.regression_score_detail == self.regression_score_detail
         assert self.figure.r2_detail == self.r2_detail
         assert len(self.figure.training_metrics) == 6  # 6 channels
 
@@ -247,7 +247,7 @@ class TestTrainingFigure:
         for channel in range(6):
             assert channel in self.figure.training_metrics
             assert "loss" in self.figure.training_metrics[channel]
-            assert "accuracy" in self.figure.training_metrics[channel]
+            assert "regression_score" in self.figure.training_metrics[channel]
             assert "r_squared" in self.figure.training_metrics[channel]
             assert "adjusted_r_squared" in self.figure.training_metrics[channel]
 
@@ -267,7 +267,7 @@ class TestTrainingFigure:
         """Test updating figure with complete metrics"""
         training_metrics = {
             "loss": 0.5,
-            "accuracy": 0.8,
+            "regression_score": 0.8,
             "r_squared": 0.9,
             "adjusted_r_squared": 0.85
         }
@@ -276,11 +276,11 @@ class TestTrainingFigure:
         self.figure.update_figure(training_metrics, channel)
         
         assert len(self.figure.training_metrics[channel]["loss"]) == 1
-        assert len(self.figure.training_metrics[channel]["accuracy"]) == 1
+        assert len(self.figure.training_metrics[channel]["regression_score"]) == 1
         assert len(self.figure.training_metrics[channel]["r_squared"]) == 1
         assert len(self.figure.training_metrics[channel]["adjusted_r_squared"]) == 1
         assert self.figure.training_metrics[channel]["loss"][0] == 0.5
-        assert self.figure.training_metrics[channel]["accuracy"][0] == 0.8
+        assert self.figure.training_metrics[channel]["regression_score"][0] == 0.8
         assert self.figure.training_metrics[channel]["r_squared"][0] == 0.9
         assert self.figure.training_metrics[channel]["adjusted_r_squared"][0] == 0.85
 
@@ -288,7 +288,7 @@ class TestTrainingFigure:
         """Test updating figure with incomplete metrics (should not update)"""
         training_metrics = {
             "loss": 0.5,
-            # Missing accuracy and r_squared - implementation returns early without updating
+            # Missing regression_score and r_squared - implementation returns early without updating
         }
         channel = 0
 
@@ -302,7 +302,7 @@ class TestTrainingFigure:
         """Test updating figure with empty metrics"""
         training_metrics = {
             "loss": [],
-            "accuracy": [],
+            "regression_score": [],
             "r_squared": []
         }
         channel = 0
@@ -317,13 +317,13 @@ class TestTrainingFigure:
         """Test updating figure for different channels"""
         training_metrics_0 = {
             "loss": 0.5,
-            "accuracy": 0.8,
+            "regression_score": 0.8,
             "r_squared": 0.9,
             "adjusted_r_squared": 0.85
         }
         training_metrics_1 = {
             "loss": 0.3,
-            "accuracy": 0.9,
+            "regression_score": 0.9,
             "r_squared": 0.95,
             "adjusted_r_squared": 0.92
         }
@@ -340,13 +340,13 @@ class TestTrainingFigure:
         """Test updating figure multiple times for same channel"""
         training_metrics_1 = {
             "loss": 0.5,
-            "accuracy": 0.8,
+            "regression_score": 0.8,
             "r_squared": 0.9,
             "adjusted_r_squared": 0.85
         }
         training_metrics_2 = {
             "loss": 0.4,
-            "accuracy": 0.85,
+            "regression_score": 0.85,
             "r_squared": 0.92,
             "adjusted_r_squared": 0.88
         }

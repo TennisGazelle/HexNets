@@ -52,7 +52,13 @@ hexnet ref -n 3 -r 0 -g structure_matplotlib
 
 ### Train a Network
 ```bash
-python -m src.cli train -n 3 -e 100 -l mean_squared_error -a sigmoid
+# After `make install` (venv active): console script from pyproject.toml
+hexnet train -m hex -n 3 -r 0 -e 100 -l mean_squared_error -a sigmoid -t identity
+```
+
+### Run statistics on a saved run
+```bash
+hexnet stats runs/<run_name>
 ```
 
 ### List Available Components
@@ -68,15 +74,16 @@ print(get_available_learning_rates())
 
 ### Iterate All Loss Functions
 ```bash
+# From repo root with `.venv` on PATH (e.g. `source .venv/bin/activate`)
 for loss in $(python -c "from networks.loss.loss import get_available_loss_functions; print(' '.join(get_available_loss_functions()))"); do
-    python -m src.cli train -n 3 -e 50 -l $loss -rn "loss_${loss}"
+    hexnet train -m hex -n 3 -r 0 -e 50 -l "$loss" -t identity -rn "loss_${loss}"
 done
 ```
 
 ### Iterate All Activation Functions
 ```bash
 for act in $(python -c "from networks.activation.activations import get_available_activation_functions; print(' '.join(get_available_activation_functions()))"); do
-    python -m src.cli train -n 3 -e 50 -a $act -rn "act_${act}"
+    hexnet train -m hex -n 3 -r 0 -e 50 -a "$act" -t identity -rn "act_${act}"
 done
 ```
 
@@ -92,10 +99,9 @@ for loss, activation in product(
     get_available_activation_functions()
 ):
     subprocess.run([
-        "python", "-m", "src.cli", "train",
-        "-n", "3", "-e", "50",
-        "-l", loss, "-a", activation,
-        "-rn", f"combo_{loss}_{activation}"
+        "hexnet", "train", "-m", "hex", "-n", "3", "-r", "0", "-e", "50",
+        "-l", loss, "-a", activation, "-t", "identity",
+        "-rn", f"combo_{loss}_{activation}",
     ])
 ```
 

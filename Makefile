@@ -13,6 +13,9 @@
 #   make unit-test        - Run unit tests
 #   make e2e-test         - Run end-to-end integration tests
 #
+# Backlog / issues:
+#   make stories-sync     - Sync stories/*.md with GitHub issues (requires gh + PyYAML)
+#
 # Code Quality:
 #   make lint             - Format code with Black (line length 120)
 #   make lint-check       - Check code formatting without making changes (fails if formatting needed)
@@ -47,6 +50,10 @@ install:
 	pip install -e .'[dev]' ;
 
 .venv/: install
+
+.PHONY: stories-sync
+stories-sync:
+	@${PYTHON} scripts/sync_github_stories.py sync
 
 .PHONY: unit-test
 unit-test:
@@ -87,7 +94,7 @@ run:
 
 .PHONY: run-streamlit
 run-streamlit:
-	@${STREAMLIT} run src/streamlit_app.py
+	@${STREAMLIT} run src/streamlit_main.py
 
 .PHONY: streamlit-deploy
 streamlit-deploy:
@@ -98,11 +105,11 @@ streamlit-deploy:
 	@echo "Checking deployment prerequisites..."
 	@echo ""
 	@# Check if app file exists
-	@if [ ! -f "src/streamlit_app.py" ]; then \
-		echo "ERROR: src/streamlit_app.py not found"; \
+	@if [ ! -f "src/streamlit_main.py" ]; then \
+		echo "ERROR: src/streamlit_main.py not found"; \
 		exit 1; \
 	else \
-		echo "Streamlit app file found: src/streamlit_app.py"; \
+		echo "Streamlit app file found: src/streamlit_main.py"; \
 	fi
 	@# Check if requirements.txt exists
 	@if [ ! -f "requirements.txt" ]; then \
@@ -134,7 +141,7 @@ streamlit-deploy:
 	@echo "4. Click 'New app' and select your repository"
 	@echo ""
 	@echo "5. Configure deployment:"
-	@echo "   - Main file path: src/streamlit_app.py"
+	@echo "   - Main file path: src/streamlit_main.py"
 	@echo "   - Python version: 3.9 or higher"
 	@echo "   - Requirements file: requirements.txt (or pyproject.toml)"
 	@echo ""
