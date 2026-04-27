@@ -108,15 +108,20 @@ class TrainCommand(Command):
     def invoke(self, args: Namespace):
         if args.type == "linear_scale":
             args.dataset_scale = LINEAR_SCALE_DEFAULT
+            effective_scale = LINEAR_SCALE_DEFAULT
+        elif args.type == "diagonal_scale":
+            args.dataset_scale = 1.0
+            effective_scale = 1.0
         else:
             args.dataset_scale = None
+            effective_scale = 1.0
 
-        if args.type == "identity":
-            data = get_dataset(args.n, args.dataset_size, type="identity")
-        elif args.type == "linear_scale":
-            data = get_dataset(args.n, args.dataset_size, type="linear_scale", scale=args.dataset_scale)
-        else:
-            raise ValueError(f"Invalid dataset type: {args.type}")
+        data = get_dataset(
+            args.n,
+            args.dataset_size,
+            type=args.type,
+            scale=effective_scale,
+        )
 
         run = RunService(args)
         net = run.net

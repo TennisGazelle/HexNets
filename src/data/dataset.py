@@ -1,6 +1,20 @@
+"""
+Dataset registry and helpers.
+
+`BaseDataset`, `DATASET_FUNCTIONS`, and `randomized_enumerate` live here (Arbor-style hub).
+Sibling modules whose names end with `_dataset.py` are imported below so subclasses
+register via `__init_subclass__`.
+"""
+
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import List, Iterator, Tuple
+from importlib import import_module
+from pathlib import Path
+from typing import Iterator, Tuple
+
 import numpy as np
+from streamlit_app.glossary_types import GlossaryNode
 
 DATASET_FUNCTIONS = {}
 
@@ -12,13 +26,20 @@ class BaseDataset(ABC):
         self.data = None
         self.index_array = None
 
-    def __init_subclass__(self, **kwargs):
-        self.display_name = kwargs.get("display_name", self.__class__.__name__.lower())
+    def __init_subclass__(cls, **kwargs):
+        display_name = kwargs.pop(
+            "display_name",
+            cls.__name__.replace("Dataset", "").lower(),
+        )
+        if kwargs:
+            raise TypeError(f"Unexpected keyword arguments for {cls.__name__}: {tuple(kwargs)}")
 
-        if self.display_name in DATASET_FUNCTIONS:
-            raise ValueError(f"Dataset function {self.display_name} already exists")
+        cls.display_name = display_name
 
-        DATASET_FUNCTIONS[self.display_name] = self
+        if display_name in DATASET_FUNCTIONS:
+            raise ValueError(f"Dataset function {display_name} already exists")
+
+        DATASET_FUNCTIONS[display_name] = cls
 
     def __iter__(self):
         return iter(zip(self.data["X"], self.data["Y"]))
@@ -33,6 +54,11 @@ class BaseDataset(ABC):
 
     def name(self) -> str:
         return self.display_name
+
+    @classmethod
+    @abstractmethod
+    def get_glossary_node(cls) -> GlossaryNode:
+        raise NotImplementedError
 
     @abstractmethod
     def load_data(self) -> bool:
@@ -54,47 +80,50 @@ def randomized_enumerate(
         yield int(index), dataset.__getitem__(index)
 
 
-class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
-    def __init__(self, d: int = 2, num_samples: int = 100, scale: float | np.float64 = 1.0):
-        super().__init__()
-        self.d = d
-        self.num_samples = num_samples
-        self.scale = scale
-        self.data = None
-
-        self.load_data()
-
-    def load_data(self) -> bool:
-        X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
-        Y = X.copy() * self.scale
-        self.data = {
-            "X": X,
-            "Y": Y,
-        }
-        return True
+for _path in sorted(Path(__file__).resolve().parent.iterdir()):
+    if _path.is_dir() or _path.name == "__init__.py":
+        continue
+    if not _path.name.endswith("_dataset.py"):
+        continue
+    _stem = _path.stem
+    _pkg = __package__
+    if _pkg:
+        import_module(f".{_stem}", _pkg)
+    else:
+        import_module(f"data.{_stem}")
 
 
-class IdentityDataset(LinearScaleDataset, display_name="identity"):
-    def __init__(self, d: int = 2, num_samples: int = 100):
-        super().__init__(d, num_samples)
-        self.scale = 1.0
+def list_registered_dataset_display_names() -> list[str]:
+    return sorted(DATASET_FUNCTIONS.keys())
 
 
-class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
-    def __init__(self, d: int = 2, num_samples: int = 100):
-        super().__init__(d, num_samples)
-        self.scale = 1.0
-        self.data = None
+def is_registered_dataset_display_name(display_name: str) -> bool:
+    return display_name in DATASET_FUNCTIONS
 
-        self.load_data()
 
-    def load_data(self) -> bool:
-        X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
-        Y = X.copy()
-        for i in range(self.d):
-            Y[:, i] *= (i + 1) * self.scale
-        self.data = {
-            "X": X,
-            "Y": Y,
-        }
-        return True
+def build_registered_dataset(
+    display_name: str,
+    *,
+    d: int,
+    num_samples: int,
+    scale: float | np.float64 = 1.0,
+) -> BaseDataset:
+    cls = DATASET_FUNCTIONS.get(display_name)
+    if cls is None:
+        raise ValueError(f"Unknown dataset display_name: {display_name!r}")
+    return cls(d=d, num_samples=num_samples, scale=scale)
+
+
+def build_datasets_glossary_parent() -> GlossaryNode:
+    children = tuple(DATASET_FUNCTIONS[name].get_glossary_node() for name in sorted(DATASET_FUNCTIONS.keys()))
+    return GlossaryNode(
+        title="Datasets",
+        aliases=("data", "training data", "samples"),
+        english=(
+            "A dataset here is an iterable of (input, target) pairs used for training. "
+            "Each vector has length **n** (the network’s node count). Expand the entries below "
+            "for the kinds used in this project. Many entries include **tags** and a **Good for** line "
+            "when the glossary node defines them."
+        ),
+        children=children,
+    )
