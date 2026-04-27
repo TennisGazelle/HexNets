@@ -29,7 +29,7 @@ class TrainCommand(Command):
         add_hex_only_arguments(parser)
         add_training_arguments(parser)
         add_global_arguments(parser)
-        # parser.add_argument("data", type=str, help="The data to train the network on", choices=["identity", "linear"])
+        # parser.add_argument("data", type=str, help="The data to train the network on", choices=["identity", "linear_scale"])
 
         # parser.add_argument(
         #     "-o",
@@ -82,8 +82,8 @@ class TrainCommand(Command):
     def invoke(self, args: Namespace):
         if args.type == "identity":
             data = get_dataset(args.n, args.dataset_size, type="identity")
-        elif args.type == "linear":
-            data = get_dataset(args.n, args.dataset_size, type="linear", scale=2.0)
+        elif args.type == "linear_scale":
+            data = get_dataset(args.n, args.dataset_size, type="linear_scale", scale=2.0)
         else:
             raise ValueError(f"Invalid dataset type: {args.type}")
 

@@ -29,7 +29,7 @@ src/
 │   ├── train_command.py  # Training command
 │   ├── reference_command.py  # `hexnet ref` — reference graph generation
 │   ├── adhoc_command.py  # Ad-hoc testing
-│   └── stats_conmand.py  # `hexnet stats` (filename typo; module is StatsCommand)
+│   └── stats_command.py  # `hexnet stats`
 ├── networks/              # Neural network implementations
 │   ├── network.py         # Base network class
 │   ├── HexagonalNetwork.py  # Hexagonal network

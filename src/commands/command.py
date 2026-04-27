@@ -34,7 +34,7 @@ def print_header():
 def get_dataset(n, train_samples, type="identity", scale=1.0):
     if type == "identity":
         return IdentityDataset(d=n, num_samples=train_samples)
-    elif type == "linear":
+    elif type == "linear_scale":
         return LinearScaleDataset(d=n, num_samples=train_samples, scale=scale)
     else:
         raise ValueError(f"Invalid dataset type: {type}")
@@ -172,7 +172,7 @@ def add_training_arguments(parser: ArgumentParser):
         "-t",
         "--type",
         help="Type of dataset to use",
-        choices=["identity", "linear"],
+        choices=["identity", "linear_scale"],
         default="identity",
         dest="type",
     )
@@ -277,5 +277,5 @@ def validate_training_arguments(args: Namespace):
         )
     if args.dataset_size < 10:
         raise ValueError("Dataset size must be at least 10")
-    if args.type not in ["identity", "linear"]:
-        raise ValueError(f"Invalid dataset type: {args.type}. Must be one of: identity, linear")
+    if args.type not in ["identity", "linear_scale"]:
+        raise ValueError(f"Invalid dataset type: {args.type}. Must be one of: identity, linear_scale")

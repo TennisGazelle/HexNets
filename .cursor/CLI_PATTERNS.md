@@ -101,7 +101,7 @@ Adds:
 - `-lr, --learning-rate`: Learning rate schedule (default: `constant`)
 - `-e, --epochs`: Number of epochs (default: 100)
 - `-p, --pause`: Pause between epochs for animation (default: 0.05)
-- `-t, --type`: Dataset type: `identity` or `linear` (default: `identity`)
+- `-t, --type`: Dataset type: `identity` or `linear_scale` (default: `identity`)
 - `-ds, --dataset-size`: Number of samples (default: 250)
 - `--dry-run`: Preview without creating run
 

@@ -45,10 +45,11 @@ def _build_glossary_root() -> list[GlossaryNode]:
     )
     linear = GlossaryNode(
         title="Linear (scaled) dataset",
-        aliases=("linear", "type=linear", "linear_scale", "LinearScaleDataset"),
+        aliases=("linear_scale", "type=linear_scale", "LinearScaleDataset", "linear", "type=linear"),
         english=(
             "Inputs **x** are drawn uniformly in [-1, 1]^d; targets are **y = scale · x** with a "
-            "scalar `scale` (default 2.0 in some CLI paths). The Streamlit **Train Network** "
+            "scalar `scale` (default 2.0 in some CLI paths). CLI and manifests use the id "
+            "**linear_scale** (same as the dataset `display_name`). The Streamlit **Train Network** "
             "button uses the identity variant (`get_dataset(..., type='identity')`), not this one."
         ),
         math_latex=r"y = s \cdot x",

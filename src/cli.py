@@ -4,7 +4,7 @@ import logging
 from commands.reference_command import ReferenceCommand
 from commands.adhoc_command import AdhocCommand
 from commands.train_command import TrainCommand
-from commands.stats_conmand import StatsCommand
+from commands.stats_command import StatsCommand
 from services.logging_config import setup_logging, get_logger
 
 logger = get_logger(__name__)

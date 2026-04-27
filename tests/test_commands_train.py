@@ -54,7 +54,7 @@ class TestTrainCommand:
         self.command.configure_parser(parser)
         args = parser.parse_args(
             [
-                "-n", "3", "-r", "0", "-e", "10", "-t", "linear",
+                "-n", "3", "-r", "0", "-e", "10", "-t", "linear_scale",
                 "-rn", "my-run", "--dry-run",
             ]
         )

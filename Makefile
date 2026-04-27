@@ -90,7 +90,7 @@ e2e-test:
 
 .PHONY: run
 run:
-	@${HEXNET} adhoc -n 3 -lr 0.001 -t linear -e 200
+	@${HEXNET} adhoc -n 3 -lr 0.001 -t linear_scale -e 200
 
 .PHONY: run-streamlit
 run-streamlit:
