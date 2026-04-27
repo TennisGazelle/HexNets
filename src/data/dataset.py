@@ -122,7 +122,8 @@ def build_datasets_glossary_parent() -> GlossaryNode:
         english=(
             "A dataset here is an iterable of (input, target) pairs used for training. "
             "Each vector has length **n** (the network’s node count). Expand the entries below "
-            "for the kinds used in this project."
+            "for the kinds used in this project. Many entries include **tags** and a **Good for** line "
+            "when the glossary node defines them."
         ),
         children=children,
     )

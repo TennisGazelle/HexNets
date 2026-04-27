@@ -33,6 +33,13 @@ class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
             ),
             math_latex=r"y = s \cdot x",
             example="With scale=2, if x = [0.5, -1.0] then y = [1.0, -2.0].",
+            good_for="Checking optimizer sensitivity to magnitude; learning-rate tuning.",
+            tags=(
+                "deterministic",
+                "regression-compatible",
+                "linear",
+                "affine-operator",
+            ),
             children=(),
         )
 

@@ -26,5 +26,13 @@ class IdentityDataset(LinearScaleDataset, display_name="identity"):
             ),
             math_latex=r"y = x \quad \text{(elementwise)}",
             example="For d=3, one sample might be x = [0.2, -0.5, 0.1] and y = [0.2, -0.5, 0.1].",
+            good_for="Sanity checks; debugging shapes; baseline convergence.",
+            tags=(
+                "sanity-check",
+                "deterministic",
+                "regression-compatible",
+                "linear",
+                "affine-operator",
+            ),
             children=(),
         )

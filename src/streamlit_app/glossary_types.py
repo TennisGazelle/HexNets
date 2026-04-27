@@ -14,5 +14,7 @@ class GlossaryNode:
     aliases: tuple[str, ...] = ()
     math_latex: str | None = None
     example: str | None = None
+    good_for: str | None = None
+    tags: tuple[str, ...] = ()
     children: tuple["GlossaryNode", ...] = ()
     search_blob: str = field(default="", repr=False)

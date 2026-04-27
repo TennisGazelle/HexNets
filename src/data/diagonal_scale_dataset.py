@@ -30,6 +30,16 @@ class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
                 "With d=3 and scale=1, if x = [0.2, 0.5, -0.1] then "
                 "y = [0.2, 1.0, -0.3] (dimension i is scaled by (i+1)·s)."
             ),
+            good_for=(
+                "Per-dimension learning behavior; fixed (non-random) diagonal conditioning; "
+                "Adam vs SGD comparisons. (For random diagonal gains per dimension, see **diagonal_linear**.)"
+            ),
+            tags=(
+                "deterministic",
+                "regression-compatible",
+                "linear",
+                "per-dimension-conditioning",
+            ),
             children=(),
         )
 

@@ -14,6 +14,10 @@ def _fill_search_blob(node: GlossaryNode) -> None:
         parts.append(node.math_latex)
     if node.example:
         parts.append(node.example)
+    if node.good_for:
+        parts.append(node.good_for)
+    if node.tags:
+        parts.append(" ".join(node.tags))
     for c in node.children:
         _fill_search_blob(c)
         parts.append(c.search_blob)

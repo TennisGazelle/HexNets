@@ -8,8 +8,12 @@ def render_glossary_node(node: GlossaryNode, query: str) -> None:
         return
     with st.expander(node.title):
         st.markdown(node.english)
+        if node.tags:
+            st.caption(" · ".join(node.tags))
         if node.math_latex:
             st.latex(node.math_latex)
+        if node.good_for:
+            st.markdown(f"**Good for:** {node.good_for}")
         if node.example:
             st.markdown(f"**Example:** {node.example}")
         for c in node.children:
@@ -19,8 +23,8 @@ def render_glossary_node(node: GlossaryNode, query: str) -> None:
 def render_glossary_tab() -> None:
     st.header("Glossary")
     st.caption(
-        "Search matches titles, definitions, formulas, examples, and nested terms. "
-        "Parents stay visible when a child matches."
+        "Search matches titles, definitions, formulas, examples, tags, good-for blurbs, "
+        "and nested terms. Parents stay visible when a child matches."
     )
     q = st.text_input(
         "Search glossary",
