@@ -17,6 +17,9 @@ from services.logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# Default ``scale`` for ``linear_scale`` dataset (CLI may add ``--dataset-scale`` later).
+LINEAR_SCALE_DEFAULT = 2.0
+
 
 class TrainCommand(Command):
     def name(self):
@@ -60,7 +63,30 @@ class TrainCommand(Command):
         )
 
         parser.add_argument(
-            "-rn", "--run_name", type=str, default=None, required=False, help="name of the new run", dest="run_name"
+            "-rn",
+            "--run_name",
+            type=str,
+            default=None,
+            required=False,
+            help="name of the new run",
+            dest="run_name",
+        )
+
+        parser.add_argument(
+            "--run-note",
+            type=str,
+            default=None,
+            required=False,
+            help="Optional freeform note stored in the run manifest (paper traceability).",
+            dest="run_note",
+        )
+        parser.add_argument(
+            "--run-tags",
+            type=str,
+            default=None,
+            required=False,
+            help='Optional comma-separated tags stored in manifest (e.g. "paper,v1").',
+            dest="run_tags",
         )
 
     def validate_args(self, args: Namespace):
@@ -80,10 +106,15 @@ class TrainCommand(Command):
                 raise ValueError(f"Run Dir '{args.run_dir}' does not exist, use --run_name if it's meant to be new.")
 
     def invoke(self, args: Namespace):
+        if args.type == "linear_scale":
+            args.dataset_scale = LINEAR_SCALE_DEFAULT
+        else:
+            args.dataset_scale = None
+
         if args.type == "identity":
             data = get_dataset(args.n, args.dataset_size, type="identity")
         elif args.type == "linear_scale":
-            data = get_dataset(args.n, args.dataset_size, type="linear_scale", scale=2.0)
+            data = get_dataset(args.n, args.dataset_size, type="linear_scale", scale=args.dataset_scale)
         else:
             raise ValueError(f"Invalid dataset type: {args.type}")
 
@@ -100,7 +131,12 @@ class TrainCommand(Command):
 
         # net.graph_structure(output_dir=run.get_figures_path())
         net.graph_weights(activation_only=False, output_dir=run.get_figures_path())
-        net.train_animated(data, epochs=args.epochs, pause=args.pause, output_dir=run.get_figures_path())
+        net.train_animated(
+            data,
+            epochs=args.epochs,
+            pause=args.pause,
+            output_dir=run.get_figures_path(),
+        )
         net.graph_weights(activation_only=False, output_dir=run.get_figures_path(), detail="trained")
 
         run.set_training_metrics(net.get_metrics_json())

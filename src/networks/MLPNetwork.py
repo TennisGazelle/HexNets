@@ -52,6 +52,15 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             self._add_layer(hidden_dims[i - 1], hidden_dims[i])
         self._add_layer(hidden_dims[-1], output_dim)
 
+    # --- static methods ---
+    @staticmethod
+    def get_parameter_count(input_dim: int, output_dim: int, hidden_dims: List[int]) -> int:
+        if len(hidden_dims) == 0:
+            raise ValueError("hidden_dims must be a list of at least one integer")
+        dims = [input_dim] + hidden_dims + [output_dim]
+        return sum(dims[i] * dims[i + 1] for i in range(len(dims) - 1))
+
+    # --- instance methods ---
     def _init_figure_service(self):
         self.figure_service = FigureService()
         self.figure_service.set_figures_path(None)
@@ -100,7 +109,9 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             # Handle backward compatibility: if learning_rate is a float, use constant
             learning_rate_config = data.get("learning_rate", "constant")
             if isinstance(learning_rate_config, (int, float)):
-                from networks.learning_rate.ConstantLearningRate import ConstantLearningRate
+                from networks.learning_rate.ConstantLearningRate import (
+                    ConstantLearningRate,
+                )
 
                 self.learning_rate_fn = ConstantLearningRate(learning_rate=learning_rate_config)
             elif isinstance(learning_rate_config, str):
@@ -275,7 +286,11 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return filename
 
     def train_animated(
-        self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
+        self,
+        data: BaseDataset,
+        epochs=25,
+        pause=0.05,
+        output_dir: Union[pathlib.Path, None] = None,
     ) -> Tuple[float, float, float]:
         """
         Train while animating loss and regression score over epochs.

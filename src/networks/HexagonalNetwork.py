@@ -54,33 +54,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self._setup_training_metrics()
         self._init_figure_service()
 
-    # --- structure helpers ---
-    def _calc_total_nodes(self, n):
-        return sum(l for l in self._hex_layer_sizes(n))
-
-    def _setup_training_metrics(self):
-        self.training_metrics = {i: Metrics() for i in range(0, 6)}
-
-    def get_training_metrics(self, channel: int):
-        return self.training_metrics[channel]
-
-    def get_all_training_metrics(self):
-        return {i: self.training_metrics[i].as_dict() for i in range(0, 6)}
-
-    def set_training_metrics(self, channel: int, metrics: Metrics):
-        self.training_metrics[channel] = metrics
-
-    def _init_figure_service(self):
-        self.figure_service = FigureService()
-        self.figure_service.set_figures_path(None)
-        self.training_figure = self.figure_service.init_training_figure(
-            f"hexnet_training_{self.loss}_{self.activation}.png",
-            f"Training {self.display_name}",
-            self.loss.display_name,
-            "mean exp(-RMSE) per example",
-            "coefficient of determination",
-        )
-
+    # --- static methods ---
     @staticmethod
     def _hex_layer_sizes(n):
         return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))
@@ -141,6 +115,38 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             return [rw[::-1] for rw in _get_top_left_to_bottom_right()[::-1]]
 
         raise ValueError(f"Invalid rotation: {r}")
+
+    @staticmethod
+    def get_parameter_count(n: int) -> int:
+        total = sum(HexagonalNeuralNetwork._hex_layer_sizes(n))
+        return total * (total + 1) // 2
+
+    # --- structure helpers ---
+    def _calc_total_nodes(self, n):
+        return sum(l for l in self._hex_layer_sizes(n))
+
+    def _setup_training_metrics(self):
+        self.training_metrics = {i: Metrics() for i in range(0, 6)}
+
+    def get_training_metrics(self, channel: int):
+        return self.training_metrics[channel]
+
+    def get_all_training_metrics(self):
+        return {i: self.training_metrics[i].as_dict() for i in range(0, 6)}
+
+    def set_training_metrics(self, channel: int, metrics: Metrics):
+        self.training_metrics[channel] = metrics
+
+    def _init_figure_service(self):
+        self.figure_service = FigureService()
+        self.figure_service.set_figures_path(None)
+        self.training_figure = self.figure_service.init_training_figure(
+            f"hexnet_training_{self.loss}_{self.activation}.png",
+            f"Training {self.display_name}",
+            self.loss.display_name,
+            "mean exp(-RMSE) per example",
+            "coefficient of determination",
+        )
 
     # --- weights ---
 
@@ -298,7 +304,12 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.epochs_completed = state["epochs_completed"]
             self.data_iteration = state.get("data_iteration", 0)
 
-    def graph_weights(self, activation_only=True, detail="", output_dir: Union[pathlib.Path, None] = None):
+    def graph_weights(
+        self,
+        activation_only=True,
+        detail="",
+        output_dir: Union[pathlib.Path, None] = None,
+    ):
         parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
         parent_dir.mkdir(parents=True, exist_ok=True)
         title = "Activation Structure" if activation_only else "Weight Matrix"
@@ -310,7 +321,11 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         fig = plt.figure(figsize=(7, 7))
         try:
-            plt.imshow(matrix, cmap="Greys" if activation_only else "viridis", interpolation="none")
+            plt.imshow(
+                matrix,
+                cmap="Greys" if activation_only else "viridis",
+                interpolation="none",
+            )
             plt.suptitle(title)
             plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
             plt.xticks(np.arange(self.total_nodes))
@@ -326,7 +341,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         return str(full_path), fig
 
     def _graph_multi_activation(
-        self, detail="", r_list=list(range(0, 6)), output_dir: Union[pathlib.Path, None] = None
+        self,
+        detail="",
+        r_list=list(range(0, 6)),
+        output_dir: Union[pathlib.Path, None] = None,
     ):
         title = "Activation Structure"
         filename = f"hexnet_n{self.n}_multi_activation{'_' + detail if detail else ''}.png"
@@ -580,9 +598,18 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 self.epochs_completed,
             ]
         )
-        table_print(["Rotation", "Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"], [[self.r, *data]])
+        table_print(
+            ["Rotation", "Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"],
+            [[self.r, *data]],
+        )
 
-    def train_animated(self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None):
+    def train_animated(
+        self,
+        data: BaseDataset,
+        epochs=25,
+        pause=0.05,
+        output_dir: Union[pathlib.Path, None] = None,
+    ):
         """
         Train while animating loss and regression score over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
@@ -590,7 +617,13 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         logger.info("==> Training with params...")
         table_print(
             ["epochs", "rotation", "num data points"],
-            [[f"{self.epochs_completed} - {self.epochs_completed + epochs}", self.r, len(data)]],
+            [
+                [
+                    f"{self.epochs_completed} - {self.epochs_completed + epochs}",
+                    self.r,
+                    len(data),
+                ]
+            ],
         )
 
         logger.debug(f"train_animated called with output_dir={output_dir}")

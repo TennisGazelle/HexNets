@@ -15,11 +15,11 @@ from networks.metrics import Metrics
 
 
 class BaseNeuralNetwork(ABC):
-    def __init_subclass__(self, **kwargs):
-        self.display_name = kwargs.get("display_name", self.__class__.__name__.lower())
-
     def __init__(
-        self, learning_rate="constant", activation: BaseActivation = Sigmoid, loss: BaseLoss = MeanSquaredErrorLoss
+        self,
+        learning_rate="constant",
+        activation: BaseActivation = Sigmoid,
+        loss: BaseLoss = MeanSquaredErrorLoss,
     ):
         # learning_rate can be a string (function name) or BaseLearningRate instance
         if isinstance(learning_rate, str):
@@ -37,12 +37,20 @@ class BaseNeuralNetwork(ABC):
         self.epochs_completed = 0
         self.data_iteration = 0  # Track current data element index
 
+    def __init_subclass__(self, **kwargs):
+        self.display_name = kwargs.get("display_name", self.__class__.__name__.lower())
+
     # def init_training_metrics(self):
     #     return {"loss": [], "regression_score": [], "r_squared": []}
 
     # @abstractmethod
     # def _init_from_file(self, filepath):
     #     pass
+
+    @staticmethod
+    @abstractmethod
+    def get_parameter_count(self):
+        raise NotImplementedError("get_parameter_count not implemented")
 
     @abstractmethod
     def show_stats(self):

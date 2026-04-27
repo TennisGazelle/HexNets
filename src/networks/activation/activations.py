@@ -14,6 +14,12 @@ class BaseActivation(ABC):
 
         ACTIVATION_FUNCTIONS[self.display_name] = self
 
+    def __str__(self):
+        return self.display_name
+
+    def __repr__(self):
+        return self.display_name
+
     @abstractmethod
     def activate(self, x):
         raise NotImplementedError("activate not implemented")
@@ -21,12 +27,6 @@ class BaseActivation(ABC):
     @abstractmethod
     def deactivate(self, x):
         raise NotImplementedError("deactivate not implemented")
-
-    def __str__(self):
-        return self.display_name
-
-    def __repr__(self):
-        return self.display_name
 
 
 def get_activation_function(display_name: str, *args, **kwargs) -> BaseActivation:

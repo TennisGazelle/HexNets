@@ -2,6 +2,8 @@
 
 This document outlines important patterns, conventions, and gotchas that developers should be aware of when working on HexNets.
 
+**Python classes:** method order (`__init__` → other dunders → `@staticmethod` → `@classmethod` → instance methods) is enforced repo-wide; see [`.cursor/rules/python-class-member-order.mdc`](./rules/python-class-member-order.mdc).
+
 ## Table of Contents
 - [Memory Management](#memory-management)
 - [CLI Command Pattern](#cli-command-pattern)

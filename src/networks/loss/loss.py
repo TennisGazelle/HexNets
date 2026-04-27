@@ -14,6 +14,12 @@ class BaseLoss(ABC):
 
         LOSS_FUNCTIONS[self.display_name] = self
 
+    def __str__(self):
+        return self.display_name
+
+    def __repr__(self):
+        return self.display_name
+
     @abstractmethod
     def calc_loss(self, y_true, y_pred):
         raise NotImplementedError("calc_loss not implemented")
@@ -21,12 +27,6 @@ class BaseLoss(ABC):
     @abstractmethod
     def calc_delta(self, y_true, y_pred):
         raise NotImplementedError("calc_delta not implemented")
-
-    def __str__(self):
-        return self.display_name
-
-    def __repr__(self):
-        return self.display_name
 
 
 def get_loss_function(display_name: str, *args, **kwargs) -> BaseLoss:

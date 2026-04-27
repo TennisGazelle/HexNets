@@ -38,7 +38,11 @@ def main():
     # Initialize logging
     setup_logging(level=logging.DEBUG)
     args, command = parse_args()
-    command(args)
+    try:
+        command(args)
+    except ValueError as e:
+        logger.error("%s", e)
+        raise SystemExit(1) from e
 
 
 if __name__ == "__main__":
