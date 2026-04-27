@@ -55,9 +55,7 @@ def randomized_enumerate(
 
 
 class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
-    def __init__(
-        self, d: int = 2, num_samples: int = 100, scale: float | np.float64 = 1.0
-    ):
+    def __init__(self, d: int = 2, num_samples: int = 100, scale: float | np.float64 = 1.0):
         super().__init__()
         self.d = d
         self.num_samples = num_samples

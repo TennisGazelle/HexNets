@@ -199,9 +199,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             activations.append(a.copy())
         return activations
 
-    def backward(
-        self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True
-    ):
+    def backward(self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True):
         grads = np.zeros_like(self.dir_W[self.r]["W"])
         delta = self.loss.calc_delta(target, activations[-1])
         # walk layers backward
@@ -302,9 +300,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             self.global_W = state["global_W"]
             self.total_nodes = self._calc_total_nodes(self.n)
             self.dir_W = state["dir_metrics"]
-            self.training_metrics = {
-                i: Metrics(state["training_metrics"][i]) for i in range(0, 6)
-            }
+            self.training_metrics = {i: Metrics(state["training_metrics"][i]) for i in range(0, 6)}
             self.epochs_completed = state["epochs_completed"]
             self.data_iteration = state.get("data_iteration", 0)
 
@@ -321,11 +317,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         filename = f"hexnet_n{self.n}_r{self.r}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
         full_path = parent_dir / filename
 
-        matrix = (
-            (self.dir_W[self.r]["W"] != 0).astype(int)
-            if activation_only
-            else self.dir_W[self.r]["W"]
-        )
+        matrix = (self.dir_W[self.r]["W"] != 0).astype(int) if activation_only else self.dir_W[self.r]["W"]
 
         fig = plt.figure(figsize=(7, 7))
         try:
@@ -335,9 +327,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 interpolation="none",
             )
             plt.suptitle(title)
-            plt.title(
-                f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}"
-            )
+            plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
             plt.xticks(np.arange(self.total_nodes))
             plt.yticks(np.arange(self.total_nodes))
             # plt.grid(visible=True, color='black', linewidth=0.5)
@@ -357,9 +347,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         output_dir: Union[pathlib.Path, None] = None,
     ):
         title = "Activation Structure"
-        filename = (
-            f"hexnet_n{self.n}_multi_activation{'_' + detail if detail else ''}.png"
-        )
+        filename = f"hexnet_n{self.n}_multi_activation{'_' + detail if detail else ''}.png"
 
         colors = ["Blues", "Greens", "Reds", "Purples", "Oranges", "Greys"]
 
@@ -373,15 +361,11 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 # Create colors with alpha: white (transparent) for 0, colored for 1
                 base_cmap = plt.cm.get_cmap(colors[i])  # get the colormap
                 colors_with_alpha = [(1, 1, 1, 0)]  # transparent white for 0
-                colors_with_alpha.extend(
-                    [(*base_cmap(0.7)[:3], 0.7)]
-                )  # colored with alpha for 1
+                colors_with_alpha.extend([(*base_cmap(0.7)[:3], 0.7)])  # colored with alpha for 1
                 custom_cmap = ListedColormap(colors_with_alpha)
 
                 plt.imshow(matrix, cmap=custom_cmap, interpolation="none")
-                legend_handles.append(
-                    Patch(color=base_cmap(0.7), alpha=0.7, label=f"Rotation {r}")
-                )
+                legend_handles.append(Patch(color=base_cmap(0.7), alpha=0.7, label=f"Rotation {r}"))
 
             plt.suptitle(title)
             plt.title(f"n={self.n}, {detail}")
@@ -389,9 +373,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             plt.yticks(np.arange(self.total_nodes))
             plt.legend(handles=legend_handles, title="Rotation")
 
-            parent_dir = (
-                pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
-            )
+            parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
             full_path = parent_dir / filename
             plt.savefig(full_path)
 
@@ -405,9 +387,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         for i, layer in enumerate(self.dir_W[r]["indices"]):
             logger.debug(f"layer{i}: {layer}")
 
-    def graph_structure(
-        self, detail="", output_dir=None, medium="matplotlib"
-    ) -> Tuple[str, plt.Figure]:
+    def graph_structure(self, detail="", output_dir=None, medium="matplotlib") -> Tuple[str, plt.Figure]:
         if medium == "matplotlib":
             return self._graph_hex(output_dir, detail=detail)
         elif medium == "dot":
@@ -502,9 +482,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             ax.add_patch(circ)
             if label == "value" and values is not None:
                 txt = (
-                    f"{values[node]:.3g}"
-                    if isinstance(values[node], (int, float, np.floating))
-                    else str(values[node])
+                    f"{values[node]:.3g}" if isinstance(values[node], (int, float, np.floating)) else str(values[node])
                 )
             else:
                 txt = str(node)
@@ -521,14 +499,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         plt.tight_layout()
         parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
-        filename = (
-            f"hexnet_n{self.n}_r{self.r}_structure{'_' + detail if detail else ''}.png"
-        )
+        filename = f"hexnet_n{self.n}_r{self.r}_structure{'_' + detail if detail else ''}.png"
         full_path = parent_dir / filename
         plt.suptitle(f"Graph Structure")
-        plt.title(
-            f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}"
-        )
+        plt.title(f"n={self.n}, r={self.r}, lr={self.learning_rate_fn.display_name}, {detail}")
         try:
             if output_dir:
                 plt.savefig(full_path)
@@ -546,12 +520,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         """
         lines = []
         lines.append("digraph HexNet {")
-        lines.append(
-            '  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];'
-        )
-        lines.append(
-            "  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true, zorder=10];"
-        )
+        lines.append('  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];')
+        lines.append("  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true, zorder=10];")
         lines.append('  edge  [penwidth=0.5, dir="none", zorder=1];')
 
         # group nodes by layer (same rank)
@@ -730,9 +700,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
                 # count += 1
 
-                self.training_metrics[self.r].tally_regression_score_r2(
-                    y_pred, y_target
-                )
+                self.training_metrics[self.r].tally_regression_score_r2(y_pred, y_target)
 
                 # backprop step
                 self.backward(activations, y_target_full, apply_delta_W=False)
@@ -748,12 +716,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             # r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
             epoch_loss = total_loss / len(data)
-            epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics[
-                self.r
-            ].calc_regression_score_and_r2(self.n, p=self.n)
-            self.training_metrics[self.r].add_metric(
-                epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2
+            epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_regression_score_and_r2(
+                self.n, p=self.n
             )
+            self.training_metrics[self.r].add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
             self.training_figure.update_figure(
                 {
                     "loss": epoch_loss,
@@ -774,9 +740,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 logger.info("")
                 logger.info("Training complete!")
                 self.show_latest_metrics()
-                logger.info(
-                    f"Training figure saved to: {self.training_figure.filename}"
-                )
+                logger.info(f"Training figure saved to: {self.training_figure.filename}")
 
         # todo: keep track of epochs completed for each rotation
         if self.r == 0:

@@ -54,9 +54,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
     # --- static methods ---
     @staticmethod
-    def get_parameter_count(
-        input_dim: int, output_dim: int, hidden_dims: List[int]
-    ) -> int:
+    def get_parameter_count(input_dim: int, output_dim: int, hidden_dims: List[int]) -> int:
         if len(hidden_dims) == 0:
             raise ValueError("hidden_dims must be a list of at least one integer")
         dims = [input_dim] + hidden_dims + [output_dim]
@@ -115,15 +113,11 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                     ConstantLearningRate,
                 )
 
-                self.learning_rate_fn = ConstantLearningRate(
-                    learning_rate=learning_rate_config
-                )
+                self.learning_rate_fn = ConstantLearningRate(learning_rate=learning_rate_config)
             elif isinstance(learning_rate_config, str):
                 from networks.learning_rate.learning_rate import get_learning_rate
 
-                self.learning_rate_fn = get_learning_rate(
-                    learning_rate_config, learning_rate=0.01
-                )
+                self.learning_rate_fn = get_learning_rate(learning_rate_config, learning_rate=0.01)
             else:
                 # If it's already a learning rate object
                 self.learning_rate_fn = learning_rate_config
@@ -143,13 +137,9 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             activations.append(a.copy())
         return activations
 
-    def backward(
-        self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True
-    ):
+    def backward(self, activations: np.ndarray, target: np.ndarray, apply_delta_W: bool = True):
         grads = [np.zeros_like(w) for w in self.W]
-        delta = self.loss.calc_delta(
-            target, self.activation.deactivate(activations[-1])
-        )
+        delta = self.loss.calc_delta(target, self.activation.deactivate(activations[-1]))
 
         for i in reversed(range(len(self.W))):
             grads[i] = activations[i + 1] @ delta
@@ -193,9 +183,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             ["loss_method", self.loss.display_name],
             ["activation_method", self.activation.display_name],
         ]
-        logger.info(
-            "\n" + tabulate(data, headers=["Parameter", "Value"], tablefmt="grid")
-        )
+        logger.info("\n" + tabulate(data, headers=["Parameter", "Value"], tablefmt="grid"))
 
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
         # print(f"regression_score:\t{self.training_metrics.regression_score[-1]:.3f}")
@@ -216,14 +204,10 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         )
         table_print(["Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"], [[*data]])
 
-    def graph_weights(
-        self, activation_only=True, detail="", output_dir: pathlib.Path = None
-    ):
+    def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
         pass
 
-    def graph_structure(
-        self, detail="", output_dir: pathlib.Path = None, medium="matplotlib"
-    ):
+    def graph_structure(self, detail="", output_dir: pathlib.Path = None, medium="matplotlib"):
         if medium == "matplotlib":
             self._graph_structure_matplotlib(detail, output_dir)
         else:
@@ -330,7 +314,9 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         filename_base = filename_path.name
         self.training_figure.filename = self.figure_service.figures_path / filename_base
         logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
-        self.training_figure.title = f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
+        self.training_figure.title = (
+            f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
+        )
         self.training_figure.loss_detail = self.loss.display_name
         self.training_figure.regression_score_detail = "mean exp(-RMSE) per example"
         self.training_figure.r2_detail = "coefficient of determination"
@@ -403,9 +389,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             # Calculate adjusted R-squared
             p = self.input_dim  # Number of features/parameters
             if num_elems > p + 1:
-                adjusted_r_squared = 1 - (1 - r_squared) * (num_elems - 1) / (
-                    num_elems - p - 1
-                )
+                adjusted_r_squared = 1 - (1 - r_squared) * (num_elems - 1) / (num_elems - p - 1)
             else:
                 adjusted_r_squared = r_squared  # Fallback if insufficient samples
 
@@ -413,9 +397,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             epoch_reg_score = regression_score_sum / count
             epoch_r2 = r_squared
             epoch_adj_r2 = adjusted_r_squared
-            self.training_metrics.add_metric(
-                epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2
-            )
+            self.training_metrics.add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
             self.training_figure.update_figure(
                 {
                     "loss": epoch_loss,
@@ -434,9 +416,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                 self.training_figure.save_figure()
                 logger.info("Training complete!")
                 self.show_latest_metrics()
-                logger.info(
-                    f"Training figure saved to: {self.training_figure.filename}"
-                )
+                logger.info(f"Training figure saved to: {self.training_figure.filename}")
 
             self.epochs_completed += 1
 
