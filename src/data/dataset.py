@@ -1,7 +1,19 @@
-from abc import ABC, abstractmethod
-from typing import Iterator, Tuple
-import numpy as np
+"""
+Dataset registry and helpers.
 
+`BaseDataset`, `DATASET_FUNCTIONS`, and `randomized_enumerate` live here (Arbor-style hub).
+Sibling modules whose names end with `_dataset.py` are imported below so subclasses
+register via `__init_subclass__`.
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from importlib import import_module
+from pathlib import Path
+from typing import Iterator, Tuple
+
+import numpy as np
 from streamlit_app.glossary_types import GlossaryNode
 
 DATASET_FUNCTIONS = {}
@@ -68,113 +80,17 @@ def randomized_enumerate(
         yield int(index), dataset.__getitem__(index)
 
 
-class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
-    def __init__(self, d: int = 2, num_samples: int = 100, scale: float | np.float64 = 1.0):
-        super().__init__()
-        self.d = d
-        self.num_samples = num_samples
-        self.scale = scale
-        self.data = None
-
-        self.load_data()
-
-    @classmethod
-    def get_glossary_node(cls) -> GlossaryNode:
-        return GlossaryNode(
-            title="Linear (scaled) dataset",
-            aliases=(
-                "linear_scale",
-                "type=linear_scale",
-                "LinearScaleDataset",
-                "linear",
-                "type=linear",
-            ),
-            english=(
-                "Inputs **x** are drawn uniformly in [-1, 1]^d; targets are **y = scale · x** with a "
-                "scalar `scale` (default 2.0 in `hexnet train` for this dataset). CLI and manifests use the id "
-                "**linear_scale** (same as the dataset `display_name`). The Streamlit **Train Network** "
-                "button uses the identity variant (`get_dataset(..., type='identity')`), not this one."
-            ),
-            math_latex=r"y = s \cdot x",
-            example="With scale=2, if x = [0.5, -1.0] then y = [1.0, -2.0].",
-            children=(),
-        )
-
-    def load_data(self) -> bool:
-        X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
-        Y = X.copy() * self.scale
-        self.data = {
-            "X": X,
-            "Y": Y,
-        }
-        return True
-
-
-class IdentityDataset(LinearScaleDataset, display_name="identity"):
-    def __init__(
-        self,
-        d: int = 2,
-        num_samples: int = 100,
-        scale: float | np.float64 | None = None,
-    ):
-        super().__init__(d, num_samples)
-        self.scale = 1.0
-
-    @classmethod
-    def get_glossary_node(cls) -> GlossaryNode:
-        return GlossaryNode(
-            title="Identity dataset",
-            aliases=("identity", "type=identity"),
-            english=(
-                "Training pairs where each target **y** equals the corresponding input **x**. "
-                "In code this is `IdentityDataset`: it uses the same random **x** in [-1, 1]^d as "
-                "`LinearScaleDataset` but with scale 1, so **y = x**."
-            ),
-            math_latex=r"y = x \quad \text{(elementwise)}",
-            example="For d=3, one sample might be x = [0.2, -0.5, 0.1] and y = [0.2, -0.5, 0.1].",
-            children=(),
-        )
-
-
-class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
-    def __init__(
-        self,
-        d: int = 2,
-        num_samples: int = 100,
-        scale: float | np.float64 = 1.0,
-    ):
-        super().__init__(d, num_samples, scale)
-        self.data = None
-        self.load_data()
-
-    @classmethod
-    def get_glossary_node(cls) -> GlossaryNode:
-        return GlossaryNode(
-            title="Diagonal scale dataset",
-            aliases=("diagonal_scale", "type=diagonal_scale", "DiagonalScaleDataset"),
-            english=(
-                "Like the linear scaled dataset, **x** is uniform in [-1, 1]^d, but each output "
-                "coordinate is scaled independently: **y_i = s · (i+1) · x_i** for zero-based index **i**. "
-                "Useful for per-dimension behavior and conditioning; CLI id **diagonal_scale**."
-            ),
-            math_latex=r"y_i = s \cdot (i+1) \cdot x_i",
-            example=(
-                "With d=3 and scale=1, if x = [0.2, 0.5, -0.1] then "
-                "y = [0.2, 1.0, -0.3] (dimension i is scaled by (i+1)·s)."
-            ),
-            children=(),
-        )
-
-    def load_data(self) -> bool:
-        X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
-        Y = X.copy()
-        for i in range(self.d):
-            Y[:, i] *= (i + 1) * self.scale
-        self.data = {
-            "X": X,
-            "Y": Y,
-        }
-        return True
+for _path in sorted(Path(__file__).resolve().parent.iterdir()):
+    if _path.is_dir() or _path.name == "__init__.py":
+        continue
+    if not _path.name.endswith("_dataset.py"):
+        continue
+    _stem = _path.stem
+    _pkg = __package__
+    if _pkg:
+        import_module(f".{_stem}", _pkg)
+    else:
+        import_module(f"data.{_stem}")
 
 
 def list_registered_dataset_display_names() -> list[str]:

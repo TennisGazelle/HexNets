@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Dataset glossary: `get_glossary_node()` per registered class, `build_datasets_glossary_parent()` in `src/data/dataset.py`, `GlossaryNode` in `src/streamlit_app/glossary_types.py`, Streamlit tree wired in `glossary_data.py`.
+- Datasets: Arbor-style `src/data/dataset.py` hub (`BaseDataset`, `DATASET_FUNCTIONS`, `randomized_enumerate`, discovery loop for `*_dataset.py`); concrete classes in sibling modules; tests import `LinearScaleDataset` from `data.linear_scale_dataset`.
 
 ---
 

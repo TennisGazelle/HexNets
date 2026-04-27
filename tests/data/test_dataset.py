@@ -4,12 +4,12 @@ import numpy as np
 
 from data.dataset import (
     DATASET_FUNCTIONS,
-    LinearScaleDataset,
     build_datasets_glossary_parent,
     build_registered_dataset,
     list_registered_dataset_display_names,
     randomized_enumerate,
 )
+from data.linear_scale_dataset import LinearScaleDataset
 
 def test_linear_dataset():
     dataset = LinearScaleDataset(d=2, num_samples=100, scale=1.0)

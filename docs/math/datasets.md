@@ -1,13 +1,13 @@
 Assumptions:
 
-* **Source of truth for implementations:** `src/data/dataset.py`
+* **Source of truth for implementations:** [`src/data/dataset.py`](../../src/data/dataset.py) — `BaseDataset`, `DATASET_FUNCTIONS`, `randomized_enumerate`, registry helpers, and a suffix-based import of sibling `*_dataset.py` modules (Arbor-style). Concrete classes live in those modules (e.g. `linear_scale_dataset.py`).
 * **CLI training dataset switch:** `get_dataset()` in `src/commands/command.py` (`-t` / `--type`)
 
 ---
 
 # Datasets
 
-## Implemented classes (`src/data/dataset.py`)
+## Implemented classes (`src/data/*.py`)
 
 | Class | `display_name` | Mapping |
 |--------|----------------|---------|
@@ -29,7 +29,7 @@ Older saved `config.json` files may still show `"dataset_type": "linear"` from b
 
 ## Adding a dataset
 
-1. Subclass `BaseDataset` in `dataset.py` with a unique `display_name` (registration happens in `__init_subclass__`).
+1. Add `src/data/<name>_dataset.py` (filename must end with `_dataset.py`). Subclass `BaseDataset` from `data.dataset` with a unique `display_name` (registration happens in `__init_subclass__`). Importing `data.dataset` loads all such modules automatically.
 2. Give `__init__(self, d, num_samples, scale=...)` the same keyword shape as the other built-ins if it should work with **`build_registered_dataset`** without extra CLI wiring; CLI `-t` choices update automatically.
 3. Implement **`get_glossary_node()`** on the class so the Streamlit glossary (and **`build_datasets_glossary_parent()`** in `dataset.py`) can list the dataset without hand-maintained mirror text. `GlossaryNode` lives in [`src/streamlit_app/glossary_types.py`](../../src/streamlit_app/glossary_types.py) (stdlib only; importing `data.dataset` does not load the Streamlit library).
 
