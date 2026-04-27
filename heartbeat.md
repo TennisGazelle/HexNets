@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Streamlit: **Run Browser** tab (`run_browser.py` — `runs/` expander tree + JSON viewer), **Lesion Lab** placeholder (`lesion_lab.py`), **Rotation Comparison** 25/75 column layout (multi-activation under `n` on the left; structure / activation / weight on the right). Docs: [`docs/streamlit_app.md`](docs/streamlit_app.md).
+- Registry glossary parity: abstract `get_glossary_node()` on `BaseLoss`, `BaseLearningRate`, `BaseActivation`; Streamlit glossary top-level parents **Loss functions**, **Learning rates**, **Activations** (`glossary_data.py`; hub builders in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`). Docs: [`docs/streamlit_app.md`](docs/streamlit_app.md).
 
 ---
 

@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import List
 
 from networks.activation import ACTIVATION_FUNCTIONS
+from streamlit_app.glossary_types import GlossaryNode
 
 
 class BaseActivation(ABC):
@@ -20,6 +23,11 @@ class BaseActivation(ABC):
     def __repr__(self):
         return self.display_name
 
+    @classmethod
+    @abstractmethod
+    def get_glossary_node(cls) -> GlossaryNode:
+        raise NotImplementedError
+
     @abstractmethod
     def activate(self, x):
         raise NotImplementedError("activate not implemented")
@@ -37,3 +45,17 @@ def get_activation_function(display_name: str, *args, **kwargs) -> BaseActivatio
 
 def get_available_activation_functions() -> List[str]:
     return list(ACTIVATION_FUNCTIONS.keys())
+
+
+def build_activations_glossary_parent() -> GlossaryNode:
+    children = tuple(ACTIVATION_FUNCTIONS[name].get_glossary_node() for name in sorted(ACTIVATION_FUNCTIONS.keys()))
+    return GlossaryNode(
+        title="Activations",
+        aliases=("activation", "nonlinearity", "ACTIVATION_FUNCTIONS", "hidden activation"),
+        english=(
+            "Hidden layers apply **activate(x)** forward and use **deactivate(x)** (derivative w.r.t. pre-activation) "
+            "in the backward pass. The **Activation** dropdown in Network Explorer selects one of the registered "
+            "functions below."
+        ),
+        children=children,
+    )

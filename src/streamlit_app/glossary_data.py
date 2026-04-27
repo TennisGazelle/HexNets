@@ -5,6 +5,9 @@ Glossary tree data (no Streamlit imports).
 from __future__ import annotations
 
 from data.dataset import build_datasets_glossary_parent
+from networks.activation.activations import build_activations_glossary_parent
+from networks.learning_rate.learning_rate import build_learning_rates_glossary_parent
+from networks.loss.loss import build_losses_glossary_parent
 from streamlit_app.glossary_types import GlossaryNode
 
 
@@ -26,6 +29,9 @@ def _fill_search_blob(node: GlossaryNode) -> None:
 
 def _build_glossary_root() -> list[GlossaryNode]:
     datasets = build_datasets_glossary_parent()
+    loss_functions = build_losses_glossary_parent()
+    learning_rates = build_learning_rates_glossary_parent()
+    activations = build_activations_glossary_parent()
 
     loss = GlossaryNode(
         title="Loss (epoch)",
@@ -33,7 +39,8 @@ def _build_glossary_root() -> list[GlossaryNode]:
         english=(
             "The number minimized by gradient descent: the **mean** over the training set of "
             "whatever loss class is configured (e.g. MSE between **y_pred** and **y_target** on "
-            "the output nodes). This is **not** the same as regression score."
+            "the output nodes). This is **not** the same as regression score. "
+            "For definitions of each **Loss** class (MSE, Huber, …), see the top-level **Loss functions** glossary entry."
         ),
         math_latex=r"L_{\text{epoch}} = \frac{1}{N}\sum_{i=1}^{N} \ell(y^{(i)}_{\text{pred}}, y^{(i)}_{\text{true}})",
         example="If every sample has loss 0.04, the epoch loss is 0.04.",
@@ -107,13 +114,19 @@ def _build_glossary_root() -> list[GlossaryNode]:
     param_act = GlossaryNode(
         title="Activation function",
         aliases=("relu", "activation"),
-        english="Nonlinearity applied in hidden layers; chosen from the **Activation** dropdown in Network Explorer.",
+        english=(
+            "Chosen from the **Activation** dropdown in Network Explorer. "
+            "See the top-level **Activations** glossary for each registered function (forward and backward behavior)."
+        ),
         children=(),
     )
     param_loss = GlossaryNode(
         title="Loss function (config)",
         aliases=("loss", "objective"),
-        english="The **Loss** dropdown picks which **Loss** class is used when computing epoch loss (e.g. MSE).",
+        english=(
+            "The **Loss** dropdown selects which **BaseLoss** subclass computes epoch loss and deltas. "
+            "See the top-level **Loss functions** glossary for MSE, Huber, and the other implementations."
+        ),
         children=(),
     )
     params = GlossaryNode(
@@ -125,6 +138,9 @@ def _build_glossary_root() -> list[GlossaryNode]:
 
     root = [
         datasets,
+        loss_functions,
+        learning_rates,
+        activations,
         metrics_parent,
         params,
     ]
