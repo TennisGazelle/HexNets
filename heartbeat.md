@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- RunService refactor: `get_parameter_count` on Hex/MLP networks, `resolve_git_commit` in `utils`, RunService static helpers + member ordering, Cursor rule `python-class-member-order.mdc`, and targeted repo-wide class reorder (ABCs, datasets, networks).
+- Dataset glossary: `get_glossary_node()` per registered class, `build_datasets_glossary_parent()` in `src/data/dataset.py`, `GlossaryNode` in `src/streamlit_app/glossary_types.py`, Streamlit tree wired in `glossary_data.py`.
 
 ---
 

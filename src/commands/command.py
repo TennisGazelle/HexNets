@@ -7,7 +7,11 @@ import logging
 from networks.activation.activations import get_available_activation_functions
 from networks.loss.loss import get_available_loss_functions
 from networks.learning_rate.learning_rate import get_available_learning_rates
-from data.dataset import IdentityDataset, LinearScaleDataset
+from data.dataset import (
+    build_registered_dataset,
+    is_registered_dataset_display_name,
+    list_registered_dataset_display_names,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +36,7 @@ def print_header():
 
 
 def get_dataset(n, train_samples, type="identity", scale=1.0):
-    if type == "identity":
-        return IdentityDataset(d=n, num_samples=train_samples)
-    elif type == "linear_scale":
-        return LinearScaleDataset(d=n, num_samples=train_samples, scale=scale)
-    else:
-        raise ValueError(f"Invalid dataset type: {type}")
+    return build_registered_dataset(type, d=n, num_samples=train_samples, scale=scale)
 
 
 class Command(ABC):
@@ -172,7 +171,7 @@ def add_training_arguments(parser: ArgumentParser):
         "-t",
         "--type",
         help="Type of dataset to use",
-        choices=["identity", "linear_scale"],
+        choices=list_registered_dataset_display_names(),
         default="identity",
         dest="type",
     )
@@ -277,5 +276,6 @@ def validate_training_arguments(args: Namespace):
         )
     if args.dataset_size < 10:
         raise ValueError("Dataset size must be at least 10")
-    if args.type not in ["identity", "linear_scale"]:
-        raise ValueError(f"Invalid dataset type: {args.type}. Must be one of: identity, linear_scale")
+    if not is_registered_dataset_display_name(args.type):
+        names = ", ".join(list_registered_dataset_display_names())
+        raise ValueError(f"Invalid dataset type: {args.type}. Must be one of: {names}")

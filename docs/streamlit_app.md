@@ -3,7 +3,7 @@
 ## Summary (for quick orientation)
 
 * **Entry:** `src/streamlit_main.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_main.py`.
-* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, metrics explainer expander), **Rotation Comparison** (loads `reference/*.png`; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; data in `src/streamlit_app/glossary_data.py`, UI in `glossary_tab.py` / `metrics_explainer.py`).
+* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, metrics explainer expander), **Rotation Comparison** (loads `reference/*.png`; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/streamlit_app/glossary_data.py`, node type in `glossary_types.py`, dataset branch from `build_datasets_glossary_parent()` in `src/data/dataset.py`; UI in `glossary_tab.py` / `metrics_explainer.py`).
 * **Rotation tab layout:** per rotation `r`, shows structure + activation + weight images; a fourth column loads `hexnet_n{n}_multi_activation.png` (same file for each `r` when present).
 * **Defaults:** `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error` (see `initialize_session_state()`).
 
@@ -192,7 +192,7 @@ When launched, the Streamlit app:
 
 - **Search**: `st.text_input` with case-insensitive substring filtering. Each entry’s index includes its nested children so terms like “identity” match under **Datasets**.
 - **Layout**: Top-level entries use two columns of expanders when multiple roots are visible; nested definitions stay inside their parent expander.
-- **Content**: Plain-language explanations with optional `st.latex` formulas and examples; glossary tree in `src/streamlit_app/glossary_data.py`, tab renderer in `glossary_tab.py`.
+- **Content**: Plain-language explanations with optional `st.latex` formulas and examples; glossary tree in `src/streamlit_app/glossary_data.py` (`GlossaryNode` in `glossary_types.py`; registered datasets supply nodes via `get_glossary_node()` / `build_datasets_glossary_parent()` in `src/data/dataset.py`), tab renderer in `glossary_tab.py`.
 
 ## Deployment to Streamlit Cloud
 

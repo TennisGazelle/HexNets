@@ -133,5 +133,5 @@ class TestTrainCommand:
 
     def test_invoke_invalid_type_raises(self):
         args = _valid_train_args(type="invalid")
-        with pytest.raises(ValueError, match="Invalid dataset type"):
+        with pytest.raises(ValueError, match="Unknown dataset display_name"):
             self.command.invoke(args)
