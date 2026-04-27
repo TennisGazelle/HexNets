@@ -21,6 +21,7 @@ Assumptions:
 
 * **`identity`** → `IdentityDataset`
 * **`linear_scale`** → `LinearScaleDataset` (CLI `-t` / `--type`; matches `display_name`. Default scale depends on command path, e.g. scale 2.0 in `train`.)
+* New runs persist a **`dataset` object** in `runs/.../config.json` (`id`, `num_samples`, `scale`); legacy runs only had flat `dataset_type` / `dataset_size` and are normalized on load.
 
 Older saved `config.json` files may still show `"dataset_type": "linear"` from before this name was aligned.
 

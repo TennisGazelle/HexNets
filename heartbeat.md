@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Normalized dataset CLI/manifest id to `linear_scale`; renamed `stats_conmand.py` → `stats_command.py` (imports, docs, stories).
+- Implemented run persistence for paper traceability: manifest/config schema v1 (git SHA, seed, dataset block, trainable parameter count, optional note/tags), JSON ingest errors, and CLI `hexnet train --run-note` / `--run-tags`.
 
 ---
 

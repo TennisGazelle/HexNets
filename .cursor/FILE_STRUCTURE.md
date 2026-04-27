@@ -110,7 +110,8 @@ Component directories (`activation/`, `loss/`, `learning_rate/`) contain base cl
 
 - **`src/utils.py`**: Helper functions
   - `table_print()` - Pretty table printing
-  - `get_json_file_contents()` - JSON file reading
+  - `read_json_from_path()` / `read_json_object()` - JSON file reading with actionable errors for run ingestion
+  - `get_json_file_contents()` - Thin wrapper around `read_json_object` (dict-only JSON)
   - `Colors` - Terminal color codes
 
 - **`src/services/logging_config/logging_config.py`**: Logging setup
@@ -133,13 +134,17 @@ Created automatically. Structure:
 ```
 runs/
   YYYY-MM-DD_HH-MM_<uuid>/
-    config.json              # Hyperparameters
-    manifest.json            # Hashes and metadata
+    config.json              # Hyperparameters + provenance (see below)
+    manifest.json            # Hashes, git SHA, parameter count, optional note/tags
     training_metrics.json    # Training history (loss, accuracy, r_squared, adjusted_r_squared arrays)
     model.pkl               # Saved weights
     plots/                  # Generated figures
       *.png
 ```
+
+**`config.json` (v1):** `schema_version`, `random_seed`, nested `dataset` (`id`, `num_samples`, `scale` for `linear_scale`), plus existing `model_type`, `loss_type`, `activation_type`, `learning_rate`, `epochs`, and legacy-mirrored `dataset_type` / `dataset_size`.
+
+**`manifest.json` (v1):** `schema_version`, `model_hash`, `data_hash`, `date_first_run`, `git_commit` (or `git_error` if not a git checkout), `random_seed`, `trainable_parameter_count`, optional `run_note` / `run_tags`.
 
 **Naming:**
 - Auto-generated: `YYYY-MM-DD_HH-MM_<6-char-uuid>`
