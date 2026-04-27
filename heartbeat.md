@@ -4,13 +4,13 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Renamed regression **accuracy** to **`regression_score`** across `src/` (Metrics, figures, pickles/JSON keys, tables, Streamlit unpack), fixed figure axis semantics, added [`tests/test_metrics.py`](tests/test_metrics.py). Old runs/checkpoints using `accuracy` / `correct` are intentionally incompatible.
+- Added R² / adjusted R² toy verification in [`tests/test_metrics.py`](tests/test_metrics.py): reference helper mirroring [`src/networks/metrics.py`](src/networks/metrics.py), perfect fit, mean-baseline (R²≈0), worse-than-mean (negative R²), low-sample and `N = p + 2` boundary, constant-target degenerate cases.
 
 ---
 
 ## Active development
 
-- Regression-metrics correctness and interpretation pass for **[#8](https://github.com/TennisGazelle/HexNets/issues/8)** — rename + tests landed; remaining story items: deeper R² toy verification, Streamlit metrics expander.
+- Regression-metrics correctness for **[#8](https://github.com/TennisGazelle/HexNets/issues/8)** — R² / adjusted R² covered by toy-backed tests; remaining: Streamlit metrics explainer expander.
 
 ---
 
