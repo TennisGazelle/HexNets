@@ -1,6 +1,7 @@
 # a unit test for the linear dataset using pytest
 
 import numpy as np
+import pytest
 
 from data.dataset import (
     DATASET_FUNCTIONS,
@@ -59,6 +60,61 @@ def test_build_datasets_glossary_parent_matches_registry():
     all_aliases = [a for child in parent.children for a in child.aliases]
     assert "diagonal_scale" in all_aliases
     assert "identity" in all_aliases
+    for child in parent.children:
+        assert child.title
+        assert child.english
+
+
+@pytest.mark.parametrize("display_name", sorted(DATASET_FUNCTIONS.keys()))
+def test_build_registered_dataset_smoke(display_name: str):
+    ds = build_registered_dataset(display_name, d=4, num_samples=20, scale=1.0)
+    assert len(ds) == 20
+    x, y = ds[0]
+    assert x.shape == (4,) and y.shape == (4,)
+
+
+def test_orthogonal_rotation_preserves_norm():
+    from data.orthogonal_rotation_dataset import OrthogonalRotationDataset
+
+    ds = OrthogonalRotationDataset(d=5, num_samples=30, scale=1.0, seed=0)
+    for x, y in ds:
+        np.testing.assert_allclose(np.linalg.norm(x), np.linalg.norm(y), rtol=1e-5, atol=1e-5)
+
+
+def test_simplex_projection_row_sums_to_one():
+    from data.simplex_projection_dataset import SimplexProjectionDataset
+
+    ds = SimplexProjectionDataset(d=4, num_samples=15, scale=1.0, seed=1)
+    _, y = ds[0]
+    np.testing.assert_allclose(y.sum(), 1.0, rtol=1e-5, atol=1e-5)
+    assert (y >= -1e-9).all()
+
+
+def test_unit_sphere_projection_unit_norm():
+    from data.unit_sphere_projection_dataset import UnitSphereProjectionDataset
+
+    ds = UnitSphereProjectionDataset(d=3, num_samples=10, scale=1.0, seed=2)
+    for _, y in ds:
+        np.testing.assert_allclose(np.linalg.norm(y), 1.0, rtol=1e-5, atol=1e-5)
+
+
+def test_sparse_identity_sparsity():
+    from data.sparse_identity_dataset import SparseIdentityDataset
+
+    ds = SparseIdentityDataset(d=10, num_samples=5, scale=1.0, seed=3)
+    for x, y in ds:
+        assert np.count_nonzero(x) <= 3
+        np.testing.assert_array_equal(x, y)
+
+
+def test_fixed_permutation_recovers_with_inverse():
+    from data.fixed_permutation_dataset import FixedPermutationDataset
+
+    ds = FixedPermutationDataset(d=4, num_samples=8, seed=42)
+    inv = np.empty_like(ds._perm)
+    inv[ds._perm] = np.arange(ds.d)
+    for x, y in ds:
+        np.testing.assert_array_equal(x, y[inv])
 
 
 def test_import_dataset_subprocess_does_not_import_streamlit():
