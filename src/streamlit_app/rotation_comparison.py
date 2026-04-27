@@ -9,9 +9,7 @@ def _show_multi_activation_column(n: int) -> None:
     st.caption("Per **n** only (same for every rotation).")
     if multi_activation_img:
         st.image(multi_activation_img, use_container_width=True)
-        st.markdown(
-            "All six rotations overlaid on one matrix; each rotation in a different color."
-        )
+        st.markdown("All six rotations overlaid on one matrix; each rotation in a different color.")
     else:
         st.warning(f"Multi-activation image not found for n={n}. Generate with: `hexnet ref --all`")
 

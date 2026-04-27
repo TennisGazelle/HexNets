@@ -63,21 +63,10 @@ def _render_run_tree(run_dirs: list[pathlib.Path]) -> None:
     for d in run_dirs:
         # Read session on each row so a same-run button click updates selection before expanders/plots below.
         is_selected = d.name == st.session_state.run_browser_selected_run
-        btn_col, _spacer = st.columns([1, 2])
-        with btn_col:
-            if st.button(
-                "Use this run",
-                key=f"run_browser_select_{d.name}",
-                disabled=is_selected,
-            ):
-                st.session_state.run_browser_selected_run = d.name
         label = f"{d.name} · selected" if is_selected else d.name
         with st.expander(label, expanded=is_selected):
             if is_selected:
-                st.success(
-                    "This run is active for the JSON viewer and training plot "
-                    "(side by side when a training plot exists)."
-                )
+                st.success("This run is selected.")
             entries = sorted(d.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
             if not entries:
                 st.caption("(empty)")
@@ -93,6 +82,13 @@ def _render_run_tree(run_dirs: list[pathlib.Path]) -> None:
                                 st.caption(f"  - … and {len(pngs) - 40} more PNGs")
                     else:
                         st.markdown(f"- `{child.name}`")
+
+            if st.button(
+                "Use this directory",
+                key=f"run_browser_select_{d.name}",
+                disabled=is_selected,
+            ):
+                st.session_state.run_browser_selected_run = d.name
 
 
 def _render_training_plots(paths: list[pathlib.Path]) -> None:
@@ -110,7 +106,9 @@ def render_run_browser_tab() -> None:
     run_dirs = _list_run_directories()
     if not run_dirs:
         if not RUNS_DIR.is_dir():
-            st.warning("No `runs/` directory found. Create runs from the CLI (e.g. `hexnet train`) or run from the repo root.")
+            st.warning(
+                "No `runs/` directory found. Create runs from the CLI (e.g. `hexnet train`) or run from the repo root."
+            )
         else:
             st.warning("`runs/` exists but has no subfolders yet.")
         return
@@ -119,7 +117,7 @@ def render_run_browser_tab() -> None:
     if st.session_state.get("run_browser_selected_run") not in names:
         st.session_state.run_browser_selected_run = names[0]
 
-    left, right = st.columns([1, 3])
+    left, right = st.columns([2, 3])
     with left:
         _render_run_tree(run_dirs)
     with right:

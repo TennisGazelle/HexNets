@@ -20,7 +20,7 @@ def run() -> None:
     st.subheader("Hexagonal Neural Network Visualizer")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        ["Network Explorer", "Rotation Comparison", "Glossary", "Run Browser", "Lesion Lab"]
+        ["Network Explorer", "Rotation Comparison", "Lesion Lab", "Run Browser", "Glossary"]
     )
 
     with tab1:
@@ -28,8 +28,8 @@ def run() -> None:
     with tab2:
         render_rotation_comparison_tab()
     with tab3:
-        render_glossary_tab()
+        render_lesion_lab_tab()
     with tab4:
         render_run_browser_tab()
     with tab5:
-        render_lesion_lab_tab()
+        render_glossary_tab()
