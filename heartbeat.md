@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Registry glossary parity: abstract `get_glossary_node()` on `BaseLoss`, `BaseLearningRate`, `BaseActivation`; Streamlit glossary top-level parents **Loss functions**, **Learning rates**, **Activations** (`glossary_data.py`; hub builders in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`). Docs: [`docs/streamlit_app.md`](docs/streamlit_app.md).
+- Run Browser: JSON + training plot in `[3, 2]` sub-columns when plots exist; JSON only otherwise. [`src/streamlit_app/run_browser.py`](src/streamlit_app/run_browser.py).
 
 ---
 

@@ -3,7 +3,7 @@
 ## Summary (for quick orientation)
 
 * **Entry:** `src/streamlit_main.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_main.py`.
-* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/streamlit_app/glossary_data.py`, node type in `glossary_types.py`; top-level branches: **Datasets** via `build_datasets_glossary_parent()` in `src/data/dataset.py` (`*_dataset.py`), **Loss functions** / **Learning rates** / **Activations** via `build_losses_glossary_parent()` / `build_learning_rates_glossary_parent()` / `build_activations_glossary_parent()` in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py` with per-class `get_glossary_node()`); UI in `glossary_tab.py` / `metrics_explainer.py`), **Run Browser** (`runs/` tree expanders + JSON viewer for `config.json` / `manifest.json` / other root `.json`), **Lesion Lab** (placeholder).
+* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/streamlit_app/glossary_data.py`, node type in `glossary_types.py`; top-level branches: **Datasets** via `build_datasets_glossary_parent()` in `src/data/dataset.py` (`*_dataset.py`), **Loss functions** / **Learning rates** / **Activations** via `build_losses_glossary_parent()` / `build_learning_rates_glossary_parent()` / `build_activations_glossary_parent()` in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py` with per-class `get_glossary_node()`); UI in `glossary_tab.py` / `metrics_explainer.py`), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/hexnet_training_*.png` side by side when those plots exist), **Lesion Lab** (placeholder).
 * **Rotation tab layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
 * **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
 
@@ -14,7 +14,7 @@ The HexNets Streamlit application provides an interactive web interface for visu
 1. **Network Explorer**: Interactive parameter controls to generate and visualize networks on-demand, plus a collapsible training metrics explainer
 2. **Rotation Comparison**: Sliders for `n` and `r` to browse pre-generated reference images for one `(n, r)` at a time (scrub `r` to compare rotations)
 3. **Glossary**: Filterable definitions (including nested entries) aligned with metrics and datasets used in the app
-4. **Run Browser**: Read-only browse of `runs/` (same root as `RunService.runs_dir`) with per-run expanders and a JSON viewer for run artifacts
+4. **Run Browser**: Read-only browse of `runs/` (same root as `RunService.runs_dir`); run tree with button selection (left); JSON on the right, or JSON + training PNG in a `[3, 2]` split when plots exist
 5. **Lesion Lab**: Placeholder for future experiments
 
 ## Architecture
@@ -149,7 +149,7 @@ When launched, the Streamlit app:
    - **Network Explorer**: Interactive controls and on-demand graph generation
    - **Rotation Comparison**: Pre-generated reference image viewer (25/75 layout)
    - **Glossary**: Search field filters top-level and nested glossary entries (substring match, case-insensitive); top-level expanders are shown in two columns when multiple entries match
-   - **Run Browser**: Run folder picker, JSON viewer, expander tree under each run
+   - **Run Browser**: Two columns — expander tree per run with **Use this run** (no run dropdown); JSON plus training PNG side-by-side when `hexnet_training_*.png` exists, else JSON only
    - **Lesion Lab**: Coming soon placeholder
 
 ### Network Explorer Tab
@@ -194,8 +194,11 @@ When launched, the Streamlit app:
 ### Run Browser Tab
 
 - **Runs root:** `pathlib.Path("runs/").resolve()` (matches `RunService.runs_dir` when the app is started from the repo root).
-- **JSON viewer:** Select a run folder, then a root-level `.json` file (prioritizes `config.json`, `manifest.json`, `training_metrics.json`; includes any other `*.json` in the run root). Parsed JSON is shown with `st.json`; invalid JSON falls back to `st.code`.
-- **Tree:** Each top-level run is an `st.expander` listing immediate children; `plots/` lists PNG filenames (names only, no inline image viewer).
+- **Layout:** `st.columns([1, 3])` — left: run list; right: JSON (full width) or JSON + training plot in `st.columns([3, 2])` when `hexnet_training_*.png` exists.
+- **Selection:** **Use this run** is rendered above each expander (not inside it) so one click selects without opening the tree first; it sets `st.session_state.run_browser_selected_run` and is disabled for the active run. The active run’s expander stays expanded and is titled with `· selected`; a short success callout marks it as driving the right column.
+- **JSON viewer:** Pick a root-level `.json` file for the active run (prioritizes `config.json`, `manifest.json`, `training_metrics.json`; includes any other `*.json` in the run root). Parsed JSON is shown with `st.json`; invalid JSON falls back to `st.code`.
+- **Tree:** Each top-level run is an `st.expander` listing immediate children; `plots/` lists PNG filenames in the tree (names only).
+- **Training plot:** If `plots/hexnet_training_*.png` exists, the right column uses `st.columns([3, 2])` so JSON and `st.image` share the row (narrower plot column keeps tall figures more readable). If there are no matching plots, only the JSON viewer is shown (no empty training block).
 
 ### Lesion Lab Tab
 
