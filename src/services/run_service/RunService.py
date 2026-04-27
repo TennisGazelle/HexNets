@@ -89,9 +89,7 @@ class RunService:
 
     def __init__(self, args):
         def init_run():
-            timestamp, run_folder_name = make_run_folder_name(
-                args.run_name if args.run_name else None
-            )
+            timestamp, run_folder_name = make_run_folder_name(args.run_name if args.run_name else None)
             self.run_folder_path = RunService.runs_dir / run_folder_name
             self.config_path = self.run_folder_path / "config.json"
             self.manifest_path = self.run_folder_path / "manifest.json"
@@ -164,9 +162,7 @@ class RunService:
             else:
                 raise ValueError(f"Invalid model: {args.model}")
 
-            self.manifest_contents["trainable_parameter_count"] = (
-                trainable_parameter_count(self.net)
-            )
+            self.manifest_contents["trainable_parameter_count"] = trainable_parameter_count(self.net)
 
         def load_run():
             self.run_folder_path = args.run_dir
@@ -176,15 +172,11 @@ class RunService:
 
             run_abs = self.run_folder_path.resolve()
             try:
-                self.config_contents = read_json_object(
-                    self.config_path, "run config (config.json)"
-                )
+                self.config_contents = read_json_object(self.config_path, "run config (config.json)")
             except ValueError as e:
                 raise ValueError(f"Failed to ingest run at {run_abs}.\n{e}") from e
             try:
-                self.manifest_contents = read_json_object(
-                    self.manifest_path, "run manifest (manifest.json)"
-                )
+                self.manifest_contents = read_json_object(self.manifest_path, "run manifest (manifest.json)")
             except ValueError as e:
                 raise ValueError(f"Failed to ingest run at {run_abs}.\n{e}") from e
             try:
@@ -202,9 +194,7 @@ class RunService:
             _validate_loaded_run_config(self.config_contents, self.run_folder_path)
 
             self.loss_function = get_loss_function(self.config_contents["loss_type"])
-            self.activation_function = get_activation_function(
-                self.config_contents["activation_type"]
-            )
+            self.activation_function = get_activation_function(self.config_contents["activation_type"])
             # Handle backward compatibility: if learning_rate is a float, use constant
             learning_rate_config = self.config_contents.get("learning_rate", "constant")
             if isinstance(learning_rate_config, (int, float)):
@@ -232,11 +222,7 @@ class RunService:
 
             self.net.load(self.get_network_weights_path())
 
-        if (
-            "run_dir" not in args
-            or args.run_dir is None
-            or ("run_name" in args and args.run_name)
-        ):
+        if "run_dir" not in args or args.run_dir is None or ("run_name" in args and args.run_name):
             init_run()
         else:
             load_run()
@@ -271,9 +257,7 @@ class RunService:
             params = f"{args.capsule_num_capsules}_{args.capsule_num_routing_iterations}_{args.capsule_num_outputs}"
         else:
             raise ValueError(f"Invalid model: {args.model}")
-        return hashlib.sha256(
-            f"{args.model}_{params}_{args.activation}_{args.loss}".encode()
-        ).hexdigest()
+        return hashlib.sha256(f"{args.model}_{params}_{args.activation}_{args.loss}".encode()).hexdigest()
 
     @staticmethod
     def get_data_hash(args: Namespace) -> str:

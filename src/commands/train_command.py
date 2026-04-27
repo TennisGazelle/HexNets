@@ -96,18 +96,14 @@ class TrainCommand(Command):
 
         if args.run_name:
             if args.run_dir:
-                raise ValueError(
-                    "Cannot define desired run_name and have a run_dir, pick one."
-                )
+                raise ValueError("Cannot define desired run_name and have a run_dir, pick one.")
 
             if (RunService.runs_dir / args.run_name).exists():
                 raise ValueError(f"Run named '{args.run_name}' already exists")
 
         if args.run_dir:
             if not args.run_dir.exists():
-                raise ValueError(
-                    f"Run Dir '{args.run_dir}' does not exist, use --run_name if it's meant to be new."
-                )
+                raise ValueError(f"Run Dir '{args.run_dir}' does not exist, use --run_name if it's meant to be new.")
 
     def invoke(self, args: Namespace):
         if args.type == "linear_scale":
@@ -118,9 +114,7 @@ class TrainCommand(Command):
         if args.type == "identity":
             data = get_dataset(args.n, args.dataset_size, type="identity")
         elif args.type == "linear_scale":
-            data = get_dataset(
-                args.n, args.dataset_size, type="linear_scale", scale=args.dataset_scale
-            )
+            data = get_dataset(args.n, args.dataset_size, type="linear_scale", scale=args.dataset_scale)
         else:
             raise ValueError(f"Invalid dataset type: {args.type}")
 
@@ -143,9 +137,7 @@ class TrainCommand(Command):
             pause=args.pause,
             output_dir=run.get_figures_path(),
         )
-        net.graph_weights(
-            activation_only=False, output_dir=run.get_figures_path(), detail="trained"
-        )
+        net.graph_weights(activation_only=False, output_dir=run.get_figures_path(), detail="trained")
 
         run.set_training_metrics(net.get_metrics_json())
         net.save(run.get_network_weights_path())

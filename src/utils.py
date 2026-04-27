@@ -26,9 +26,7 @@ def read_json_from_path(fileref: pathlib.Path, description: str) -> Any:
             "Repair or replace the run directory."
         ) from e
     except UnicodeDecodeError as e:
-        raise ValueError(
-            f"Cannot load {description}: file is not valid UTF-8:\n  {abs_path}\n  {e}"
-        ) from e
+        raise ValueError(f"Cannot load {description}: file is not valid UTF-8:\n  {abs_path}\n  {e}") from e
 
 
 def read_json_object(fileref: pathlib.Path, description: str) -> dict:
