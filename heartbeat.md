@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Implemented: `GlossaryNode` **`good_for`** / **`tags`** (search + Streamlit glossary UI); enriched glossary for `identity`, `linear_scale`, `diagonal_scale`; added story datasets **3–9, 13–20, 22–23** as `*_dataset.py` modules (noise ids **10, 11, 12, 21** deferred). Docs: [`docs/math/datasets.md`](docs/math/datasets.md).
+- Streamlit: **Run Browser** tab (`run_browser.py` — `runs/` expander tree + JSON viewer), **Lesion Lab** placeholder (`lesion_lab.py`), **Rotation Comparison** 25/75 column layout (multi-activation under `n` on the left; structure / activation / weight on the right). Docs: [`docs/streamlit_app.md`](docs/streamlit_app.md).
 
 ---
 

@@ -3,31 +3,34 @@
 ## Summary (for quick orientation)
 
 * **Entry:** `src/streamlit_main.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_main.py`.
-* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, metrics explainer expander), **Rotation Comparison** (loads `reference/*.png`; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/streamlit_app/glossary_data.py`, node type in `glossary_types.py`, dataset branch from `build_datasets_glossary_parent()` in `src/data/dataset.py` (concrete classes in sibling `src/data/*_dataset.py` modules); UI in `glossary_tab.py` / `metrics_explainer.py`).
-* **Rotation tab layout:** per rotation `r`, shows structure + activation + weight images; a fourth column loads `hexnet_n{n}_multi_activation.png` (same file for each `r` when present).
-* **Defaults:** `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error` (see `initialize_session_state()`).
+* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/streamlit_app/glossary_data.py`, node type in `glossary_types.py`, dataset branch from `build_datasets_glossary_parent()` in `src/data/dataset.py` (concrete classes in sibling `src/data/*_dataset.py` modules); UI in `glossary_tab.py` / `metrics_explainer.py`), **Run Browser** (`runs/` tree expanders + JSON viewer for `config.json` / `manifest.json` / other root `.json`), **Lesion Lab** (placeholder).
+* **Rotation tab layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
+* **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
 
 ## Overview
 
-The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers three main features:
+The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers five main tabs:
 
 1. **Network Explorer**: Interactive parameter controls to generate and visualize networks on-demand, plus a collapsible training metrics explainer
-2. **Rotation Comparison**: Side-by-side comparison of all 6 rotations for a given network dimension
+2. **Rotation Comparison**: Sliders for `n` and `r` to browse pre-generated reference images for one `(n, r)` at a time (scrub `r` to compare rotations)
 3. **Glossary**: Filterable definitions (including nested entries) aligned with metrics and datasets used in the app
+4. **Run Browser**: Read-only browse of `runs/` (same root as `RunService.runs_dir`) with per-run expanders and a JSON viewer for run artifacts
+5. **Lesion Lab**: Placeholder for future experiments
 
 ## Architecture
 
 ### Application Structure
 
-The Streamlit app is launched from `src/streamlit_main.py` and implemented under the `src/streamlit_app/` package: `main.py` wires tabs; each tab has its own module (`network_explorer.py`, `rotation_comparison.py`, `glossary_tab.py`); shared helpers include `session.py`, `figures.py`, and `references.py`.
+The Streamlit app is launched from `src/streamlit_main.py` and implemented under the `src/streamlit_app/` package: `main.py` wires tabs; each tab has its own module (`network_explorer.py`, `rotation_comparison.py`, `glossary_tab.py`, `run_browser.py`, `lesion_lab.py`); shared helpers include `session.py`, `figures.py`, and `references.py`.
 
 ### Key Components
 
 #### 1. Session State Management
 ```python
 def initialize_session_state():
-    # Stores network parameters (n, r, activation, loss)
-    # Maintains a cached network instance
+    # Stores network parameters (n, r, activation, loss), training dataset picks,
+    # rotation-comparison viewer keys (rotation_comparison_n / rotation_comparison_r),
+    # and a cached network instance
 ```
 
 The app uses Streamlit's session state to:
@@ -140,12 +143,14 @@ streamlit run src/streamlit_main.py
 ### Application Behavior
 
 When launched, the Streamlit app:
-1. Initializes session state with default values (n=2, r=0, activation=relu, loss=mean_squared_error)
+1. Initializes session state with default values (n=2, r=0, activation=relu, loss=mean_squared_error, dataset registry fields, rotation-comparison sliders)
 2. Creates a network instance and caches it in session state
-3. Displays the main interface with three tabs:
+3. Displays the main interface with five tabs:
    - **Network Explorer**: Interactive controls and on-demand graph generation
-   - **Rotation Comparison**: Pre-generated reference image viewer
+   - **Rotation Comparison**: Pre-generated reference image viewer (25/75 layout)
    - **Glossary**: Search field filters top-level and nested glossary entries (substring match, case-insensitive); top-level expanders are shown in two columns when multiple entries match
+   - **Run Browser**: Run folder picker, JSON viewer, expander tree under each run
+   - **Lesion Lab**: Coming soon placeholder
 
 ### Network Explorer Tab
 
@@ -155,14 +160,16 @@ When launched, the Streamlit app:
   - Slider for `r` (rotation): 0-5
   - Dropdown for activation function
   - Dropdown for loss function
+  - Dropdown for **dataset type** (registered display names from `list_registered_dataset_display_names()` in `src/data/dataset.py`, same registry as CLI `get_dataset`)
+  - Dropdown for **number of data samples** (fixed choices: 10, 50, 100, 250, 500, 1000)
 
 - **Actions**:
   - **Generate Graphs**: Creates structure and multi-activation graphs on-demand
-  - **Train Network**: Runs a quick training session (10 epochs) with animated visualization
+  - **Train Network**: Runs a quick training session (10 epochs) with animated visualization on the selected dataset and sample count; `scale` for `get_dataset` matches `TrainCommand` (`linear_scale` → `LINEAR_SCALE_DEFAULT` from `commands/train_command.py`, `diagonal_scale` → `1.0`, else `1.0`)
 
 - **Information Panel**:
   - Displays network statistics (total nodes, layer count, layer sizes)
-  - Shows current parameter values
+  - Shows current parameter values (including training dataset type and sample count)
   - Expandable layer indices view
 
 - **Training metrics expander** (collapsed by default): formulas and caveats for loss, regression score (mean exp(−RMSE)), R², and adjusted R² (see `docs/math/metrics.md` and `src/networks/metrics.py`). Includes a toy numeric example. After **Train Network**, the last epoch’s four metrics appear under “Last run (this session)” via `st.session_state.last_metrics`.
@@ -176,17 +183,23 @@ When launched, the Streamlit app:
 ### Rotation Comparison Tab
 
 **Features**:
-- Dropdown to select `n` value (2-8)
-- Tabbed interface showing all 6 rotations
-- For each rotation, displays:
-  - Physical structure graph
-  - Activation pattern matrix
-  - Weight matrix visualization
+- Sliders for `n` (2–8) and `r` (0–5), same ranges as Network Explorer; values live in `st.session_state.rotation_comparison_n` / `rotation_comparison_r` so they do not change the live network’s `n`/`r`.
+- **Layout** (`st.columns([1, 3])`): narrow column has `n` slider, multi-activation image (per `n` only), then `r` slider; wide column has three images for the selected `(n, r)` — physical structure, activation pattern, weight matrix.
 
 **Image Loading**:
 - Attempts to load images from `reference/` directory
 - Shows warnings if images are missing
 - Gracefully handles missing files without crashing
+
+### Run Browser Tab
+
+- **Runs root:** `pathlib.Path("runs/").resolve()` (matches `RunService.runs_dir` when the app is started from the repo root).
+- **JSON viewer:** Select a run folder, then a root-level `.json` file (prioritizes `config.json`, `manifest.json`, `training_metrics.json`; includes any other `*.json` in the run root). Parsed JSON is shown with `st.json`; invalid JSON falls back to `st.code`.
+- **Tree:** Each top-level run is an `st.expander` listing immediate children; `plots/` lists PNG filenames (names only, no inline image viewer).
+
+### Lesion Lab Tab
+
+- Placeholder: **Coming soon** (scope undetermined).
 
 ### Glossary Tab
 

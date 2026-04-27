@@ -4,11 +4,23 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 from commands.command import get_dataset
+from commands.train_command import LINEAR_SCALE_DEFAULT
+from data.dataset import list_registered_dataset_display_names
 from networks.activation.activations import get_available_activation_functions
 from networks.loss.loss import get_available_loss_functions
 from streamlit_app.figures import create_matplotlib_figure
 from streamlit_app.metrics_explainer import render_training_metrics_expander
 from streamlit_app.session import update_network
+
+_DATASET_SAMPLE_OPTIONS = (10, 50, 100, 250, 500, 1000)
+
+
+def _effective_dataset_scale(dataset_type: str) -> float:
+    if dataset_type == "linear_scale":
+        return LINEAR_SCALE_DEFAULT
+    if dataset_type == "diagonal_scale":
+        return 1.0
+    return 1.0
 
 
 def render_network_explorer_tab(streamlit_dir: pathlib.Path) -> None:
@@ -26,6 +38,15 @@ def render_network_explorer_tab(streamlit_dir: pathlib.Path) -> None:
         st.session_state.activation = st.selectbox("Activation", get_available_activation_functions(), index=0)
 
         st.session_state.loss = st.selectbox("Loss", get_available_loss_functions(), index=0)
+
+        dataset_names = list_registered_dataset_display_names()
+        if st.session_state.dataset_type not in dataset_names:
+            st.session_state.dataset_type = "identity"
+        st.selectbox("Dataset type", options=dataset_names, key="dataset_type")
+
+        if st.session_state.dataset_num_samples not in _DATASET_SAMPLE_OPTIONS:
+            st.session_state.dataset_num_samples = 100
+        st.selectbox("Number of data samples", options=list(_DATASET_SAMPLE_OPTIONS), key="dataset_num_samples")
 
         if st.button("Generate Graphs"):
             update_network()
@@ -48,8 +69,11 @@ def render_network_explorer_tab(streamlit_dir: pathlib.Path) -> None:
 
         if st.button("Train Network"):
             update_network()
-            with st.spinner("Training on identity dataset"):
-                data = get_dataset(st.session_state.n, 100, type="identity")
+            ds_type = st.session_state.dataset_type
+            n_samples = st.session_state.dataset_num_samples
+            scale = _effective_dataset_scale(ds_type)
+            with st.spinner(f"Training on {ds_type} dataset ({n_samples} samples)"):
+                data = get_dataset(st.session_state.n, n_samples, type=ds_type, scale=scale)
                 net = st.session_state.net
                 loss, reg_score, r2, fig = net.train_animated(data, epochs=10, pause=0, output_dir=streamlit_dir)
                 adj = net.training_metrics[net.r].adjusted_r_squared[-1]
@@ -76,6 +100,8 @@ def render_network_explorer_tab(streamlit_dir: pathlib.Path) -> None:
             st.write(f"**r (rotation):** {st.session_state.r}")
             st.write(f"**Activation:** {st.session_state.activation}")
             st.write(f"**Loss:** {st.session_state.loss}")
+            st.write(f"**Dataset (training):** {st.session_state.dataset_type}")
+            st.write(f"**Samples (training):** {st.session_state.dataset_num_samples}")
 
             with st.expander("Layer Indices"):
                 for i, layer in enumerate(layers):
