@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Refactored Streamlit UI: entry `src/streamlit_main.py`, package `src/streamlit_app/` (tab modules + glossary/metrics helpers); docs in `docs/streamlit_app.md`.
+- Normalized dataset CLI/manifest id to `linear_scale`; renamed `stats_conmand.py` → `stats_command.py` (imports, docs, stories).
 
 ---
 

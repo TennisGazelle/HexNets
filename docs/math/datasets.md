@@ -20,7 +20,9 @@ Assumptions:
 `get_dataset(n, train_samples, type=...)` supports:
 
 * **`identity`** → `IdentityDataset`
-* **`linear`** → `LinearScaleDataset` (default scale 1.0)
+* **`linear_scale`** → `LinearScaleDataset` (CLI `-t` / `--type`; matches `display_name`. Default scale depends on command path, e.g. scale 2.0 in `train`.)
+
+Older saved `config.json` files may still show `"dataset_type": "linear"` from before this name was aligned.
 
 `DiagonalScaleDataset` exists in code but is **not** exposed on `-t` until `get_dataset` is extended.
 

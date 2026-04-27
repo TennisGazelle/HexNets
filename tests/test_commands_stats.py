@@ -1,4 +1,4 @@
-"""Unit tests for stats_conmand.py (StatsCommand)."""
+"""Unit tests for stats_command.py (StatsCommand)."""
 
 import sys
 from pathlib import Path
@@ -7,17 +7,17 @@ _src = str(Path(__file__).resolve().parent.parent / "src")
 if _src in sys.path:
     sys.path.remove(_src)
 sys.path.insert(0, _src)
-for _k in list(sys.modules):
-    if _k == "commands" or (_k.startswith("commands.") and "test_" not in _k):
-        del sys.modules[_k]
+# Do not purge all of `commands.*` here: that evicts `commands.train_command` while other
+# test modules may still hold classes bound to the old module, so patches on
+# `commands.train_command.RunService` would target the wrong module.
 
 import pytest
 from argparse import ArgumentParser, Namespace
 from unittest.mock import Mock, patch
 
-from commands.stats_conmand import StatsCommand
+from commands.stats_command import StatsCommand
 
-STATS_COMMAND_MODULE = sys.modules["commands.stats_conmand"]
+STATS_COMMAND_MODULE = sys.modules["commands.stats_command"]
 
 
 class TestStatsCommand:
