@@ -47,6 +47,11 @@ class BaseNeuralNetwork(ABC):
     # def _init_from_file(self, filepath):
     #     pass
 
+    @staticmethod
+    @abstractmethod
+    def get_parameter_count(self):
+        raise NotImplementedError("get_parameter_count not implemented")
+
     @abstractmethod
     def show_stats(self):
         pass
