@@ -22,9 +22,7 @@ class TrainingFigure(Figure):
             for channel in self.channels
         }
 
-        self.fig, (self.ax_loss, self.ax_reg_score, self.ax_r2, self.ax_adj_r2) = plt.subplots(
-            4, 1, figsize=(6, 16)
-        )
+        self.fig, (self.ax_loss, self.ax_reg_score, self.ax_r2, self.ax_adj_r2) = plt.subplots(4, 1, figsize=(6, 16))
         self.fig.suptitle(f"{self.title}")
 
         self.lines_loss = {}

@@ -42,9 +42,7 @@ class Metrics:
             "count": self.count,
         }
 
-    def add_metric(
-        self, loss: float, regression_score: float, r_squared: float, adjusted_r_squared: float
-    ):
+    def add_metric(self, loss: float, regression_score: float, r_squared: float, adjusted_r_squared: float):
         self.loss.append(loss)
         self.regression_score.append(regression_score)
         self.r_squared.append(r_squared)

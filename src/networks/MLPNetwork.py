@@ -384,7 +384,12 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             epoch_adj_r2 = adjusted_r_squared
             self.training_metrics.add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
             self.training_figure.update_figure(
-                {"loss": epoch_loss, "regression_score": epoch_reg_score, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2}
+                {
+                    "loss": epoch_loss,
+                    "regression_score": epoch_reg_score,
+                    "r_squared": epoch_r2,
+                    "adjusted_r_squared": epoch_adj_r2,
+                }
             )
 
             self.apply_delta_W()

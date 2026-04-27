@@ -683,10 +683,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             # r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
             epoch_loss = total_loss / len(data)
-            epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_regression_score_and_r2(self.n, p=self.n)
+            epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_regression_score_and_r2(
+                self.n, p=self.n
+            )
             self.training_metrics[self.r].add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
             self.training_figure.update_figure(
-                {"loss": epoch_loss, "regression_score": epoch_reg_score, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2},
+                {
+                    "loss": epoch_loss,
+                    "regression_score": epoch_reg_score,
+                    "r_squared": epoch_r2,
+                    "adjusted_r_squared": epoch_adj_r2,
+                },
                 self.r,
             )
 

@@ -51,9 +51,7 @@ def render_network_explorer_tab(streamlit_dir: pathlib.Path) -> None:
             with st.spinner("Training on identity dataset"):
                 data = get_dataset(st.session_state.n, 100, type="identity")
                 net = st.session_state.net
-                loss, reg_score, r2, fig = net.train_animated(
-                    data, epochs=10, pause=0, output_dir=streamlit_dir
-                )
+                loss, reg_score, r2, fig = net.train_animated(data, epochs=10, pause=0, output_dir=streamlit_dir)
                 adj = net.training_metrics[net.r].adjusted_r_squared[-1]
                 st.session_state.last_metrics = {
                     "loss": float(loss),

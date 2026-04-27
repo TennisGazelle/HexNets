@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 from abc import ABC, abstractmethod
 
+
 # === Base class (with graph) ===
 class BaseNeuralNetwork(ABC):
     @abstractmethod
@@ -37,7 +38,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     # --- structure helpers ---
     def _hex_layer_sizes(self, n):
-        return list(range(n, 2*n)) + list(range(2*n - 2, n - 1, -1))
+        return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))
 
     def _get_default_layer_indices(self, n):
         sizes = self._hex_layer_sizes(n)
@@ -52,7 +53,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def _init_weight_matrix(self, random_init=True):
         W = np.zeros((self.total_nodes, self.total_nodes))
         rng = np.random.default_rng()
-        if not random_init: return W
+        if not random_init:
+            return W
         for i in range(len(self.layer_indices) - 1):
             src = self.layer_indices[i]
             dst = self.layer_indices[i + 1]
@@ -65,9 +67,12 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return W
 
     @staticmethod
-    def _sigmoid(x): return 1.0 / (1.0 + np.exp(-x))
+    def _sigmoid(x):
+        return 1.0 / (1.0 + np.exp(-x))
+
     @staticmethod
-    def _sigmoid_deriv_from_output(sig_y): return sig_y * (1.0 - sig_y)
+    def _sigmoid_deriv_from_output(sig_y):
+        return sig_y * (1.0 - sig_y)
 
     def forward(self, x):
         activations = [x.copy()]
@@ -81,7 +86,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def backward(self, activations, target_full):
         grads_W = np.zeros_like(self.W)
         y_hat = activations[-1]
-        delta = (y_hat - target_full)
+        delta = y_hat - target_full
 
         for i in reversed(range(len(self.layer_indices) - 1)):
             src = self.layer_indices[i]
@@ -134,19 +139,21 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             return np.argmax(y), y
 
     def save(self, filepath):
-        with open(filepath, 'wb') as f: pickle.dump({'n': self.n, 'W': self.W}, f)
+        with open(filepath, "wb") as f:
+            pickle.dump({"n": self.n, "W": self.W}, f)
+
     def load(self, filepath):
-        with open(filepath, 'rb') as f:
+        with open(filepath, "rb") as f:
             state = pickle.load(f)
-            self.n = state['n']
+            self.n = state["n"]
             self.layer_indices = self._get_default_layer_indices(self.n)
             self.total_nodes = sum(len(l) for l in self.layer_indices)
-            self.W = state['W']
+            self.W = state["W"]
 
     def _graphW(self, activation_only=True):
         matrix = (self.W != 0).astype(int) if activation_only else self.W
         plt.figure(figsize=(7, 7))
-        plt.imshow(matrix, interpolation='none')
+        plt.imshow(matrix, interpolation="none")
         plt.title(("Activation Structure" if activation_only else "Weight Matrix") + f" (n={self.n})")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
@@ -158,7 +165,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         losses, accs = [], []
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
-        line_loss, = ax_loss.plot([], [])
+        (line_loss,) = ax_loss.plot([], [])
         ax_loss.set_title("Training Loss (MSE)")
         ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
@@ -166,7 +173,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
         fig_acc = plt.figure(figsize=(6, 4))
         ax_acc = fig_acc.add_subplot(111)
-        line_acc, = ax_acc.plot([], [])
+        (line_acc,) = ax_acc.plot([], [])
         ax_acc.set_title("Training Accuracy")
         ax_acc.set_xlabel("Epoch")
         ax_acc.set_ylabel("Accuracy")
@@ -209,12 +216,12 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
             losses.append(total_loss)
             accs.append(total_acc / max(1, count))
-            line_loss.set_data(np.arange(1, len(losses)+1), losses)
+            line_loss.set_data(np.arange(1, len(losses) + 1), losses)
             ax_loss.relim()
             ax_loss.autoscale_view()
             fig_loss.canvas.draw()
 
-            line_acc.set_data(np.arange(1, len(accs)+1), accs)
+            line_acc.set_data(np.arange(1, len(accs) + 1), accs)
             ax_acc.relim()
             ax_acc.autoscale_view()
             fig_acc.canvas.draw()
@@ -243,12 +250,12 @@ if __name__ == "__main__":
     #     # ([0.3, 0.4], [0.6, 0.8]),
     #     # ([0.7, 0.8], [1.4, 1.6]),
     #     # ([0.9, 1.0], [1.8, 2.0])
-    #     ([x0, x1], [2 * x0, 2 * x1]) 
+    #     ([x0, x1], [2 * x0, 2 * x1])
     #     for x0 in np.arange(-1.0, 1.0, 0.1) for x1 in np.arange(-1.0, 1.0, 0.1)
     # ])
 
     print("Starting training...")
-    
+
     # run training animation
     losses, accs = net.train(data, epochs=250, threshold=0.1)
     # losses, accs = net.train_animated(data, epochs=50, threshold=0.1, pause=0.00005)

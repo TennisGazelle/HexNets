@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pickle
 from abc import ABC, abstractmethod
 
+
 # === Base class (with graph) ===
 class BaseNeuralNetwork(ABC):
     @abstractmethod
@@ -37,7 +38,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
     # --- structure helpers ---
     def _hex_layer_sizes(self, n):
-        return list(range(n, 2*n)) + list(range(2*n - 2, n - 1, -1))
+        return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))
 
     def _get_default_layer_indices(self, n):
         sizes = self._hex_layer_sizes(n)
@@ -127,32 +128,32 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         return activations[-1][self.layer_indices[-1]]
 
     def save(self, filepath):
-        with open(filepath, 'wb') as f:
-            pickle.dump({'n': self.n, 'W': self.W}, f)
+        with open(filepath, "wb") as f:
+            pickle.dump({"n": self.n, "W": self.W}, f)
 
     def load(self, filepath):
-        with open(filepath, 'rb') as f:
+        with open(filepath, "rb") as f:
             state = pickle.load(f)
-            self.n = state['n']
+            self.n = state["n"]
             self.layer_indices = self._get_default_layer_indices(self.n)
             self.total_nodes = sum(len(l) for l in self.layer_indices)
-            self.W = state['W']
+            self.W = state["W"]
 
     def _graphW(self, activation_only=True, detail=""):
         title = "Activation Structure" if activation_only else "Weight Matrix"
         filename = f"figures/hexnet_n{self.n}_{title.replace(' ', '_')}{'_' + detail if detail else ''}.png"
         matrix = (self.W != 0).astype(int) if activation_only else self.W
         plt.figure(figsize=(7, 7))
-        plt.imshow(matrix, cmap='Greys' if activation_only else 'viridis', interpolation='none')
+        plt.imshow(matrix, cmap="Greys" if activation_only else "viridis", interpolation="none")
         plt.suptitle(title + f" (n={self.n})")
         plt.title(f"lr={self.learning_rate}, {detail}")
         plt.xticks(np.arange(self.total_nodes))
         plt.yticks(np.arange(self.total_nodes))
-        plt.grid(visible=True, color='black', linewidth=0.5)
+        plt.grid(visible=True, color="black", linewidth=0.5)
         plt.colorbar()
         plt.savefig(filename)
         plt.show()
-    
+
     def _printIndices(self):
         for i, layer in enumerate(self.layer_indices):
             print(f"layer{i}: {layer}")
@@ -162,14 +163,14 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         figsize=(10, 8),
         node_radius=0.28,
         edge_alpha=0.15,
-        edge_weighted=False,          # if True, scale edge alpha by |W[u,v]|
+        edge_weighted=False,  # if True, scale edge alpha by |W[u,v]|
         node_fc="white",
         node_ec="black",
         font_size=10,
-        label="index",               # "index" (default) or "value"
-        values=None,                 # optional array aligned to global node index
-        dy=1.0,                      # vertical spacing
-        dx=1.0                       # horizontal spacing
+        label="index",  # "index" (default) or "value"
+        values=None,  # optional array aligned to global node index
+        dy=1.0,  # vertical spacing
+        dx=1.0,  # horizontal spacing
     ):
         """
         Draw a hex-layer network:
@@ -219,7 +220,8 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 for v in layers[i + 1]:
                     x2, y2 = pos[v]
                     ax.plot(
-                        [x1, x2], [y1, y2],
+                        [x1, x2],
+                        [y1, y2],
                         linewidth=1.0,
                         alpha=edge_alpha_for(u, v),
                     )
@@ -229,7 +231,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             circ = plt.Circle((x, y), node_radius, facecolor=node_fc, edgecolor=node_ec, linewidth=1.2)
             ax.add_patch(circ)
             if label == "value" and values is not None:
-                txt = f"{values[node]:.3g}" if isinstance(values[node], (int, float, np.floating)) else str(values[node])
+                txt = (
+                    f"{values[node]:.3g}" if isinstance(values[node], (int, float, np.floating)) else str(values[node])
+                )
             else:
                 txt = str(node)
             ax.text(x, y, txt, ha="center", va="center", fontsize=font_size)
@@ -247,7 +251,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         plt.savefig(f"figures/hexnet_n{self.n}_view.png")
         plt.show()
 
-
     def to_dot_string(self):
         """
         Export the layered, fully-connected structure as Graphviz DOT text.
@@ -256,23 +259,23 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         lines = []
         lines.append("digraph HexNet {")
         lines.append('  graph [rankdir=TB, splines=false, nodesep="0.35", ranksep="0.35"];')
-        lines.append('  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true];')
+        lines.append("  node  [shape=circle, fontsize=10, width=0.45, fixedsize=true];")
         lines.append('  edge  [penwidth=1.0, dir="none"];')
 
         # group nodes by layer (same rank)
         for i, layer in enumerate(self.layer_indices):
-            lines.append(f'  {{ rank=same; // layer {i}')
+            lines.append(f"  {{ rank=same; // layer {i}")
             for n in layer:
-                lines.append(f'    {n};')
+                lines.append(f"    {n};")
             lines.append("  }")
-        
+
         # invisible edges between nodes in same rank to enforce order
         for i in range(len(self.layer_indices)):
             line = f"  {self.layer_indices[i][0]}"
             for u_idx, u in enumerate(self.layer_indices[i]):
                 if u_idx > 0:
                     line += f" -> {u}"
-            line += " [style=\"invis\"];"
+            line += ' [style="invis"];'
             lines.append(line)
 
         # edges between consecutive layers
@@ -292,7 +295,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
     def graph_dot(self):
         dot_string = self.to_dot_string()
         dot_file = f"figures/hexnet_n{self.n}_viewdot.dot"
-        with open(dot_file, 'w') as f:
+        with open(dot_file, "w") as f:
             f.write(dot_string)
         os.system(f"dot -Tpng {dot_file} -o {dot_file.replace('.dot', '.png')}")
 
@@ -310,7 +313,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
         # Prepare two separate figures to respect "one chart per figure"
         fig_loss = plt.figure(figsize=(6, 4))
         ax_loss = fig_loss.add_subplot(111)
-        line_loss, = ax_loss.plot([], [])
+        (line_loss,) = ax_loss.plot([], [])
         ax_loss.set_title("Training Loss (MAE)")
         ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
@@ -318,7 +321,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
 
         fig_acc = plt.figure(figsize=(6, 4))
         ax_acc = fig_acc.add_subplot(111)
-        line_acc, = ax_acc.plot([], [])
+        (line_acc,) = ax_acc.plot([], [])
         ax_acc.set_title("Training Accuracy")
         ax_acc.set_xlabel("Epoch")
         ax_acc.set_ylabel("Accuracy")
@@ -355,9 +358,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
                 y_pred = activations[-1][self.layer_indices[-1]]
                 diff = y_pred - y_target
                 delta_thr = 0.1  # tune: try 0.1, 0.25, 1.0
-                huber = np.where(np.abs(diff) <= delta_thr,
-                                0.5 * diff**2,
-                                delta_thr * (np.abs(diff) - 0.5 * delta_thr))
+                huber = np.where(np.abs(diff) <= delta_thr, 0.5 * diff**2, delta_thr * (np.abs(diff) - 0.5 * delta_thr))
                 total_loss += np.mean(huber)
 
                 # # accuracy
@@ -387,12 +388,12 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork):
             accs.append(epoch_acc)
 
             # update plots
-            line_loss.set_data(np.arange(1, len(losses)+1), losses)
+            line_loss.set_data(np.arange(1, len(losses) + 1), losses)
             ax_loss.relim()
             ax_loss.autoscale_view()
             fig_loss.canvas.draw()
 
-            line_acc.set_data(np.arange(1, len(accs)+1), accs)
+            line_acc.set_data(np.arange(1, len(accs) + 1), accs)
             ax_acc.relim()
             ax_acc.autoscale_view()
             fig_acc.canvas.draw()
@@ -416,6 +417,7 @@ def get_dataset(n, train_samples, type="identity", scale=1.0):
         raise ValueError(f"Invalid dataset type: {type}")
     return list(zip(X, Y))
 
+
 def main():
     # ---------- Demo with synthetic data ----------
     # We'll create a tiny binary task on n=2 (output matches input for half the samples)
@@ -428,11 +430,12 @@ def main():
     net.graphHex()
     net.graph_dot()
 
-    net.graph(activation_only=False, detail='untrained')
+    net.graph(activation_only=False, detail="untrained")
 
     losses, accs = net.train_animated(data, epochs=100, pause=0.05)
 
-    net.graph(activation_only=False, detail='trained')
+    net.graph(activation_only=False, detail="trained")
+
 
 # --- main ---
 if __name__ == "__main__":

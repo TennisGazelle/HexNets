@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 def render_training_metrics_expander() -> None:
     """Collapsed expander with formulas, caveats, toy and session last-run metrics."""
     with st.expander("Training metrics — formulas, caveats, examples", expanded=False):
