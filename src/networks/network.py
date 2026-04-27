@@ -38,7 +38,7 @@ class BaseNeuralNetwork(ABC):
         self.data_iteration = 0  # Track current data element index
 
     # def init_training_metrics(self):
-    #     return {"loss": [], "accuracy": [], "r_squared": []}
+    #     return {"loss": [], "regression_score": [], "r_squared": []}
 
     # @abstractmethod
     # def _init_from_file(self, filepath):

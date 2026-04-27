@@ -186,7 +186,7 @@ if __name__ == "__main__":
                 update_network()
                 with st.spinner(f"Training on linear set"):
                     data = get_dataset(st.session_state.n, 100, type="identity")
-                    loss, acc, r2, fig = st.session_state.net.train_animated(
+                    loss, reg_score, r2, fig = st.session_state.net.train_animated(
                         data, epochs=10, pause=0, output_dir=streamlit_dir
                     )
                     buf = create_matplotlib_figure(fig)

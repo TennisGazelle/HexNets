@@ -54,7 +54,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self._setup_training_metrics()
         self._init_figure_service()
 
-    # --- structure helpers ---0
+    # --- structure helpers ---
     def _calc_total_nodes(self, n):
         return sum(l for l in self._hex_layer_sizes(n))
 
@@ -77,7 +77,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             f"hexnet_training_{self.loss}_{self.activation}.png",
             f"Training {self.display_name}",
             self.loss.display_name,
-            "RMSE",
+            "mean exp(-RMSE) per example",
             "coefficient of determination",
         )
 
@@ -234,7 +234,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self.dir_W[self.r]["delta_W"].fill(0)
 
     # --- public API ---
-    def calc_accuracy(self, y_pred, y_target):
+    def per_example_regression_score(self, y_pred, y_target):
         rmse = np.sqrt(np.mean((y_pred - y_target) ** 2))
         score = np.exp(-rmse)  # map rmse to [0,1]
         return score
@@ -574,17 +574,17 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             if len(metrics.loss) == 0
             else [
                 metrics.loss[-1],
-                metrics.accuracy[-1],
+                metrics.regression_score[-1],
                 metrics.r_squared[-1],
                 metrics.adjusted_r_squared[-1] if metrics.adjusted_r_squared else 0.0,
                 self.epochs_completed,
             ]
         )
-        table_print(["Rotation", "Loss", "Accuracy", "R^2", "Adjusted R^2", "Epochs"], [[self.r, *data]])
+        table_print(["Rotation", "Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"], [[self.r, *data]])
 
     def train_animated(self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None):
         """
-        Train while animating loss & accuracy over epochs.
+        Train while animating loss and regression score over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
         logger.info("==> Training with params...")
@@ -607,7 +607,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
         self.training_figure.title = f"Hexagonal Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
         self.training_figure.loss_detail = self.loss.display_name
-        self.training_figure.accuracy_detail = "RMSE"
+        self.training_figure.regression_score_detail = "mean exp(-RMSE) per example"
         self.training_figure.r2_detail = "coefficient of determination"
 
         # training loop
@@ -667,7 +667,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
                 # count += 1
 
-                self.training_metrics[self.r].tally_accurcy_r2(y_pred, y_target)
+                self.training_metrics[self.r].tally_regression_score_r2(y_pred, y_target)
 
                 # backprop step
                 self.backward(activations, y_target_full, apply_delta_W=False)
@@ -683,10 +683,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             # r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
 
             epoch_loss = total_loss / len(data)
-            epoch_acc, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_accuracy_r2(self.n, p=self.n)
-            self.training_metrics[self.r].add_metric(epoch_loss, epoch_acc, epoch_r2, epoch_adj_r2)
+            epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_regression_score_and_r2(self.n, p=self.n)
+            self.training_metrics[self.r].add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
             self.training_figure.update_figure(
-                {"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2},
+                {"loss": epoch_loss, "regression_score": epoch_reg_score, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2},
                 self.r,
             )
 
@@ -706,7 +706,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         if self.r == 0:
             self.epochs_completed += epochs
 
-        return epoch_loss, epoch_acc, epoch_r2, self.training_figure.fig
+        return epoch_loss, epoch_reg_score, epoch_r2, self.training_figure.fig
 
     def get_metrics_json(self):
         return self.get_all_training_metrics()

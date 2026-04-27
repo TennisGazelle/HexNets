@@ -8,25 +8,27 @@ logger = get_logger(__name__)
 
 
 class TrainingFigure(Figure):
-    def __init__(self, title: str, filename: str, loss_detail: str, accuracy_detail: str, r2_detail: str):
+    def __init__(self, title: str, filename: str, loss_detail: str, regression_score_detail: str, r2_detail: str):
         super().__init__(filename)
         self.title = title
         self.loss_detail = loss_detail
-        self.accuracy_detail = accuracy_detail
+        self.regression_score_detail = regression_score_detail
         self.r2_detail = r2_detail
 
         self.channels = list(range(6))
 
         self.training_metrics = {
-            channel: {"loss": [], "accuracy": [], "r_squared": [], "adjusted_r_squared": []}
+            channel: {"loss": [], "regression_score": [], "r_squared": [], "adjusted_r_squared": []}
             for channel in self.channels
         }
 
-        self.fig, (self.ax_loss, self.ax_acc, self.ax_r2, self.ax_adj_r2) = plt.subplots(4, 1, figsize=(6, 16))
+        self.fig, (self.ax_loss, self.ax_reg_score, self.ax_r2, self.ax_adj_r2) = plt.subplots(
+            4, 1, figsize=(6, 16)
+        )
         self.fig.suptitle(f"{self.title}")
 
         self.lines_loss = {}
-        self.lines_acc = {}
+        self.lines_reg_score = {}
         self.lines_r2 = {}
         self.lines_adj_r2 = {}
 
@@ -34,7 +36,9 @@ class TrainingFigure(Figure):
 
         for channel in self.channels:
             (self.lines_loss[channel],) = self.ax_loss.plot([], [], label=f"Channel {channel}", color=colors[channel])
-            (self.lines_acc[channel],) = self.ax_acc.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_reg_score[channel],) = self.ax_reg_score.plot(
+                [], [], label=f"Channel {channel}", color=colors[channel]
+            )
             (self.lines_r2[channel],) = self.ax_r2.plot([], [], label=f"Channel {channel}", color=colors[channel])
             (self.lines_adj_r2[channel],) = self.ax_adj_r2.plot(
                 [], [], label=f"Channel {channel}", color=colors[channel]
@@ -45,11 +49,11 @@ class TrainingFigure(Figure):
         self.ax_loss.set_ylabel("Loss")
         self.ax_loss.grid(True)
 
-        self.ax_acc.legend()
-        self.ax_acc.set_title(f"Accuracy ({self.accuracy_detail})")
-        self.ax_acc.set_ylabel("Accuracy")
-        self.ax_acc.set_ylim(0, 1)
-        self.ax_acc.grid(True)
+        self.ax_reg_score.legend()
+        self.ax_reg_score.set_title(f"Regression score ({self.regression_score_detail})")
+        self.ax_reg_score.set_ylabel("Mean exp(-RMSE)")
+        self.ax_reg_score.set_ylim(0, 1)
+        self.ax_reg_score.grid(True)
 
         self.ax_r2.legend()
         self.ax_r2.set_title(f"R^2 ({self.r2_detail})")
@@ -79,12 +83,18 @@ class TrainingFigure(Figure):
         self.fig.show()
 
     def update_figure(self, training_metrics: dict, channel: int = 0):
-        required_keys = ("loss", "accuracy", "r_squared")
-        if any(not training_metrics.get(k) for k in required_keys):
+        required_keys = ("loss", "regression_score", "r_squared")
+        if not all(k in training_metrics for k in required_keys):
+            return
+
+        def _epoch_scalar_ok(x) -> bool:
+            return isinstance(x, (int, float, np.integer, np.floating)) and not isinstance(x, bool)
+
+        if not all(_epoch_scalar_ok(training_metrics[k]) for k in required_keys):
             return
 
         self.training_metrics[channel]["loss"].append(training_metrics["loss"])
-        self.training_metrics[channel]["accuracy"].append(training_metrics["accuracy"])
+        self.training_metrics[channel]["regression_score"].append(training_metrics["regression_score"])
         self.training_metrics[channel]["r_squared"].append(training_metrics["r_squared"])
         if "adjusted_r_squared" in training_metrics:
             self.training_metrics[channel]["adjusted_r_squared"].append(training_metrics["adjusted_r_squared"])
@@ -97,13 +107,13 @@ class TrainingFigure(Figure):
         self.ax_loss.relim()
         self.ax_loss.autoscale_view()
 
-        # accuracy
-        self.lines_acc[channel].set_data(
-            np.arange(1, len(self.training_metrics[channel]["accuracy"]) + 1),
-            self.training_metrics[channel]["accuracy"],
+        # regression score (mean per-example exp(-RMSE))
+        self.lines_reg_score[channel].set_data(
+            np.arange(1, len(self.training_metrics[channel]["regression_score"]) + 1),
+            self.training_metrics[channel]["regression_score"],
         )
-        self.ax_acc.relim()
-        self.ax_acc.autoscale_view()
+        self.ax_reg_score.relim()
+        self.ax_reg_score.autoscale_view()
 
         # r^2
         self.lines_r2[channel].set_data(

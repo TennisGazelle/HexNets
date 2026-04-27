@@ -13,9 +13,9 @@ class FigureService:
     def set_figures_path(self, figures_path: Union[pathlib.Path, None] = None):
         self.figures_path = pathlib.Path(figures_path) if figures_path else pathlib.Path("figures")
 
-    def init_training_figure(self, filename, title, loss_detail, accuracy_detail, r2_detail):
+    def init_training_figure(self, filename, title, loss_detail, regression_score_detail, r2_detail):
         self.figures[title] = TrainingFigure(
-            title, self.figures_path / filename, loss_detail, accuracy_detail, r2_detail
+            title, self.figures_path / filename, loss_detail, regression_score_detail, r2_detail
         )
         return self.figures[title]
 

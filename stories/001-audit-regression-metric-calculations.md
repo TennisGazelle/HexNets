@@ -21,16 +21,16 @@ sync:
 
 ## Checklist
 
-- [ ] Review src/networks/metrics.py and document the intended meaning of each metric
-- [ ] Verify accuracy proxy behavior for regression and decide whether to rename it in code and UI
+- [x] Review src/networks/metrics.py and document the intended meaning of each metric
+- [x] Verify accuracy proxy behavior for regression and decide whether to rename it in code and UI (renamed to `regression_score`; breaking change for old checkpoints)
 - [ ] Verify r_squared and adjusted_r_squared formulas against known toy data
 - [ ] Add unit tests for perfect fit, poor fit, and low-sample edge cases
-- [ ] Add a short metrics interpretation section to docs
-- [ ] Update any labels in Streamlit that are misleading for regression
+- [x] Add a short metrics interpretation section to docs (`docs/math/metrics.md`)
+- [x] Update any labels in Streamlit that are misleading for regression (no accuracy labels found; train tuple uses `reg_score`)
 - [ ] Streamlit - Add a metrics explainer expander on page showing formulas, caveats, and example values.
 
 ## Done When
 
-- [ ] Metrics test pass
-- [ ] Docs reflect final definitions
+- [x] Metrics test pass (`tests/test_metrics.py` + full `tests/`)
+- [x] Docs reflect final definitions (`docs/math/metrics.md`)
 - [ ] streamlit labels match the final terminology

@@ -59,7 +59,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             f"mlpnet_training_{self.loss}_{self.activation}.png",
             f"Training {self.display_name}",
             self.loss.display_name,
-            "RMSE",
+            "mean exp(-RMSE) per example",
             "coefficient of determination",
         )
 
@@ -175,7 +175,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         logger.info("\n" + tabulate(data, headers=["Parameter", "Value"], tablefmt="grid"))
 
         # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
-        # print(f"accuracy:\t{self.training_metrics['accuracy'][-1]:.3f}")
+        # print(f"regression_score:\t{self.training_metrics.regression_score[-1]:.3f}")
         # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
 
     def show_latest_metrics(self):
@@ -185,13 +185,13 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             if len(metrics.loss) == 0
             else [
                 metrics.loss[-1],
-                metrics.accuracy[-1],
+                metrics.regression_score[-1],
                 metrics.r_squared[-1],
                 metrics.adjusted_r_squared[-1] if metrics.adjusted_r_squared else 0.0,
                 self.epochs_completed,
             ]
         )
-        table_print(["Loss", "Accuracy", "R^2", "Adjusted R^2", "Epochs"], [[*data]])
+        table_print(["Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"], [[*data]])
 
     def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
         pass
@@ -278,7 +278,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self, data: BaseDataset, epochs=25, pause=0.05, output_dir: Union[pathlib.Path, None] = None
     ) -> Tuple[float, float, float]:
         """
-        Train while animating loss & accuracy over epochs.
+        Train while animating loss and regression score over epochs.
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
         """
         logger.info("MLP Network Training:")
@@ -303,13 +303,13 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
         )
         self.training_figure.loss_detail = self.loss.display_name
-        self.training_figure.accuracy_detail = "RMSE"
+        self.training_figure.regression_score_detail = "mean exp(-RMSE) per example"
         self.training_figure.r2_detail = "coefficient of determination"
 
         # training loop
         for epoch in trange(self.epochs_completed, epochs + self.epochs_completed):
             total_loss = 0.0
-            correct = 0
+            regression_score_sum = 0
             count = 0
             ss_res_sum = 0.0
             sum_y = 0.0
@@ -344,7 +344,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
                 rmse = np.sqrt(np.mean((y_pred - y_target) ** 2))
                 score = np.exp(-rmse)  # maps 0->1, larger errors decay smoothly
-                correct += score
+                regression_score_sum += score
 
                 # scale = np.maximum(1e-8, np.mean(np.abs(y_target)))  # per-sample
                 # nmae = np.mean(np.abs(y_pred - y_target)) / scale
@@ -379,12 +379,12 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                 adjusted_r_squared = r_squared  # Fallback if insufficient samples
 
             epoch_loss = total_loss / count
-            epoch_acc = correct / count
+            epoch_reg_score = regression_score_sum / count
             epoch_r2 = r_squared
             epoch_adj_r2 = adjusted_r_squared
-            self.training_metrics.add_metric(epoch_loss, epoch_acc, epoch_r2, epoch_adj_r2)
+            self.training_metrics.add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
             self.training_figure.update_figure(
-                {"loss": epoch_loss, "accuracy": epoch_acc, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2}
+                {"loss": epoch_loss, "regression_score": epoch_reg_score, "r_squared": epoch_r2, "adjusted_r_squared": epoch_adj_r2}
             )
 
             self.apply_delta_W()
@@ -400,7 +400,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
             self.epochs_completed += 1
 
-        return epoch_loss, epoch_acc, epoch_r2, self.training_figure.fig
+        return epoch_loss, epoch_reg_score, epoch_r2, self.training_figure.fig
 
     def get_metrics_json(self):
         return self.training_metrics.as_dict()

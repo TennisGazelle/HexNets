@@ -4,13 +4,13 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Add **documentation-sync** Cursor rule (keep docs aligned with code; **never** auto-edit `docs/latex/` without explicit direction); audit doc ↔ code drift and tighten high-traffic docs for concise AI reads.
+- Renamed regression **accuracy** to **`regression_score`** across `src/` (Metrics, figures, pickles/JSON keys, tables, Streamlit unpack), fixed figure axis semantics, added [`tests/test_metrics.py`](tests/test_metrics.py). Old runs/checkpoints using `accuracy` / `correct` are intentionally incompatible.
 
 ---
 
 ## Active development
 
-- Regression-metrics correctness and interpretation pass for **[#8](https://github.com/TennisGazelle/HexNets/issues/8)**, focused on metric semantics and docs clarity.
+- Regression-metrics correctness and interpretation pass for **[#8](https://github.com/TennisGazelle/HexNets/issues/8)** — rename + tests landed; remaining story items: deeper R² toy verification, Streamlit metrics expander.
 
 ---
 
