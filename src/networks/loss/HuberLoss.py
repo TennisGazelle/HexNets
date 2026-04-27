@@ -1,9 +1,25 @@
 import numpy as np
 
 from networks.loss.loss import BaseLoss
+from streamlit_app.glossary_types import GlossaryNode
 
 
 class HuberLoss(BaseLoss, display_name="huber"):
+    @classmethod
+    def get_glossary_node(cls) -> GlossaryNode:
+        return GlossaryNode(
+            title="Huber loss",
+            aliases=("huber", "HuberLoss", "smooth l1", "pseudo-huber"),
+            english=(
+                "Robust regression loss: quadratic when |y_pred − y_true| ≤ **delta_threshold**, "
+                "else linear beyond that threshold. Constructor default **delta_threshold** is 1.0. "
+                "The reported loss is the **mean** over elements (same scalar style as MSE here)."
+            ),
+            math_latex=r"\ell_\delta(a)=\begin{cases}\frac12 a^2 & |a|\le\delta \\ \delta(|a|-\frac12\delta) & |a|>\delta\end{cases},\quad a=y_{\text{pred}}-y_{\text{true}}",
+            example="With delta=1, error 0.5 contributes 0.125 to the quadratic branch; error 3 contributes 2.5 on the linear branch.",
+            tags=("regression-compatible", "outlier-robust"),
+        )
+
     def __init__(self, delta_threshold=1.0):
         self.delta_threshold = delta_threshold
 

@@ -14,6 +14,14 @@ def initialize_session_state():
         st.session_state.activation = "relu"
     if "loss" not in st.session_state:
         st.session_state.loss = "mean_squared_error"
+    if "rotation_comparison_n" not in st.session_state:
+        st.session_state.rotation_comparison_n = 2
+    if "rotation_comparison_r" not in st.session_state:
+        st.session_state.rotation_comparison_r = 0
+    if "dataset_type" not in st.session_state:
+        st.session_state.dataset_type = "identity"
+    if "dataset_num_samples" not in st.session_state:
+        st.session_state.dataset_num_samples = 100
     if "net" not in st.session_state:
         st.session_state.net = HexagonalNeuralNetwork(
             n=st.session_state.n,
