@@ -13,6 +13,9 @@
 #   make unit-test        - Run unit tests
 #   make e2e-test         - Run end-to-end integration tests
 #
+# Backlog / issues:
+#   make stories-sync     - Sync stories/*.md with GitHub issues (requires gh + PyYAML)
+#
 # Code Quality:
 #   make lint             - Format code with Black (line length 120)
 #   make lint-check       - Check code formatting without making changes (fails if formatting needed)
@@ -47,6 +50,10 @@ install:
 	pip install -e .'[dev]' ;
 
 .venv/: install
+
+.PHONY: stories-sync
+stories-sync:
+	@${PYTHON} scripts/sync_github_stories.py sync
 
 .PHONY: unit-test
 unit-test:
