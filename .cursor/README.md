@@ -2,6 +2,8 @@
 
 Welcome to the HexNets documentation! This directory contains comprehensive documentation about the project architecture, usage, and development.
 
+**Shallow index of user-facing theory docs:** [`docs/README.md`](../docs/README.md). **Paper sources** live under `docs/latex/` — agents should not edit that tree unless explicitly asked (see [`.cursor/rules/documentation-sync.mdc`](./rules/documentation-sync.mdc)).
+
 ## Documentation Files
 
 ### Core Documentation

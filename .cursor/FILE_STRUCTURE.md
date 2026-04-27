@@ -27,9 +27,9 @@ src/
 ├── commands/             # CLI command implementations
 │   ├── command.py        # Base Command class and helpers
 │   ├── train_command.py  # Training command
-│   ├── ref_command.py    # Reference graph generation
-│   ├── adhoc_command.py   # Ad-hoc testing
-│   └── stats_command.py  # Run statistics
+│   ├── reference_command.py  # `hexnet ref` — reference graph generation
+│   ├── adhoc_command.py  # Ad-hoc testing
+│   └── stats_conmand.py  # `hexnet stats` (filename typo; module is StatsCommand)
 ├── networks/              # Neural network implementations
 │   ├── network.py         # Base network class
 │   ├── HexagonalNetwork.py  # Hexagonal network
@@ -48,9 +48,9 @@ src/
 │   │   └── QuantileLoss.py
 │   ├── learning_rate/     # Learning rate schedules (plugin dir)
 │   │   ├── learning_rate.py  # Base learning rate class
-│   │   └── ConstantLearningRate.py
+│   │   ├── ConstantLearningRate.py
+│   │   └── ExponentialDecayLearningRate.py
 │   ├── metrics.py         # Training metrics (loss, accuracy, r_squared, adjusted_r_squared)
-│   └── optimizer/          # Optimizers (future)
 ├── data/                  # Dataset implementations
 │   └── dataset.py         # Base dataset and implementations
 ├── services/              # Service modules

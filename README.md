@@ -1,16 +1,48 @@
 # HexNets
-Hexagonal Neural Network Implementations
+
+Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`hexnet`), **Streamlit** UI, and **run** / **figure** outputs.
+
+## Quick start
+
+```bash
+make install          # venv + editable install + dev deps
+hexnet --help         # CLI (entry: pyproject → src/cli.py)
+make run-streamlit    # or: streamlit run src/streamlit_app.py
+```
+
+**Reference images** (for Streamlit rotation tab): `hexnet ref --all` → `reference/*.png`
+
+**Tests:** `make unit-test` · **E2E:** `make e2e-test`
 
 ## Nomenclature
 
-Reference Graphs - figures that do not belong to a run, but is instead created given the structure of the graph.  For examples, while weights may vary, all hex graphs of n=4 will have the same activation structure and activation weight matrix.
+- **Reference graph** — Structure for a fixed `(n, r)`; not tied to a training run.
+- **Training graph** — Loss and regression metrics over epochs for one run (`Metrics` / `TrainingFigure`).
+- **Run** — One training execution; artifacts under `runs/<name>/`.
 
-Training Graph - The graph showing the progression of loss, accuracy, r^2, and adjusted r^2 of a run.
+## Where docs live
 
-Run - A run consists of the implementation and execution of a model.
+| Audience | Location |
+|----------|----------|
+| Short theory + math notes | [`docs/`](docs/README.md) (see index; **not** auto-editing `docs/latex/` without explicit ask) |
+| Agent / architecture / CLI depth | [`.cursor/`](.cursor/README.md) |
+| Backlog / issues | [`stories/`](stories/README.md) |
+| Last request / state | [`heartbeat.md`](heartbeat.md) |
 
-## CLI Interface
+## CLI (summary)
 
-When installing, a figures/ and a runs/ directory will be created.
-All runs will be saved by their name (if not provided, one will be generated with a timestamp and a uuid segment), underneath the run directory.
-The figures directory will hold all figures related to reference graphs ()
+| Command | Role |
+|---------|------|
+| `hexnet ref` | Reference graphs (`-g` types, `--all`, `-m hex\|mlp`) |
+| `hexnet train` | Train hex or MLP; writes under `runs/` |
+| `hexnet adhoc` | Quick scripted demo |
+| `hexnet stats <run_dir>` | Inspect a saved run |
+
+Full argument patterns: [`.cursor/CLI_PATTERNS.md`](.cursor/CLI_PATTERNS.md).
+
+## Layout
+
+- `src/` — application code (`networks/`, `commands/`, `data/`, `services/`, `streamlit_app.py`)
+- `figures/`, `runs/`, `reference/` — created at install or runtime (`Makefile` creates `figures/` and `runs/`)
+
+Legacy / scratch: `hexnet.py` (root) is **not** the installed package entrypoint; prefer `hexnet` CLI after `make install`.

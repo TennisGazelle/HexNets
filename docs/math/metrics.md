@@ -12,6 +12,8 @@ Assumptions in snippets:
 
 This glossary documents the intended meaning of each metric/state field currently used during training.
 
+**Plot / UI caveat:** training figures may set `accuracy_detail = "RMSE"` while the stored `accuracy` series is **`exp(-RMSE)`** (bounded score, not RMSE). Treat axis subtitles as legacy labels unless code is updated to match.
+
 ## 1) `loss`
 
 **meaning:** epoch-level optimization objective reported by the configured loss function (for example MSE, Huber, etc.).

@@ -1,5 +1,12 @@
 # Streamlit App Documentation
 
+## Summary (for quick orientation)
+
+* **Entry:** `src/streamlit_app.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_app.py`.
+* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train) and **Rotation Comparison** (loads `reference/*.png`; needs `hexnet ref --all` for full grid).
+* **Rotation tab layout:** per rotation `r`, shows structure + activation + weight images; a fourth column loads `hexnet_n{n}_multi_activation.png` (same file for each `r` when present).
+* **Defaults:** `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error` (see `initialize_session_state()`).
+
 ## Overview
 
 The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers two main features:

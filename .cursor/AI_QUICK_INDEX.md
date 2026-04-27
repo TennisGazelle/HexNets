@@ -4,6 +4,9 @@ This is a quick reference for AI assistants working on HexNets. Use this to quic
 
 ## Critical Patterns (Read First)
 
+0. **Doc sync** - [.cursor/rules/documentation-sync.mdc](./rules/documentation-sync.mdc)
+   - Code changes → update `README.md`, `docs/**` (not `docs/latex/` unless explicitly asked), and relevant `.cursor/**` notes concisely.
+
 1. **Memory Management** - [MEMORY_MANAGEMENT.md](./MEMORY_MANAGEMENT.md)
    - Always close matplotlib figures with `plt.close(fig)` in finally blocks
    - Memoize network instances when generating multiple graphs
@@ -85,6 +88,8 @@ See [DEVELOPMENT_PATTERNS.md#common-gotchas](./DEVELOPMENT_PATTERNS.md#common-go
 
 ## Documentation Map
 
+**Non-LaTeX theory / math snippets:** [../docs/README.md](../docs/README.md) (index of `docs/math/`, Streamlit notes). **Do not** auto-edit `docs/latex/` without an explicit maintainer request.
+
 ```
 .cursor/
 ├── README.md                    # This directory overview
@@ -148,7 +153,7 @@ Update documentation when:
 - Adding new patterns
 
 Keep documentation:
-- **Extensive** - Cover all important details
-- **Concise** - No fluff, get to the point
-- **Current** - Reflect actual codebase state
+- **Concise** - Prefer bullets, tables, and correct paths; avoid duplicate long explanations across `README.md`, `docs/`, and `.cursor/`.
+- **Current** - Reflect actual codebase state (especially CLI names, file paths, and wired dataset types).
 - **Actionable** - Show how, not just what
+- **Token-aware** - Default to short sections that still answer “where / what / how to run”.
