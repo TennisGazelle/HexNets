@@ -1,6 +1,6 @@
 import numpy as np
 
-from data.dataset import BaseDataset
+from data.dataset import BaseDataset, DatasetNoiseMode
 from hexnets_web.glossary_types import GlossaryNode
 
 
@@ -12,8 +12,18 @@ class LowRankLinearDataset(BaseDataset, display_name="low_rank_linear"):
         scale: float | np.float64 = 1.0,
         seed: int | None = None,
         rank: int = 2,
+        *,
+        noise_mode: DatasetNoiseMode | None = None,
+        noise_mu: float = 0.0,
+        noise_sigma: float = 0.1,
+        noise_seed: int = 0,
     ):
-        super().__init__()
+        super().__init__(
+            noise_mode=noise_mode,
+            noise_mu=noise_mu,
+            noise_sigma=noise_sigma,
+            noise_seed=noise_seed,
+        )
         self.d = d
         self.num_samples = num_samples
         self.gain = float(scale)
@@ -44,7 +54,7 @@ class LowRankLinearDataset(BaseDataset, display_name="low_rank_linear"):
             children=(),
         )
 
-    def load_data(self) -> bool:
+    def _load_data_impl(self) -> None:
         rng = np.random.default_rng(self.seed)
         X = rng.standard_normal((self.num_samples, self.d)).astype(float)
         r = self.rank
@@ -53,4 +63,3 @@ class LowRankLinearDataset(BaseDataset, display_name="low_rank_linear"):
         A = (U @ V.T) * self.gain
         Y = X @ A.T
         self.data = {"X": X, "Y": Y}
-        return True

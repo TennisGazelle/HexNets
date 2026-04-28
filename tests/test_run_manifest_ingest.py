@@ -36,6 +36,7 @@ def test_normalize_dataset_idempotent_when_nested_present() -> None:
     cfg = {"dataset": {"id": "identity", "num_samples": 10, "scale": None}}
     RunService._normalize_dataset_in_config(cfg)
     assert cfg["dataset"]["id"] == "identity"
+    assert cfg["dataset"]["noise"] is None
 
 
 def test_get_parameter_count_hex_n2() -> None:
@@ -113,6 +114,9 @@ def test_new_run_manifest_has_traceability_fields(
         run_note="bench run",
         run_tags="paper,v1",
         dataset_scale=None,
+        dataset_noise="inputs",
+        dataset_noise_mu=0.0,
+        dataset_noise_sigma=0.05,
     )
     run = RunService(args)
     m = run.manifest_contents
@@ -126,3 +130,5 @@ def test_new_run_manifest_has_traceability_fields(
     assert run.config_contents["random_seed"] == 99
     assert run.config_contents["dataset"]["id"] == "identity"
     assert run.config_contents["dataset"]["scale"] is None
+    noise = run.config_contents["dataset"]["noise"]
+    assert noise == {"mode": "inputs", "mu": 0.0, "sigma": 0.05, "noise_seed": 99}

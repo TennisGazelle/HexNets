@@ -63,9 +63,9 @@ jobs:
 
             // Check if only CI change
             let isCIChange = true;
-            // all changes in this PR should NOT touch arbor/ directory if CI only change
+            // all changes in this PR should NOT touch src/ or tests/ directory if CI only change
             for (const file of files) {
-              if (file.filename.startsWith('arbor/')) {
+              if (file.filename.startsWith('src/') || file.filename.startsWith('tests/')) {
                 isCIChange = false;
                 break;
               }
@@ -190,12 +190,12 @@ jobs:
           sed -i "s/.*ReleaseStaticBadge.*$/\[\!\[ReleaseStaticBadge\]\(https:\/\/img.shields.io\/badge\/Version-$release_version-darkgreen?style=for-the-badge\)\]\(https:\/\/github.com\/TennisGazelle\/HexNets\/releases\/latest\)/" README.md
 
           # push back to the repo
-          git config --global user.name "Automated GHA Committer"
-          git config --global user.email "ops+ci@simplerose.com"
+          git config --global user.name "Automated GHA Account (TennisGazelle)"
+          git config --global user.email "daniellopez123456789+automatedghacct@gmail.com"
           git config --global pull.ff only
 
           # Push the version bump commit
-          git add arbor/src/rose_driver/__init__.py
+          git add src/hexnet/__init__.py
           git add README.md
           git commit -m "UPDATE: $(make version-print)"
           git push

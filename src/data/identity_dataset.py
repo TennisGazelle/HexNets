@@ -1,5 +1,6 @@
 import numpy as np
 
+from data.dataset import DatasetNoiseMode
 from data.linear_scale_dataset import LinearScaleDataset
 from hexnets_web.glossary_types import GlossaryNode
 
@@ -10,8 +11,20 @@ class IdentityDataset(LinearScaleDataset, display_name="identity"):
         d: int = 2,
         num_samples: int = 100,
         scale: float | np.float64 | None = None,
+        *,
+        noise_mode: DatasetNoiseMode | None = None,
+        noise_mu: float = 0.0,
+        noise_sigma: float = 0.1,
+        noise_seed: int = 0,
     ):
-        super().__init__(d, num_samples)
+        super().__init__(
+            d,
+            num_samples,
+            noise_mode=noise_mode,
+            noise_mu=noise_mu,
+            noise_sigma=noise_sigma,
+            noise_seed=noise_seed,
+        )
         self.scale = 1.0
 
     @classmethod

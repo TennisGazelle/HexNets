@@ -121,6 +121,10 @@ class TrainCommand(Command):
             args.dataset_size,
             type=args.type,
             scale=effective_scale,
+            noise_mode=getattr(args, "dataset_noise", None),
+            noise_mu=getattr(args, "dataset_noise_mu", 0.0),
+            noise_sigma=getattr(args, "dataset_noise_sigma", 0.1),
+            noise_seed=args.seed,
         )
 
         run = RunService(args)

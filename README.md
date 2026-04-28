@@ -39,7 +39,7 @@ make streamlit-run    # or: streamlit run src/streamlit_app.py
 | Command | Role |
 |---------|------|
 | `hexnet ref` | Reference graphs (`-g` types, `--all`, `-m hex\|mlp`) |
-| `hexnet train` | Train hex or MLP; writes under `runs/` (optional `--run-note`, `--run-tags` for manifest traceability) |
+| `hexnet train` | Train hex or MLP; writes under `runs/` (optional `--run-note`, `--run-tags`; optional `--dataset-noise` / `--dataset-noise-mu` / `--dataset-noise-sigma` for synthetic data) |
 | `hexnet adhoc` | Quick scripted demo |
 | `hexnet stats <run_dir>` | Inspect a saved run |
 
