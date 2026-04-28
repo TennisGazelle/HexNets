@@ -11,20 +11,41 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from importlib import import_module
 from pathlib import Path
-from typing import Iterator, Tuple
+from typing import Iterator, Literal, Tuple
 
 import numpy as np
 from hexnets_web.glossary_types import GlossaryNode
 
 DATASET_FUNCTIONS = {}
 
+DatasetNoiseMode = Literal["inputs", "targets", "both"]
+_NOISE_SEED_ENTROPY_TAG = 0x4E015E  # tag for isolated dataset-noise RNG stream
+
+# --- static methods ---
+
+
+def _dataset_noise_entropy(noise_seed: int) -> list[int]:
+    """Entropy list for an RNG stream independent of global ``np.random``."""
+    return [int(noise_seed) & 0xFFFFFFFF, _NOISE_SEED_ENTROPY_TAG]
+
 
 class BaseDataset(ABC):
     "this class should be subscriptable"
 
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        noise_mode: DatasetNoiseMode | None = None,
+        noise_mu: float = 0.0,
+        noise_sigma: float = 0.1,
+        noise_seed: int = 0,
+    ):
         self.data = None
         self.index_array = None
+        self.noise_mode: DatasetNoiseMode | None = noise_mode
+        self.noise_mu = float(noise_mu)
+        self.noise_sigma = float(noise_sigma)
+        self.noise_seed = int(noise_seed)
 
     def __init_subclass__(cls, **kwargs):
         display_name = kwargs.pop(
@@ -61,8 +82,32 @@ class BaseDataset(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def _load_data_impl(self) -> None:
+        raise NotImplementedError("_load_data_impl not implemented")
+
     def load_data(self) -> bool:
-        raise NotImplementedError("load_data not implemented")
+        self._load_data_impl()
+        self._apply_configured_gaussian_noise()
+        return True
+
+    def _apply_configured_gaussian_noise(self) -> None:
+        if self.noise_mode is None or self.data is None:
+            return
+        if self.noise_sigma < 0:
+            raise ValueError("noise_sigma must be non-negative")
+        rng = np.random.default_rng(np.random.SeedSequence(_dataset_noise_entropy(self.noise_seed)))
+        mode = self.noise_mode
+        mu, sigma = self.noise_mu, self.noise_sigma
+
+        if mode in ("inputs", "both"):
+            X = self.data["X"]
+            noise_x = rng.normal(loc=mu, scale=sigma, size=X.shape)
+            self.data["X"] = (X.astype(np.float64, copy=False) + noise_x).astype(X.dtype, copy=False)
+
+        if mode in ("targets", "both"):
+            Y = self.data["Y"]
+            noise_y = rng.normal(loc=mu, scale=sigma, size=Y.shape)
+            self.data["Y"] = (Y.astype(np.float64, copy=False) + noise_y).astype(Y.dtype, copy=False)
 
     def get_data(self) -> dict:
         return self.data
@@ -107,11 +152,23 @@ def build_registered_dataset(
     d: int,
     num_samples: int,
     scale: float | np.float64 = 1.0,
+    noise_mode: DatasetNoiseMode | None = None,
+    noise_mu: float = 0.0,
+    noise_sigma: float = 0.1,
+    noise_seed: int = 0,
 ) -> BaseDataset:
     cls = DATASET_FUNCTIONS.get(display_name)
     if cls is None:
         raise ValueError(f"Unknown dataset display_name: {display_name!r}")
-    return cls(d=d, num_samples=num_samples, scale=scale)
+    return cls(
+        d=d,
+        num_samples=num_samples,
+        scale=scale,
+        noise_mode=noise_mode,
+        noise_mu=noise_mu,
+        noise_sigma=noise_sigma,
+        noise_seed=noise_seed,
+    )
 
 
 def build_datasets_glossary_parent() -> GlossaryNode:
@@ -121,7 +178,7 @@ def build_datasets_glossary_parent() -> GlossaryNode:
         aliases=("data", "training data", "samples"),
         english=(
             "A dataset here is an iterable of (input, target) pairs used for training. "
-            "Each vector has length **n** (the network’s node count). Expand the entries below "
+            "Each vector has length **n** (the network's node count). Expand the entries below "
             "for the kinds used in this project. Many entries include **tags** and a **Good for** line "
             "when the glossary node defines them."
         ),

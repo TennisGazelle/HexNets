@@ -41,7 +41,7 @@ HexNets uses a **plugin-based architecture** where components automatically regi
 ## Running the Streamlit Web Interface
 
 ```bash
-make run-streamlit
+make streamlit-run
 # or: streamlit run src/streamlit_app.py
 ```
 

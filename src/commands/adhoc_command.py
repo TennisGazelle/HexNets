@@ -50,7 +50,16 @@ class AdhocCommand(Command):
 
         # alternate between rotations 0 and 1
         for i in range(50):
-            data = get_dataset(args.n, args.dataset_size, type=args.type, scale=2.0)
+            data = get_dataset(
+                args.n,
+                args.dataset_size,
+                type=args.type,
+                scale=2.0,
+                noise_mode=args.dataset_noise,
+                noise_mu=args.dataset_noise_mu,
+                noise_sigma=args.dataset_noise_sigma,
+                noise_seed=args.seed + i,
+            )
             for rotation in range(3):
                 net.rotate(rotation)
                 net.graph_weights(activation_only=False, detail=f"r{rotation}_i{i}")

@@ -181,6 +181,26 @@
             ]
         },
         {
+            "name": "Hex Net Train With Noise",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/cli.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "train",
+                "--model", "hex",
+                "--type", "identity",
+                "--rotation", "0",
+                "--epochs", "1000",
+                "--dataset-size", "1000",
+                "--dataset-noise", "inputs",
+                "--dataset-noise-mu", "0.7",
+                "--dataset-noise-sigma", "0.5"
+            ]
+        },
+        {
             "name": "Hex Net Train From Previous Run",
             "type": "debugpy",
             "request": "launch",

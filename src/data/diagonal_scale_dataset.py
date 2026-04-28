@@ -1,5 +1,6 @@
 import numpy as np
 
+from data.dataset import DatasetNoiseMode
 from data.linear_scale_dataset import LinearScaleDataset
 from hexnets_web.glossary_types import GlossaryNode
 
@@ -10,8 +11,21 @@ class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
         d: int = 2,
         num_samples: int = 100,
         scale: float | np.float64 = 1.0,
+        *,
+        noise_mode: DatasetNoiseMode | None = None,
+        noise_mu: float = 0.0,
+        noise_sigma: float = 0.1,
+        noise_seed: int = 0,
     ):
-        super().__init__(d, num_samples, scale)
+        super().__init__(
+            d,
+            num_samples,
+            scale,
+            noise_mode=noise_mode,
+            noise_mu=noise_mu,
+            noise_sigma=noise_sigma,
+            noise_seed=noise_seed,
+        )
         self.data = None
         self.load_data()
 
@@ -43,7 +57,7 @@ class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
             children=(),
         )
 
-    def load_data(self) -> bool:
+    def _load_data_impl(self) -> None:
         X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
         Y = X.copy()
         for i in range(self.d):
@@ -52,4 +66,3 @@ class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
             "X": X,
             "Y": Y,
         }
-        return True

@@ -5,7 +5,7 @@
 ### Launch Streamlit Locally
 ```bash
 # Using Makefile
-make run-streamlit
+make streamlit-run
 
 # Or directly
 streamlit run src/streamlit_app.py

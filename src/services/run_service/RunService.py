@@ -53,6 +53,7 @@ class RunService:
                     "id": args.type,
                     "num_samples": args.dataset_size,
                     "scale": ds,
+                    "noise": RunService._dataset_noise_block_from_args(args),
                 },
                 "random_seed": args.seed,
                 "run_folder_name": self.run_folder_path.name,
@@ -175,15 +176,30 @@ class RunService:
         return now, now + "_" + str(uuid.uuid4())[0:6] if filename is None else filename
 
     @staticmethod
+    def _dataset_noise_block_from_args(args: Namespace) -> dict | None:
+        mode = getattr(args, "dataset_noise", None)
+        if mode is None:
+            return None
+        return {
+            "mode": mode,
+            "mu": float(getattr(args, "dataset_noise_mu", 0.0)),
+            "sigma": float(getattr(args, "dataset_noise_sigma", 0.1)),
+            "noise_seed": int(args.seed),
+        }
+
+    @staticmethod
     def _normalize_dataset_in_config(config: dict) -> None:
         """Ensure ``config['dataset']`` exists (mutates ``config`` for legacy runs)."""
         if isinstance(config.get("dataset"), dict):
+            if "noise" not in config["dataset"]:
+                config["dataset"]["noise"] = None
             return
         if "dataset_type" in config and "dataset_size" in config:
             config["dataset"] = {
                 "id": config["dataset_type"],
                 "num_samples": config["dataset_size"],
                 "scale": config.get("dataset_scale"),
+                "noise": None,
             }
             return
         raise ValueError(
@@ -220,6 +236,12 @@ class RunService:
         scale = getattr(args, "dataset_scale", None)
         if args.type == "linear_scale" and scale is not None:
             parts.append(str(scale))
+        noise_mode = getattr(args, "dataset_noise", None)
+        if noise_mode is not None:
+            parts.append(str(noise_mode))
+            parts.append(str(getattr(args, "dataset_noise_mu", 0.0)))
+            parts.append(str(getattr(args, "dataset_noise_sigma", 0.1)))
+            parts.append(str(args.seed))
         payload = "_".join(parts)
         return hashlib.sha256(payload.encode()).hexdigest()
 

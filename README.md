@@ -12,7 +12,7 @@ Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`h
 ```bash
 make install          # venv + editable install + dev deps
 hexnet --help         # CLI (entry: pyproject → src/cli.py)
-make run-streamlit    # or: streamlit run src/streamlit_app.py
+make streamlit-run    # or: streamlit run src/streamlit_app.py
 ```
 
 **Reference images** (for Streamlit rotation tab): `hexnet ref --all` → `reference/*.png`
@@ -39,7 +39,7 @@ make run-streamlit    # or: streamlit run src/streamlit_app.py
 | Command | Role |
 |---------|------|
 | `hexnet ref` | Reference graphs (`-g` types, `--all`, `-m hex\|mlp`) |
-| `hexnet train` | Train hex or MLP; writes under `runs/` (optional `--run-note`, `--run-tags` for manifest traceability) |
+| `hexnet train` | Train hex or MLP; writes under `runs/` (optional `--run-note`, `--run-tags`; optional `--dataset-noise` / `--dataset-noise-mu` / `--dataset-noise-sigma` for synthetic data) |
 | `hexnet adhoc` | Quick scripted demo |
 | `hexnet stats <run_dir>` | Inspect a saved run |
 

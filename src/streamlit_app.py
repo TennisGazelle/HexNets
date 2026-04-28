@@ -1,4 +1,4 @@
-"""Streamlit entrypoint (Streamlit Community Cloud, Makefile `run-streamlit`)."""
+"""Streamlit entrypoint (Streamlit Community Cloud, Makefile `streamlit-run`)."""
 
 from hexnets_web.main import run
 

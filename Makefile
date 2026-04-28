@@ -6,7 +6,7 @@
 # Quick Start:
 #   make install          - Set up the virtual environment and install dependencies
 #   make run              - Run a quick adhoc training example
-#   make run-streamlit    - Launch the Streamlit web interface
+#   make streamlit-run    - Launch the Streamlit web interface
 #   make streamlit-deploy - Prepare and get instructions for deploying to Streamlit Cloud
 #
 # Testing:
@@ -71,8 +71,8 @@ e2e-test:
 run:
 	@${HEXNET} adhoc -n 3 -lr 0.001 -t linear_scale -e 200
 
-.PHONY: run-streamlit
-run-streamlit:
+.PHONY: streamlit-run
+streamlit-run:
 	@${STREAMLIT} run src/streamlit_app.py
 
 .PHONY: streamlit-deploy

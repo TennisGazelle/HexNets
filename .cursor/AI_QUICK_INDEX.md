@@ -48,7 +48,7 @@ This is a quick reference for AI assistants working on HexNets. Use this to quic
 
 ### Running Streamlit
 1. [QUICK_REFERENCE.md](./QUICK_REFERENCE.md#running-the-streamlit-web-interface) - How to launch
-2. `make run-streamlit` or `streamlit run src/streamlit_app.py`
+2. `make streamlit-run` or `streamlit run src/streamlit_app.py`
 3. Requires reference graphs: `hexnet ref --all`
 
 ### Run Management

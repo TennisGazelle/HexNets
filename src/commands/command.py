@@ -32,17 +32,47 @@ def print_header():
      / __  /  __/>  </ /|  /  __/ /_
     /_/ /_/\___/_/|_/_/ |_/\___/\__/
     """
-    print(random.choice([header1, header2]))
+    header3 = """
+                _____       
+               /     \      
+         _____/ 2     \_____
+        /     \       /     \        
+  _____/ 1     \_____/ 6     \_____ 
+ /     \       /     \       /     \   
+/ 0     \_____/ 5     \_____/ 11    \    
+\       /     \       /     \       /        - hexnets
+ \_____/ 4     \_____/ 10    \_____/
+    """
+    print(random.choice([header1, header2, header3]))
+    print("@TennisGazelle")
 
 
-def get_dataset(n, train_samples, type="identity", scale=1.0):
-    return build_registered_dataset(type, d=n, num_samples=train_samples, scale=scale)
+def get_dataset(
+    n,
+    train_samples,
+    type="identity",
+    scale=1.0,
+    *,
+    noise_mode=None,
+    noise_mu=0.0,
+    noise_sigma=0.1,
+    noise_seed=0,
+):
+    return build_registered_dataset(
+        type,
+        d=n,
+        num_samples=train_samples,
+        scale=scale,
+        noise_mode=noise_mode,
+        noise_mu=noise_mu,
+        noise_sigma=noise_sigma,
+        noise_seed=noise_seed,
+    )
 
 
 class Command(ABC):
 
     def __call__(self, args: Namespace):
-        print_header()
         self.validate_args(args)
         self.invoke(args)
 
@@ -186,6 +216,29 @@ def add_training_arguments(parser: ArgumentParser):
     )
 
     parser.add_argument(
+        "--dataset-noise",
+        help="Add Gaussian noise to synthetic inputs and/or targets (off if omitted)",
+        type=str,
+        default=None,
+        choices=("inputs", "targets", "both"),
+        dest="dataset_noise",
+    )
+    parser.add_argument(
+        "--dataset-noise-mu",
+        help="Mean of additive Gaussian dataset noise (used when --dataset-noise is set)",
+        type=float,
+        default=0.0,
+        dest="dataset_noise_mu",
+    )
+    parser.add_argument(
+        "--dataset-noise-sigma",
+        help="Std dev of additive Gaussian dataset noise (used when --dataset-noise is set)",
+        type=float,
+        default=0.1,
+        dest="dataset_noise_sigma",
+    )
+
+    parser.add_argument(
         "--dry-run", help="What would be run, do not create a run.", default=False, action="store_true", dest="dry_run"
     )
 
@@ -279,3 +332,5 @@ def validate_training_arguments(args: Namespace):
     if not is_registered_dataset_display_name(args.type):
         names = ", ".join(list_registered_dataset_display_names())
         raise ValueError(f"Invalid dataset type: {args.type}. Must be one of: {names}")
+    if getattr(args, "dataset_noise", None) is not None and getattr(args, "dataset_noise_sigma", 0.1) < 0:
+        raise ValueError("dataset_noise_sigma must be non-negative when --dataset-noise is set")
