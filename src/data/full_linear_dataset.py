@@ -1,7 +1,7 @@
 import numpy as np
 
 from data.dataset import BaseDataset
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class FullLinearDataset(BaseDataset, display_name="full_linear"):

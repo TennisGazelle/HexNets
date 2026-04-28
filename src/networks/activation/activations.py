@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from networks.activation import ACTIVATION_FUNCTIONS
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class BaseActivation(ABC):

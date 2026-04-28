@@ -1,7 +1,7 @@
 import numpy as np
 
 from networks.loss.loss import BaseLoss
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class MeanSquaredErrorLoss(BaseLoss, display_name="mean_squared_error"):

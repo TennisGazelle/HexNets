@@ -8,7 +8,7 @@ from data.dataset import build_datasets_glossary_parent
 from networks.activation.activations import build_activations_glossary_parent
 from networks.learning_rate.learning_rate import build_learning_rates_glossary_parent
 from networks.loss.loss import build_losses_glossary_parent
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 def _fill_search_blob(node: GlossaryNode) -> None:

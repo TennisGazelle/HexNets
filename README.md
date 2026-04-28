@@ -2,12 +2,14 @@
 
 Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`hexnet`), **Streamlit** UI, and **run** / **figure** outputs.
 
+[![ReleaseStaticBadge](https://img.shields.io/badge/Release%20Version-0.2.0-darkgreen?style=for-the-badge)](https://github.com/TennisGazelle/HexNets/releases/latest)
+
 ## Quick start
 
 ```bash
 make install          # venv + editable install + dev deps
 hexnet --help         # CLI (entry: pyproject → src/cli.py)
-make run-streamlit    # or: streamlit run src/streamlit_main.py
+make run-streamlit    # or: streamlit run src/streamlit_app.py
 ```
 
 **Reference images** (for Streamlit rotation tab): `hexnet ref --all` → `reference/*.png`
@@ -42,7 +44,7 @@ Full argument patterns: [`.cursor/CLI_PATTERNS.md`](.cursor/CLI_PATTERNS.md).
 
 ## Layout
 
-- `src/` — application code (`networks/`, `commands/`, `data/`, `services/`, `streamlit_main.py`, `streamlit_app/`)
+- `src/` — application code (`networks/`, `commands/`, `data/`, `services/`, `streamlit_app.py`, `hexnets_web/`)
 - `figures/`, `runs/`, `reference/` — created at install or runtime (`Makefile` creates `figures/` and `runs/`)
 
 Legacy / scratch: `hexnet.py` (root) is **not** the installed package entrypoint; prefer `hexnet` CLI after `make install`.

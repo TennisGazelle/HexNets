@@ -58,10 +58,14 @@ def _render_json_viewer(run_path: pathlib.Path, relative_name: str) -> None:
     st.json(parsed)
 
 
+def _set_run_browser_selected_run(run_name: str) -> None:
+    """Session-state only; used as `st.button(..., on_click=...)` so selection updates before the tree re-renders."""
+    st.session_state.run_browser_selected_run = run_name
+
+
 def _render_run_tree(run_dirs: list[pathlib.Path]) -> None:
     st.subheader("Runs tree (read-only)")
     for d in run_dirs:
-        # Read session on each row so a same-run button click updates selection before expanders/plots below.
         is_selected = d.name == st.session_state.run_browser_selected_run
         label = f"{d.name} · selected" if is_selected else d.name
         with st.expander(label, expanded=is_selected):
@@ -83,12 +87,13 @@ def _render_run_tree(run_dirs: list[pathlib.Path]) -> None:
                     else:
                         st.markdown(f"- `{child.name}`")
 
-            if st.button(
+            st.button(
                 "Use this directory",
                 key=f"run_browser_select_{d.name}",
                 disabled=is_selected,
-            ):
-                st.session_state.run_browser_selected_run = d.name
+                on_click=_set_run_browser_selected_run,
+                kwargs={"run_name": d.name},
+            )
 
 
 def _render_training_plots(paths: list[pathlib.Path]) -> None:
@@ -117,17 +122,16 @@ def render_run_browser_tab() -> None:
     if st.session_state.get("run_browser_selected_run") not in names:
         st.session_state.run_browser_selected_run = names[0]
 
-    left, right = st.columns([2, 3])
+    left, right = st.columns([1, 4])
     with left:
         _render_run_tree(run_dirs)
     with right:
-        # After left column so a same-run button click sees updated `run_browser_selected_run`.
         selected = RUNS_DIR / st.session_state.run_browser_selected_run
         json_files = _json_artifacts(selected)
         plot_paths = _training_plot_paths(selected)
 
         if plot_paths:
-            json_col, plot_col = st.columns([3, 2])
+            json_col, plot_col = st.columns([2, 3])
             with json_col:
                 _render_json_viewer_section(selected, json_files)
             with plot_col:

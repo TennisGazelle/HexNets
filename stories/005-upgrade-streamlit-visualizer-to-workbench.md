@@ -28,8 +28,8 @@ The current app is useful, but still narrow: two tabs, one quick training button
 - [ ] Keep current Network Explorer page
 - [ ] Keep current Rotation Comparison page
 - [ ] Add placeholders/routes for Dataset Explorer, Run Browser, Sweep Planner, Lesion Lab
-- [ ] Refactor shared UI helpers out of streamlit_app.py
-- [ ] Document page layout in docs/streamlit_app.md
+- [ ] Refactor shared UI helpers out of `src/hexnets_web/` (was monolithic `streamlit_app.py`)
+- [ ] Document page layout in `docs/hexnets_web.md`
 
 ## Streamlit surface
 

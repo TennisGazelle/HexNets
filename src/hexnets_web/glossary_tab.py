@@ -1,6 +1,6 @@
 import streamlit as st
 
-from streamlit_app.glossary_data import GLOSSARY_ROOT, GlossaryNode
+from hexnets_web.glossary_data import GLOSSARY_ROOT, GlossaryNode
 
 
 def render_glossary_node(node: GlossaryNode, query: str) -> None:

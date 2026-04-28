@@ -1,6 +1,6 @@
 import streamlit as st
 
-from streamlit_app.references import load_multi_activation_image, load_reference_image
+from hexnets_web.references import load_multi_activation_image, load_reference_image
 
 
 def _show_multi_activation_column(n: int) -> None:

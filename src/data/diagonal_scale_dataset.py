@@ -1,7 +1,7 @@
 import numpy as np
 
 from data.linear_scale_dataset import LinearScaleDataset
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):

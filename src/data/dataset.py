@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Iterator, Tuple
 
 import numpy as np
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 DATASET_FUNCTIONS = {}
 

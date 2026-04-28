@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from networks.learning_rate import LEARNING_RATES
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class BaseLearningRate(ABC):

@@ -51,6 +51,10 @@ install:
 
 .venv/: install
 
+.PHONY: build
+build:
+	@${PYTHON} -m build
+
 .PHONY: stories-sync
 stories-sync:
 	@${PYTHON} scripts/sync_github_stories.py sync
@@ -61,32 +65,7 @@ unit-test:
 
 .PHONY: e2e-test
 e2e-test:
-	# clean up any previous runs
-	rm -rf runs/e2etest-hex-train
-	rm -rf runs/e2etest-mlp-train
-
-	@echo '============================|E2E Tests|============================' ; \
-	source .venv/bin/activate ; \
-
-	echo '===> ref graph, hex, n=2, r=1' ; \
-	hexnet ref -m hex -n 2 -r 1 -g structure_matplotlib ; \
-	status_ref_hex=$$? ; \
-
-	echo '===> ref graph, mlp, n=2,3,3,2' ; \
-	hexnet ref -m mlp -g structure_matplotlib ; \
-	status_ref_mlp=$$? ; \
-
-	echo '===> train, hex, n=2, r=1, e=100' ; \
-	hexnet train -m hex -n 2 -r 1 -e 100 -t identity -rn e2etest-hex-train ; \
-	status_train_hex=$$? ; \
-
-	echo '===> train, mlp, n=2,3,3,2, e=100' ; \
-	hexnet train -m mlp -n 2 -e 100 -t identity -rn e2etest-mlp-train ; \
-	status_train_mlp=$$? ; \
-	
-	echo '============================|E2E Tests|============================' ; \
-	exit $$status_ref_hex || $$status_ref_mlp || $$status_train_hex || $$status_train_mlp
-
+	./e2e_test.sh
 
 .PHONY: run
 run:
@@ -94,7 +73,7 @@ run:
 
 .PHONY: run-streamlit
 run-streamlit:
-	@${STREAMLIT} run src/streamlit_main.py
+	@${STREAMLIT} run src/streamlit_app.py
 
 .PHONY: streamlit-deploy
 streamlit-deploy:
@@ -105,11 +84,11 @@ streamlit-deploy:
 	@echo "Checking deployment prerequisites..."
 	@echo ""
 	@# Check if app file exists
-	@if [ ! -f "src/streamlit_main.py" ]; then \
-		echo "ERROR: src/streamlit_main.py not found"; \
+	@if [ ! -f "src/streamlit_app.py" ]; then \
+		echo "ERROR: src/streamlit_app.py not found"; \
 		exit 1; \
 	else \
-		echo "Streamlit app file found: src/streamlit_main.py"; \
+		echo "Streamlit app file found: src/streamlit_app.py"; \
 	fi
 	@# Check if requirements.txt exists
 	@if [ ! -f "requirements.txt" ]; then \
@@ -141,7 +120,7 @@ streamlit-deploy:
 	@echo "4. Click 'New app' and select your repository"
 	@echo ""
 	@echo "5. Configure deployment:"
-	@echo "   - Main file path: src/streamlit_main.py"
+	@echo "   - Main file path: src/streamlit_app.py"
 	@echo "   - Python version: 3.9 or higher"
 	@echo "   - Requirements file: requirements.txt (or pyproject.toml)"
 	@echo ""
@@ -182,3 +161,19 @@ lint:
 .PHONY: lint-check
 lint-check:
 	@${BLACK} --check src -l 120 || (echo "Linting failed. Run 'make lint' to fix formatting issues." && exit 1)
+
+.PHONY: version-print
+version-print:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml
+
+.PHONY: version-bump-patch
+version-bump-patch:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml --patch
+
+.PHONY: version-bump-minor
+version-bump-minor:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml --minor
+
+.PHONY: version-bump-major
+version-bump-major:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml --major
