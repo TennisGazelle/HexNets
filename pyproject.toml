@@ -10,7 +10,13 @@ authors = [
     { name = "Daniel Lopez", email = "daniellopez123456789@gmail.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
+
+# note all the dependencies are listed here are sometimes duplicated
+# in requirements.txt for the sake of streamlit.  If there is a networks
+# dependency to add, use this file and use pip freeze > requirements.txt
+# to update the requirements.txt file. DO NOT directly edit the requirements.txt file.
+
 dependencies = [
     "numpy",
     "matplotlib",
@@ -19,7 +25,6 @@ dependencies = [
     "streamlit",
     "tqdm"
 ]
-
 
 [project.optional-dependencies]
 dev = [

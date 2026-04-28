@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Run Browser: JSON + training plot in `[3, 2]` sub-columns when plots exist; JSON only otherwise. [`src/streamlit_app/run_browser.py`](src/streamlit_app/run_browser.py).
+- Renamed Streamlit UI package to `hexnets_web`, entry script `src/streamlit_app.py` (Streamlit Cloud / `make run-streamlit`). Docs: [`docs/hexnets_web.md`](docs/hexnets_web.md).
 
 ---
 

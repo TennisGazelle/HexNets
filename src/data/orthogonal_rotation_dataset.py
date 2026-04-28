@@ -1,7 +1,7 @@
 import numpy as np
 
 from data.dataset import BaseDataset
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class OrthogonalRotationDataset(BaseDataset, display_name="orthogonal_rotation"):

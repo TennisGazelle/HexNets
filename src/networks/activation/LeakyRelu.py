@@ -1,7 +1,7 @@
 import numpy as np
 
 from networks.activation.activations import BaseActivation
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class LeakyReLU(BaseActivation, display_name="leaky_relu"):

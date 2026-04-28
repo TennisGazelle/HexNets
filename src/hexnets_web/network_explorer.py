@@ -8,9 +8,9 @@ from commands.train_command import LINEAR_SCALE_DEFAULT
 from data.dataset import list_registered_dataset_display_names
 from networks.activation.activations import get_available_activation_functions
 from networks.loss.loss import get_available_loss_functions
-from streamlit_app.figures import create_matplotlib_figure
-from streamlit_app.metrics_explainer import render_training_metrics_expander
-from streamlit_app.session import update_network
+from hexnets_web.figures import create_matplotlib_figure
+from hexnets_web.metrics_explainer import render_training_metrics_expander
+from hexnets_web.session import update_network
 
 _DATASET_SAMPLE_OPTIONS = (10, 50, 100, 250, 500, 1000)
 

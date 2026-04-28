@@ -253,8 +253,8 @@ Checklist
  Keep current Network Explorer page
  Keep current Rotation Comparison page
  Add placeholders/routes for Dataset Explorer, Run Browser, Sweep Planner, Lesion Lab
- Refactor shared UI helpers out of streamlit_app.py
- Document page layout in docs/streamlit_app.md
+ Refactor shared UI helpers out of `src/hexnets_web/` (entry: `src/streamlit_app.py`)
+ Document page layout in `docs/hexnets_web.md`
 
 Definition of done
 
@@ -489,6 +489,7 @@ Story 2 — Fix CLI / docs / code naming inconsistencies
 Story 3 — Add run manifest fields needed for paper traceability
 Story 4 — Promote dataset registry to first-class CLI support
 Story 10 — Upgrade Streamlit from visualizer to experiment workbench
+
 Phase 2
 Story 5 — Add noisy synthetic regression datasets
 Story 6 — Add two more same-dimension benchmark datasets
@@ -498,6 +499,7 @@ Story 9 — Add aggregate run table and comparison utilities
 Story 11 — Add a Run Browser page
 Story 12 — Add a Dataset Explorer page
 Story 13 — Add a Benchmark Comparison page
+
 Phase 3
 Story 14 — Implement MLP baseline parity runs
 Story 15 — Add sequential-task training workflow
@@ -505,6 +507,7 @@ Story 16 — Add cross-direction training protocol support
 Story 17 — Add lesion framework with uniform baseline
 Story 18 — Add directional lesion types
 Story 19 — Add no-lesion vs uniform vs directional retention benchmark
+
 Phase 4
 Story 20 — Add paper-figure export and traceability mapping
 Story 21 — Add literature-to-experiment mapping doc

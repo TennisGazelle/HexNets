@@ -1,5 +1,5 @@
 from networks.learning_rate.learning_rate import BaseLearningRate
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class ConstantLearningRate(BaseLearningRate, display_name="constant"):

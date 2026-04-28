@@ -2,12 +2,12 @@ import pathlib
 
 import streamlit as st
 
-from streamlit_app.glossary_tab import render_glossary_tab
-from streamlit_app.lesion_lab import render_lesion_lab_tab
-from streamlit_app.network_explorer import render_network_explorer_tab
-from streamlit_app.rotation_comparison import render_rotation_comparison_tab
-from streamlit_app.run_browser import render_run_browser_tab
-from streamlit_app.session import initialize_session_state
+from hexnets_web.glossary_tab import render_glossary_tab
+from hexnets_web.lesion_lab import render_lesion_lab_tab
+from hexnets_web.network_explorer import render_network_explorer_tab
+from hexnets_web.rotation_comparison import render_rotation_comparison_tab
+from hexnets_web.run_browser import render_run_browser_tab
+from hexnets_web.session import initialize_session_state
 
 
 def run() -> None:

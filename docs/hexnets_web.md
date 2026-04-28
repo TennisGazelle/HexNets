@@ -1,9 +1,11 @@
-# Streamlit App Documentation
+# HexNets web UI (Streamlit)
+
+Python package: [`hexnets_web`](../src/hexnets_web/). Entry script: [`src/streamlit_app.py`](../src/streamlit_app.py).
 
 ## Summary (for quick orientation)
 
-* **Entry:** `src/streamlit_main.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_main.py`.
-* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/streamlit_app/glossary_data.py`, node type in `glossary_types.py`; top-level branches: **Datasets** via `build_datasets_glossary_parent()` in `src/data/dataset.py` (`*_dataset.py`), **Loss functions** / **Learning rates** / **Activations** via `build_losses_glossary_parent()` / `build_learning_rates_glossary_parent()` / `build_activations_glossary_parent()` in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py` with per-class `get_glossary_node()`); UI in `glossary_tab.py` / `metrics_explainer.py`), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/hexnet_training_*.png` side by side when those plots exist), **Lesion Lab** (placeholder).
+* **Entry:** `src/streamlit_app.py` — launch: `make run-streamlit` or `streamlit run src/streamlit_app.py`.
+* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/hexnets_web/glossary_data.py`, node type in `glossary_types.py`; top-level branches: **Datasets** via `build_datasets_glossary_parent()` in `src/data/dataset.py` (`*_dataset.py`), **Loss functions** / **Learning rates** / **Activations** via `build_losses_glossary_parent()` / `build_learning_rates_glossary_parent()` / `build_activations_glossary_parent()` in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py` with per-class `get_glossary_node()`); UI in `glossary_tab.py` / `metrics_explainer.py`), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/hexnet_training_*.png` side by side when those plots exist), **Lesion Lab** (placeholder).
 * **Rotation tab layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
 * **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
 
@@ -21,7 +23,7 @@ The HexNets Streamlit application provides an interactive web interface for visu
 
 ### Application Structure
 
-The Streamlit app is launched from `src/streamlit_main.py` and implemented under the `src/streamlit_app/` package: `main.py` wires tabs; each tab has its own module (`network_explorer.py`, `rotation_comparison.py`, `glossary_tab.py`, `run_browser.py`, `lesion_lab.py`); shared helpers include `session.py`, `figures.py`, and `references.py`.
+The Streamlit app is launched from `src/streamlit_app.py` and implemented under the `src/hexnets_web/` package: `main.py` wires tabs; each tab has its own module (`network_explorer.py`, `rotation_comparison.py`, `glossary_tab.py`, `run_browser.py`, `lesion_lab.py`); shared helpers include `session.py`, `figures.py`, and `references.py`.
 
 ### Key Components
 
@@ -131,13 +133,13 @@ make run-streamlit
 
 **Direct Streamlit Command**:
 ```bash
-streamlit run src/streamlit_main.py
+streamlit run src/streamlit_app.py
 ```
 
 **With Virtual Environment**:
 ```bash
 source .venv/bin/activate
-streamlit run src/streamlit_main.py
+streamlit run src/streamlit_app.py
 ```
 
 ### Application Behavior
@@ -208,7 +210,7 @@ When launched, the Streamlit app:
 
 - **Search**: `st.text_input` with case-insensitive substring filtering. Each entry’s index includes its nested children so terms like “identity” match under **Datasets**.
 - **Layout**: Top-level entries use two columns of expanders when multiple roots are visible; nested definitions stay inside their parent expander.
-- **Content**: Plain-language explanations with optional `st.latex` formulas and examples; glossary tree in `src/streamlit_app/glossary_data.py` (`GlossaryNode` in `glossary_types.py`). Registered **datasets**, **losses**, **learning rates**, and **activations** each expose `get_glossary_node()` on the class and a hub `build_*_glossary_parent()` (datasets: `src/data/dataset.py`; losses / learning rates / activations: hub files under `src/networks/loss/`, `src/networks/learning_rate/`, `src/networks/activation/`). Tab renderer: `glossary_tab.py`.
+- **Content**: Plain-language explanations with optional `st.latex` formulas and examples; glossary tree in `src/hexnets_web/glossary_data.py` (`GlossaryNode` in `glossary_types.py`). Registered **datasets**, **losses**, **learning rates**, and **activations** each expose `get_glossary_node()` on the class and a hub `build_*_glossary_parent()` (datasets: `src/data/dataset.py`; losses / learning rates / activations: hub files under `src/networks/loss/`, `src/networks/learning_rate/`, `src/networks/activation/`). Tab renderer: `glossary_tab.py`.
 
 ## Deployment to Streamlit Cloud
 
@@ -226,7 +228,7 @@ make streamlit-deploy
 ```
 
 This command:
-- Validates that `src/streamlit_main.py` exists
+- Validates that `src/streamlit_app.py` exists
 - Checks for `requirements.txt` (warns if missing)
 - Verifies `reference/` directory exists (warns if missing)
 - Provides step-by-step deployment instructions
@@ -238,7 +240,7 @@ This command:
 3. **Sign in**: Use your GitHub account
 4. **Create New App**: Click "New app" and select your repository
 5. **Configure**:
-   - **Main file path**: `src/streamlit_main.py`
+   - **Main file path**: `src/streamlit_app.py`
    - **Python version**: 3.9 or higher
    - **Requirements file**: `requirements.txt` (or `pyproject.toml`)
 6. **Deploy**: Click "Deploy!"

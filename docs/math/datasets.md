@@ -36,7 +36,7 @@ Assumptions:
 
 ## Glossary (`good_for` and `tags`)
 
-Each dataset’s `get_glossary_node()` may set optional **`good_for`** (one-line experiment intent from the story) and **`tags`** (short labels such as `regression-compatible`, `classification-style`). The Streamlit **Glossary** tab shows them and includes them in search; types live in [`src/streamlit_app/glossary_types.py`](../../src/streamlit_app/glossary_types.py).
+Each dataset’s `get_glossary_node()` may set optional **`good_for`** (one-line experiment intent from the story) and **`tags`** (short labels such as `regression-compatible`, `classification-style`). The Streamlit **Glossary** tab shows them and includes them in search; types live in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py).
 
 ## Wired into `hexnet train` today
 
@@ -55,6 +55,6 @@ Older saved `config.json` files may still show `"dataset_type": "linear"` from b
 
 1. Add `src/data/<name>_dataset.py` (filename must end with `_dataset.py`). Subclass `BaseDataset` from `data.dataset` with a unique `display_name` (registration happens in `__init_subclass__`). Importing `data.dataset` loads all such modules automatically.
 2. Give `__init__(self, d, num_samples, scale=...)` the same keyword shape as the other built-ins if it should work with **`build_registered_dataset`** without extra CLI wiring; CLI `-t` choices update automatically.
-3. Implement **`get_glossary_node()`** on the class so the Streamlit glossary (and **`build_datasets_glossary_parent()`** in `dataset.py`) can list the dataset without hand-maintained mirror text. Optionally set **`good_for`** and **`tags`** on `GlossaryNode` for discoverability. `GlossaryNode` lives in [`src/streamlit_app/glossary_types.py`](../../src/streamlit_app/glossary_types.py) (stdlib only; importing `data.dataset` does not load the Streamlit library).
+3. Implement **`get_glossary_node()`** on the class so the Streamlit glossary (and **`build_datasets_glossary_parent()`** in `dataset.py`) can list the dataset without hand-maintained mirror text. Optionally set **`good_for`** and **`tags`** on `GlossaryNode` for discoverability. `GlossaryNode` lives in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py) (stdlib only; importing `data.dataset` does not load the Streamlit library).
 
 For architecture and CLI patterns, see [`.cursor/ARCHITECTURE.md`](../../.cursor/ARCHITECTURE.md) and [`.cursor/CLI_PATTERNS.md`](../../.cursor/CLI_PATTERNS.md).

@@ -1,7 +1,7 @@
 import numpy as np
 
 from networks.loss.loss import BaseLoss
-from streamlit_app.glossary_types import GlossaryNode
+from hexnets_web.glossary_types import GlossaryNode
 
 
 class HuberLoss(BaseLoss, display_name="huber"):
