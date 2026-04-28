@@ -131,7 +131,7 @@ def render_run_browser_tab() -> None:
         plot_paths = _training_plot_paths(selected)
 
         if plot_paths:
-            json_col, plot_col = st.columns([3, 2])
+            json_col, plot_col = st.columns([2, 3])
             with json_col:
                 _render_json_viewer_section(selected, json_files)
             with plot_col:

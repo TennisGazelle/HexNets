@@ -61,32 +61,7 @@ unit-test:
 
 .PHONY: e2e-test
 e2e-test:
-	# clean up any previous runs
-	rm -rf runs/e2etest-hex-train
-	rm -rf runs/e2etest-mlp-train
-
-	@echo '============================|E2E Tests|============================' ; \
-	source .venv/bin/activate ; \
-
-	echo '===> ref graph, hex, n=2, r=1' ; \
-	hexnet ref -m hex -n 2 -r 1 -g structure_matplotlib ; \
-	status_ref_hex=$$? ; \
-
-	echo '===> ref graph, mlp, n=2,3,3,2' ; \
-	hexnet ref -m mlp -g structure_matplotlib ; \
-	status_ref_mlp=$$? ; \
-
-	echo '===> train, hex, n=2, r=1, e=100' ; \
-	hexnet train -m hex -n 2 -r 1 -e 100 -t identity -rn e2etest-hex-train ; \
-	status_train_hex=$$? ; \
-
-	echo '===> train, mlp, n=2,3,3,2, e=100' ; \
-	hexnet train -m mlp -n 2 -e 100 -t identity -rn e2etest-mlp-train ; \
-	status_train_mlp=$$? ; \
-	
-	echo '============================|E2E Tests|============================' ; \
-	exit $$status_ref_hex || $$status_ref_mlp || $$status_train_hex || $$status_train_mlp
-
+	./e2e_test.sh
 
 .PHONY: run
 run:
