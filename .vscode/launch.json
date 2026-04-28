@@ -106,7 +106,7 @@
             ]
         },
         {
-            "name": "Ref Graph All (n=2..4)",
+            "name": "Ref Graph All (n=2..8)",
             "type": "debugpy",
             "request": "launch",
             "program": "src/cli.py",

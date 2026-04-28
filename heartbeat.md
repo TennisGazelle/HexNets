@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Renamed Streamlit UI package to `hexnets_web`, entry script `src/streamlit_app.py` (Streamlit Cloud / `make run-streamlit`). Docs: [`docs/hexnets_web.md`](docs/hexnets_web.md).
+- Fixed Run Browser tab: **Use this directory** now updates the left-column expander selection on the first click (`on_click` session-state update before tree render). Docs: [`docs/hexnets_web.md`](docs/hexnets_web.md).
 
 ---
 
