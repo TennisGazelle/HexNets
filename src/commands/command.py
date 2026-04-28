@@ -32,7 +32,19 @@ def print_header():
      / __  /  __/>  </ /|  /  __/ /_
     /_/ /_/\___/_/|_/_/ |_/\___/\__/
     """
-    print(random.choice([header1, header2]))
+    header3 = """
+                _____       
+               /     \      
+         _____/ 2     \_____
+        /     \       /     \        
+  _____/ 1     \_____/ 6     \_____ 
+ /     \       /     \       /     \   
+/ 0     \_____/ 5     \_____/ 11    \    
+\       /     \       /     \       /        - hexnets
+ \_____/ 4     \_____/ 10    \_____/
+    """
+    print(random.choice([header1, header2, header3]))
+    print("@TennisGazelle")
 
 
 def get_dataset(
@@ -61,7 +73,6 @@ def get_dataset(
 class Command(ABC):
 
     def __call__(self, args: Namespace):
-        print_header()
         self.validate_args(args)
         self.invoke(args)
 

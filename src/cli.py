@@ -6,6 +6,7 @@ from commands.adhoc_command import AdhocCommand
 from commands.train_command import TrainCommand
 from commands.stats_command import StatsCommand
 from services.logging_config import setup_logging, get_logger
+from commands.command import print_header
 
 logger = get_logger(__name__)
 
@@ -36,7 +37,8 @@ def parse_args():
 
 def main():
     # Initialize logging
-    setup_logging(level=logging.DEBUG)
+    setup_logging(level=logging.INFO)
+    print_header()
     args, command = parse_args()
     try:
         command(args)
