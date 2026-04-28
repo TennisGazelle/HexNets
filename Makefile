@@ -157,3 +157,19 @@ lint:
 .PHONY: lint-check
 lint-check:
 	@${BLACK} --check src -l 120 || (echo "Linting failed. Run 'make lint' to fix formatting issues." && exit 1)
+
+.PHONY: version-print
+version-print:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml
+
+.PHONY: version-bump-patch
+version-bump-patch:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml --patch
+
+.PHONY: version-bump-minor
+version-bump-minor:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml --minor
+
+.PHONY: version-bump-major
+version-bump-major:
+	@$(PYTHON) scripts/bump_version.py pyproject.toml --major

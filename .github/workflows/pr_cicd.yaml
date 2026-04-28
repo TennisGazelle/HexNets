@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  build:
+  pr:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -28,7 +28,115 @@ jobs:
       
       - name: Run lint check
         run: make lint-check
-      
+
+      - name: Check for 'patch' or 'minor' or 'CI/CD' label
+        id: version-label-check
+        uses: actions/github-script@v6
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            // Fetch PR details
+            const prNumber = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+
+            // Check if only CI change
+            let isCIChange = true;
+            // all changes in this PR should NOT touch arbor/ directory if CI only change
+            for (const file of files) {
+              if (file.filename.startsWith('arbor/')) {
+                isCIChange = false;
+                break;
+              }
+            }
+
+            // Check PR title for 'feat' or 'feature'
+            let isMinor = /feat|feature/i.test(pullRequest.title);
+            if (!isMinor) {
+              for (const commit of commits) {
+                if (/feat|feature/i.test(commit.commit.message)) {
+                  isMinor = true;
+                  break;
+                }
+              }
+            }
+
+            // Add 'minor' or 'patch' label
+            const correctLabel = isMinor ? 'minor' : 'patch';
+            const wrongLabel = isMinor ? 'patch' : 'minor';
+            const existingLabels = pullRequest.labels.map(label => label.name);
+
+            // if there's a CI/CD label, remove all other relevant labels (if they exist)
+            if (isCIChange) {
+              if (existingLabels.includes('minor')) {
+                  await github.rest.issues.removeLabel({
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                    name: 'minor',
+                  });
+                  console.log(`Removed 'minor' label`);
+              }
+              if (existingLabels.includes('patch')) {
+                  await github.rest.issues.removeLabel({
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                    name: 'patch',
+                  });
+                  console.log(`Removed 'patch' label`);
+              }
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: prNumber,
+                labels: ['CI/CD'],
+              });
+              console.log(`Added 'CI/CD' label`);
+            } else {
+              // Remove wrong label if it exists
+              if (existingLabels.includes(wrongLabel)) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  name: wrongLabel,
+                });
+                console.log(`Removed '${wrongLabel}' label`);
+              }
+
+              // Add correct label if it's not already there
+              if (!existingLabels.includes(correctLabel)) {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  labels: [correctLabel],
+                });
+                console.log(`Added '${correctLabel}' label`);
+              } else {
+                console.log(`'${correctLabel}' label already exists`);
+              }
+            }
+
       # - name: Run streamlit app
       #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
       #   run: |
@@ -40,3 +148,50 @@ jobs:
       #     source .venv/bin/activate
       #     streamlit login --token ${{ secrets.STREAMLIT_TOKEN }}
       #     streamlit deploy
+
+  cicd:
+    needs: pr
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          make install
+
+      # version bump depending on label
+      - name: Version bump on Label
+        if: ${{ github.event.pull_request.merged && github.event.pull_request.base.ref == 'develop' }}
+        run: |
+          # if label is patch, run make version-bump-patch
+          if [[ '${{ contains(github.event.pull_request.labels.*.name, 'major') }}' == 'true' ]]; then
+            make version-bump-major
+          elif [[ '${{ contains(github.event.pull_request.labels.*.name, 'minor') }}' == 'true' ]]; then
+            make version-bump-minor
+          elif [[ '${{ contains(github.event.pull_request.labels.*.name, 'patch') }}' == 'true' ]]; then
+            make version-bump-patch
+          else
+            echo 'no version bump!'
+            exit 0
+          fi
+
+          # sed the version in the README.md
+          release_version=$(make version-print)
+          sed -i "s/.*ReleaseStaticBadge.*$/\[\!\[ReleaseStaticBadge\]\(https:\/\/img.shields.io\/badge\/Release%20Version-$release_version-darkgreen?style=for-the-badge\)\]\(https:\/\/github.com\/TennisGazelle\/HexNets\/releases\/latest\)/" README.md
+
+          # push back to the repo
+          git config --global user.name "Automated GHA Committer"
+          git config --global user.email "ops+ci@simplerose.com"
+          git config --global pull.ff only
+
+          # Push the version bump commit
+          git add arbor/src/rose_driver/__init__.py
+          git commit -m "UPDATE: $(make version-print)"
+          git push

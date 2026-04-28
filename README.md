@@ -2,6 +2,8 @@
 
 Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`hexnet`), **Streamlit** UI, and **run** / **figure** outputs.
 
+[![ReleaseStaticBadge](https://img.shields.io/badge/Release%20Version-0.2.0-darkgreen?style=for-the-badge)](https://github.com/TennisGazelle/HexNets/releases/latest)
+
 ## Quick start
 
 ```bash
