@@ -51,6 +51,10 @@ install:
 
 .venv/: install
 
+.PHONY: build
+build:
+	@${PYTHON} -m build
+
 .PHONY: stories-sync
 stories-sync:
 	@${PYTHON} scripts/sync_github_stories.py sync
