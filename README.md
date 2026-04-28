@@ -12,7 +12,7 @@ Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`h
 ```bash
 make install          # venv + editable install + dev deps
 hexnet --help         # CLI (entry: pyproject → src/cli.py)
-make run-streamlit    # or: streamlit run src/streamlit_app.py
+make streamlit-run    # or: streamlit run src/streamlit_app.py
 ```
 
 **Reference images** (for Streamlit rotation tab): `hexnet ref --all` → `reference/*.png`
