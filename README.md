@@ -4,6 +4,9 @@ Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`h
 
 [![ReleaseStaticBadge](https://img.shields.io/badge/Release%20Version-0.2.0-darkgreen?style=for-the-badge)](https://github.com/TennisGazelle/HexNets/releases/latest)
 
+[![CI/CD](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml/badge.svg)](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml)
+
+
 ## Quick start
 
 ```bash

@@ -3,11 +3,11 @@ name: PR and CICD
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, reopened, synchronize, closed]
     branches:
       - main
 
-permissions:
-  contents: write
+permissions: write-all
 
 jobs:
   pr:
@@ -155,7 +155,7 @@ jobs:
   cicd:
     needs: pr
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged && github.event.pull_request.base.ref == 'main') }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -171,7 +171,7 @@ jobs:
 
       # version bump depending on label
       - name: Version bump on Label
-        if: ${{ github.event.pull_request.merged && github.event.pull_request.base.ref == 'develop' }}
+        if: ${{ github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
         run: |
           # if label is patch, run make version-bump-patch
           if [[ '${{ contains(github.event.pull_request.labels.*.name, 'major') }}' == 'true' ]]; then
@@ -187,7 +187,7 @@ jobs:
 
           # sed the version in the README.md
           release_version=$(make version-print)
-          sed -i "s/.*ReleaseStaticBadge.*$/\[\!\[ReleaseStaticBadge\]\(https:\/\/img.shields.io\/badge\/Release%20Version-$release_version-darkgreen?style=for-the-badge\)\]\(https:\/\/github.com\/TennisGazelle\/HexNets\/releases\/latest\)/" README.md
+          sed -i "s/.*ReleaseStaticBadge.*$/\[\!\[ReleaseStaticBadge\]\(https:\/\/img.shields.io\/badge\/Version-$release_version-darkgreen?style=for-the-badge\)\]\(https:\/\/github.com\/TennisGazelle\/HexNets\/releases\/latest\)/" README.md
 
           # push back to the repo
           git config --global user.name "Automated GHA Committer"
