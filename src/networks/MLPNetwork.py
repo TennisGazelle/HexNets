@@ -215,10 +215,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         title = "Activation Structure" if activation_only else "Weight Matrix"
         hslug = "-".join(str(h) for h in self.hidden_dims)
         suffix = f"_{detail}" if detail else ""
-        filename = (
-            f"mlpnet_in{self.input_dim}_h{hslug}_out{self.output_dim}_"
-            f"{title.replace(' ', '_')}{suffix}.png"
-        )
+        filename = f"mlpnet_in{self.input_dim}_h{hslug}_out{self.output_dim}_" f"{title.replace(' ', '_')}{suffix}.png"
         full_path = parent_dir / filename
 
         n_layers = len(self.W)
