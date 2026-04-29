@@ -19,7 +19,7 @@ make streamlit-run    # or: streamlit run src/streamlit_app.py
 
 **Reference images** (for Streamlit rotation tab): `hexnet ref --all` → `reference/*.png`
 
-**Tests:** `make unit-test` · **E2E:** `make e2e-test`
+**Tests:** `make unit-test` · **E2E:** `make e2e-test` (optional `E2E_EPOCHS=20` for shorter runs; artifacts under `runs/e2etest-smoke/` and `runs/e2etest-fam*` — see [`stories/benchmark-families-to-test.md`](stories/benchmark-families-to-test.md))
 
 ## Streamlit UI
 

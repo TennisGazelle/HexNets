@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- **MLP training curve save bugfix**: [`MLPNetwork.train_animated`](src/networks/MLPNetwork.py) saved the metrics PNG only when `epochs == 1` because the last-epoch check used `self.epochs_completed`, which increments every epoch. Save now triggers on `epoch == epoch_stop - 1` (same half-open range as the loop). Regression test in `tests/test_mlp_network_graph_weights.py`.
+- **Benchmark story + E2E**: [`stories/benchmark-families-to-test.md`](stories/benchmark-families-to-test.md) reformatted (headings, CLI-aligned tokens, E2E coverage table). [`e2e_test.sh`](e2e_test.sh) uses `runs/e2etest-smoke/` for smoke trains, `runs/e2etest-famA`–`famF/` for benchmark families (no activation×loss×lr grid); optional `E2E_EPOCHS` env var.
 
 ---
 
