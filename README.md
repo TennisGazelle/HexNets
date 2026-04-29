@@ -2,9 +2,11 @@
 
 Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`hexnet`), **Streamlit** UI, and **run** / **figure** outputs.
 
-[![ReleaseStaticBadge](https://img.shields.io/badge/Release%20Version-0.2.0-darkgreen?style=for-the-badge)](https://github.com/TennisGazelle/HexNets/releases/latest)
+[![ReleaseStaticBadge](https://img.shields.io/badge/Release%20Version-0.2.0-darkgreen)](https://github.com/TennisGazelle/HexNets/releases/latest)
 
 [![CI/CD](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml/badge.svg)](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml)
+
+Streamlit UI: https://tennisgazelle-hexnets-main.streamlit.app/
 
 
 ## Quick start
