@@ -129,16 +129,12 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
                 values[arg.dest] = None if sel == omit_label else sel
             else:
                 idx = _default_index(arg.choices, arg.default)
-                values[arg.dest] = st.selectbox(
-                    label, options=list(arg.choices), index=idx, key=key, **h
-                )
+                values[arg.dest] = st.selectbox(label, options=list(arg.choices), index=idx, key=key, **h)
             continue
 
         if arg.type_kind == "int":
             if arg.default is None:
-                values[arg.dest] = st.text_input(
-                    label, value="", placeholder="optional", key=key, **h
-                )
+                values[arg.dest] = st.text_input(label, value="", placeholder="optional", key=key, **h)
             else:
                 values[arg.dest] = st.number_input(
                     label,
@@ -152,9 +148,7 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
 
         if arg.type_kind == "float":
             if arg.default is None:
-                values[arg.dest] = st.text_input(
-                    label, value="", placeholder="optional", key=key, **h
-                )
+                values[arg.dest] = st.text_input(label, value="", placeholder="optional", key=key, **h)
             else:
                 values[arg.dest] = st.number_input(
                     label,
