@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- Implemented **additive Gaussian dataset noise** on `BaseDataset` (`_load_data_impl` + noise kwargs), CLI flags, run `config.json` `dataset.noise`, and tests. Docs: [`docs/math/datasets.md`](docs/math/datasets.md).
+- **CLI Builder** layout: argparse argument groups (`hex`, `global`, `training`) in [`src/commands/command.py`](src/commands/command.py); `CliArgNode.group` from `_action_groups` in [`src/hexnets_web/cli_types.py`](src/hexnets_web/cli_types.py); Streamlit columns split command vs **global** (`-m/-s/-a/-l`) in [`src/hexnets_web/cli_builder.py`](src/hexnets_web/cli_builder.py).
 
 ---
 

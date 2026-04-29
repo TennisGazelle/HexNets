@@ -19,6 +19,12 @@ make streamlit-run    # or: streamlit run src/streamlit_app.py
 
 **Tests:** `make unit-test` · **E2E:** `make e2e-test`
 
+## Streamlit UI
+
+Tabs include **Network Explorer**, **Rotation Comparison**, **Lesion Lab**, **Run Browser**, **Glossary**, and **CLI Builder**.
+
+- **CLI Builder** — Builds a copy/paste `hexnet …` command from each subcommand’s argparse definition. Shared helpers register argparse groups (`hex`, `global`, `training`); the UI splits **global** options (`--model`, `--seed`, `--activation`, `--loss`) into their own column. Metadata follows the same pattern as the glossary: `Command.get_cli_node()` (see [`src/commands/command.py`](src/commands/command.py)) produces a [`CliNode`](src/hexnets_web/cli_types.py) tree; [`src/hexnets_web/cli_data.py`](src/hexnets_web/cli_data.py) aggregates the root node (`CLI_ROOT`).
+
 ## Nomenclature
 
 - **Reference graph** — Structure for a fixed `(n, r)`; not tied to a training run.
