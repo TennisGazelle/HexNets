@@ -10,8 +10,14 @@ from typing import Any, Iterable
 
 import streamlit as st
 
+from data.dataset import DATASET_FUNCTIONS
 from hexnets_web.cli_data import CLI_ROOT
 from hexnets_web.cli_types import CliArgNode, CliNode
+from hexnets_web.glossary_tab import render_glossary_node
+from hexnets_web.glossary_types import GlossaryNode
+from networks.activation import ACTIVATION_FUNCTIONS
+from networks.learning_rate import LEARNING_RATES
+from networks.loss import LOSS_FUNCTIONS
 
 
 def _widget_key(cmd_name: str, dest: str) -> str:
@@ -190,6 +196,68 @@ def _build_preview(cmd: CliNode, values: dict[str, Any]) -> str:
     return " ".join(["hexnet", cmd.name, *parts])
 
 
+def _find_arg(cmd: CliNode, dest: str) -> CliArgNode | None:
+    for a in cmd.args:
+        if a.dest == dest:
+            return a
+    return None
+
+
+def _should_show_string_glossary(arg: CliArgNode, coerced: Any) -> bool:
+    if coerced is None and arg.default is None:
+        return False
+    if coerced is None:
+        return False
+    return bool(str(coerced).strip())
+
+
+def _lookup_registry_class(registry: dict[str, Any], key: str) -> Any | None:
+    if key in registry:
+        return registry[key]
+    lower = key.lower()
+    if lower in registry:
+        return registry[lower]
+    return None
+
+
+def _iter_cli_registry_glossary_sections(cmd: CliNode, values: dict[str, Any]) -> list[tuple[str, GlossaryNode]]:
+    """Return (heading, glossary_node) for current command and widget values."""
+    specs: tuple[tuple[str, str, dict[str, Any]], ...] = (
+        ("activation", "Activation", ACTIVATION_FUNCTIONS),
+        ("loss", "Loss", LOSS_FUNCTIONS),
+        ("learning_rate", "Learning rate", LEARNING_RATES),
+        ("type", "Dataset", DATASET_FUNCTIONS),
+    )
+    out: list[tuple[str, GlossaryNode]] = []
+    for dest, heading, registry in specs:
+        arg = _find_arg(cmd, dest)
+        if arg is None:
+            continue
+        coerced = _coerce_value(arg, values.get(arg.dest))
+        if not _should_show_string_glossary(arg, coerced):
+            continue
+        key = str(coerced).strip()
+        cls = _lookup_registry_class(registry, key)
+        if cls is None:
+            continue
+        out.append((f"{heading} - {cmd.name}", cls.get_glossary_node()))
+    return out
+
+
+def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
+    sections = _iter_cli_registry_glossary_sections(cmd, values)
+    if not sections:
+        st.caption("No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices).")
+        return
+
+    cols = st.columns([1] * len(sections), gap="large")
+    for index, (heading, node) in enumerate(sections):
+        with cols[index]:
+            with st.container():
+                st.markdown(f"### {heading}")
+                render_glossary_node(node, "", as_expander=False)
+
+
 def render_cli_builder_tab() -> None:
     st.header("CLI Builder")
     st.caption(
@@ -244,3 +312,7 @@ def render_cli_builder_tab() -> None:
         help="Execution from the UI is not yet implemented",
         key="cli_builder_run_placeholder",
     )
+
+    st.markdown("---")
+    st.subheader("What your choices mean")
+    _render_cli_choice_glossaries(cmd, values)

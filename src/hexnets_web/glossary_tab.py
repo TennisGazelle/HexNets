@@ -3,10 +3,11 @@ import streamlit as st
 from hexnets_web.glossary_data import GLOSSARY_ROOT, GlossaryNode
 
 
-def render_glossary_node(node: GlossaryNode, query: str) -> None:
+def render_glossary_node(node: GlossaryNode, query: str, as_expander: bool = True) -> None:
     if query and query not in node.search_blob:
         return
-    with st.expander(node.title):
+
+    def render_content():
         st.markdown(node.english)
         if node.tags:
             st.caption(" · ".join(node.tags))
@@ -16,8 +17,17 @@ def render_glossary_node(node: GlossaryNode, query: str) -> None:
             st.markdown(f"**Good for:** {node.good_for}")
         if node.example:
             st.markdown(f"**Example:** {node.example}")
-        for c in node.children:
-            render_glossary_node(c, query)
+
+    if as_expander:
+        with st.expander(node.title):
+            render_content()
+            for c in node.children:
+                render_glossary_node(c, query)
+    else:
+        st.markdown(f"#### {node.title}")
+        render_content()
+        if node.children:
+            st.markdown("#### See also" + " · ".join([c.title for c in node.children]))
 
 
 def render_glossary_tab() -> None:

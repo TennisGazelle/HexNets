@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- **CLI Builder** layout: argparse argument groups (`hex`, `global`, `training`) in [`src/commands/command.py`](src/commands/command.py); `CliArgNode.group` from `_action_groups` in [`src/hexnets_web/cli_types.py`](src/hexnets_web/cli_types.py); Streamlit columns split command vs **global** (`-m/-s/-a/-l`) in [`src/hexnets_web/cli_builder.py`](src/hexnets_web/cli_builder.py).
+- **CLI Builder — “What your choices mean”**: registry-backed glossary (activation, loss, learning rate, dataset `type`) from current subcommand + widgets in [`src/hexnets_web/cli_builder.py`](src/hexnets_web/cli_builder.py); sections omitted when the arg is absent or explicitly **— omit —** (`default is None` and coerced `None`). Layout/groups still live in [`src/commands/command.py`](src/commands/command.py) and [`src/hexnets_web/cli_types.py`](src/hexnets_web/cli_types.py).
 
 ---
 
