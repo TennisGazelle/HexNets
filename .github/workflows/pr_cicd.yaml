@@ -205,6 +205,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           generate_release_notes: true
+          tag_name: v$(make version-print)
           files: |
             README.md
             requirements.txt
