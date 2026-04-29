@@ -3,6 +3,9 @@ import pathlib
 
 import streamlit as st
 
+from hexnets_web.pages.base_page import BasePage
+from hexnets_web.pages.run_browser.training_plots import _training_plot_paths
+
 # Align with RunService.runs_dir (process cwd, typically repo root).
 RUNS_DIR = pathlib.Path("runs/").resolve()
 
@@ -23,14 +26,6 @@ def _json_artifacts(run_path: pathlib.Path) -> list[str]:
     ordered = [n for n in preferred if n in names]
     ordered.extend(sorted(names - set(ordered)))
     return ordered
-
-
-def _training_plot_paths(run_path: pathlib.Path) -> list[pathlib.Path]:
-    plots_dir = run_path / "plots"
-    if not plots_dir.is_dir():
-        return []
-    # Hex: hexnet_training_*.png — MLP: mlpnet_training_*.png (same plots/ convention as RunService).
-    return sorted(plots_dir.glob("*net_training_*.png"))
 
 
 def _render_json_viewer_section(run_path: pathlib.Path, json_files: list[str]) -> None:
@@ -72,7 +67,9 @@ def _render_run_tree(run_dirs: list[pathlib.Path]) -> None:
         with st.expander(label, expanded=is_selected):
             if is_selected:
                 st.success("This run is selected.")
-            entries = sorted(d.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+            entries = sorted(
+                d.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())
+            )
             if not entries:
                 st.caption("(empty)")
             else:
@@ -105,37 +102,40 @@ def _render_training_plots(paths: list[pathlib.Path]) -> None:
         st.image(str(p), use_container_width=True)
 
 
-def render_run_browser_tab() -> None:
-    st.header("Run Browser")
-    st.caption(f"Runs directory: `{RUNS_DIR}` (same convention as `RunService.runs_dir`).")
+class RunBrowserPage(BasePage):
+    def render(self) -> None:
+        st.header("Run Browser")
+        st.caption(
+            f"Runs directory: `{RUNS_DIR}` (same convention as `RunService.runs_dir`)."
+        )
 
-    run_dirs = _list_run_directories()
-    if not run_dirs:
-        if not RUNS_DIR.is_dir():
-            st.warning(
-                "No `runs/` directory found. Create runs from the CLI (e.g. `hexnet train`) or run from the repo root."
-            )
-        else:
-            st.warning("`runs/` exists but has no subfolders yet.")
-        return
+        run_dirs = _list_run_directories()
+        if not run_dirs:
+            if not RUNS_DIR.is_dir():
+                st.warning(
+                    "No `runs/` directory found. Create runs from the CLI (e.g. `hexnet train`) or run from the repo root."
+                )
+            else:
+                st.warning("`runs/` exists but has no subfolders yet.")
+            return
 
-    names = [d.name for d in run_dirs]
-    if st.session_state.get("run_browser_selected_run") not in names:
-        st.session_state.run_browser_selected_run = names[0]
+        names = [d.name for d in run_dirs]
+        if st.session_state.get("run_browser_selected_run") not in names:
+            st.session_state.run_browser_selected_run = names[0]
 
-    left, right = st.columns([1, 4])
-    with left:
-        _render_run_tree(run_dirs)
-    with right:
-        selected = RUNS_DIR / st.session_state.run_browser_selected_run
-        json_files = _json_artifacts(selected)
-        plot_paths = _training_plot_paths(selected)
+        left, right = st.columns([1, 4])
+        with left:
+            _render_run_tree(run_dirs)
+        with right:
+            selected = RUNS_DIR / st.session_state.run_browser_selected_run
+            json_files = _json_artifacts(selected)
+            plot_paths = _training_plot_paths(selected)
 
-        if plot_paths:
-            json_col, plot_col = st.columns([2, 3])
-            with json_col:
+            if plot_paths:
+                json_col, plot_col = st.columns([2, 3])
+                with json_col:
+                    _render_json_viewer_section(selected, json_files)
+                with plot_col:
+                    _render_training_plots(plot_paths)
+            else:
                 _render_json_viewer_section(selected, json_files)
-            with plot_col:
-                _render_training_plots(plot_paths)
-        else:
-            _render_json_viewer_section(selected, json_files)

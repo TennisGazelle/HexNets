@@ -88,7 +88,7 @@ def _build_glossary_root() -> list[GlossaryNode]:
         aliases=("metrics", "evaluation"),
         english=(
             "Quantities recorded each epoch during training. For formulas and caveats in one place, "
-            "see the **Training metrics** expander on the **Network Explorer** tab."
+            "see the **Training metrics** expander on the **Network Explorer** page."
         ),
         children=(loss, reg_score, r2, adj_r2),
     )
@@ -132,7 +132,7 @@ def _build_glossary_root() -> list[GlossaryNode]:
     params = GlossaryNode(
         title="Hex network parameters",
         aliases=("hyperparameters", "controls"),
-        english="Main knobs in the Network Explorer tab that define the `HexagonalNeuralNetwork` instance.",
+        english="Main knobs in the Network Explorer page that define the `HexagonalNeuralNetwork` instance.",
         children=(param_n, param_r, param_act, param_loss),
     )
 

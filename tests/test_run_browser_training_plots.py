@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from hexnets_web.run_browser import _training_plot_paths
+from hexnets_web.pages.run_browser.training_plots import _training_plot_paths
 
 
 def test_training_plot_paths_finds_mlp_png(tmp_path: Path) -> None:

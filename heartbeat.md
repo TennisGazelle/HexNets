@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- **Benchmark docs + E2E**: Canonical benchmark families and matrix live in [`docs/math/benchmark-families.md`](docs/math/benchmark-families.md). [`e2e_test.sh`](e2e_test.sh) uses `runs/e2etest-smoke/` for smoke trains, `runs/e2etest-famA`–`famF/` for benchmark families (no activation×loss×lr grid); optional `E2E_EPOCHS` env var.
+- **hexnets_web multipage split**: `main.py` uses `st.navigation` + `st.Page`; routes under `src/hexnets_web/pages/` with `BasePage.render()`; default page **CLI Builder**. Run-browser plot helper split to `pages/run_browser/training_plots.py` for tests without importing Streamlit.
 
 ---
 

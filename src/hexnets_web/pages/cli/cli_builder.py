@@ -1,5 +1,5 @@
 """
-Streamlit tab: build and preview `hexnet ...` CLI strings from CliNode metadata.
+Streamlit page: build and preview `hexnet ...` CLI strings from CliNode metadata.
 """
 
 from __future__ import annotations
@@ -11,10 +11,11 @@ from typing import Any, Iterable
 import streamlit as st
 
 from data.dataset import DATASET_FUNCTIONS
-from hexnets_web.cli_data import CLI_ROOT
 from hexnets_web.cli_types import CliArgNode, CliNode
-from hexnets_web.glossary_tab import render_glossary_node
 from hexnets_web.glossary_types import GlossaryNode
+from hexnets_web.pages.base_page import BasePage
+from hexnets_web.pages.cli.cli_data import CLI_ROOT
+from hexnets_web.pages.glossary.glossary import render_glossary_node
 from networks.activation import ACTIVATION_FUNCTIONS
 from networks.learning_rate import LEARNING_RATES
 from networks.loss import LOSS_FUNCTIONS
@@ -73,7 +74,9 @@ def _coerce_value(arg: CliArgNode, raw: Any) -> Any:
 def _values_equal(a: Any, b: Any) -> bool:
     if a is None and b is None:
         return True
-    if type(a) is type(b) or (isinstance(a, (int, float)) and isinstance(b, (int, float))):
+    if type(a) is type(b) or (
+        isinstance(a, (int, float)) and isinstance(b, (int, float))
+    ):
         try:
             return a == b
         except Exception:
@@ -99,7 +102,9 @@ def _format_cli_part(arg: CliArgNode, value: Any) -> list[str]:
         return [shlex.quote(text)]
 
     long_opts = [s for s in arg.option_strings if s.startswith("--")]
-    short_opts = [s for s in arg.option_strings if s.startswith("-") and not s.startswith("--")]
+    short_opts = [
+        s for s in arg.option_strings if s.startswith("-") and not s.startswith("--")
+    ]
     opt = long_opts[0] if long_opts else (short_opts[0] if short_opts else arg.dest)
 
     if arg.type_kind == "bool":
@@ -123,7 +128,11 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
         h = _help_kw(arg)
 
         if arg.is_flag:
-            default_on = bool(arg.default) if arg.default not in (None, argparse.SUPPRESS) else False
+            default_on = (
+                bool(arg.default)
+                if arg.default not in (None, argparse.SUPPRESS)
+                else False
+            )
             values[arg.dest] = st.checkbox(label, value=default_on, key=key, **h)
             continue
 
@@ -135,12 +144,16 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
                 values[arg.dest] = None if sel == omit_label else sel
             else:
                 idx = _default_index(arg.choices, arg.default)
-                values[arg.dest] = st.selectbox(label, options=list(arg.choices), index=idx, key=key, **h)
+                values[arg.dest] = st.selectbox(
+                    label, options=list(arg.choices), index=idx, key=key, **h
+                )
             continue
 
         if arg.type_kind == "int":
             if arg.default is None:
-                values[arg.dest] = st.text_input(label, value="", placeholder="optional", key=key, **h)
+                values[arg.dest] = st.text_input(
+                    label, value="", placeholder="optional", key=key, **h
+                )
             else:
                 values[arg.dest] = st.number_input(
                     label,
@@ -154,7 +167,9 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
 
         if arg.type_kind == "float":
             if arg.default is None:
-                values[arg.dest] = st.text_input(label, value="", placeholder="optional", key=key, **h)
+                values[arg.dest] = st.text_input(
+                    label, value="", placeholder="optional", key=key, **h
+                )
             else:
                 values[arg.dest] = st.number_input(
                     label,
@@ -220,7 +235,9 @@ def _lookup_registry_class(registry: dict[str, Any], key: str) -> Any | None:
     return None
 
 
-def _iter_cli_registry_glossary_sections(cmd: CliNode, values: dict[str, Any]) -> list[tuple[str, GlossaryNode]]:
+def _iter_cli_registry_glossary_sections(
+    cmd: CliNode, values: dict[str, Any]
+) -> list[tuple[str, GlossaryNode]]:
     """Return (heading, glossary_node) for current command and widget values."""
     specs: tuple[tuple[str, str, dict[str, Any]], ...] = (
         ("activation", "Activation", ACTIVATION_FUNCTIONS),
@@ -247,7 +264,9 @@ def _iter_cli_registry_glossary_sections(cmd: CliNode, values: dict[str, Any]) -
 def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
     sections = _iter_cli_registry_glossary_sections(cmd, values)
     if not sections:
-        st.caption("No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices).")
+        st.caption(
+            "No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices)."
+        )
         return
 
     cols = st.columns([1] * len(sections), gap="large")
@@ -258,61 +277,64 @@ def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
                 render_glossary_node(node, "", as_expander=False)
 
 
-def render_cli_builder_tab() -> None:
-    st.header("CLI Builder")
-    st.caption(
-        "Pick a subcommand and options; the preview updates as you change controls. "
-        "Copy the command from the code block (hover → copy)."
-    )
+class CliBuilderPage(BasePage):
+    def render(self) -> None:
+        st.header("CLI Builder")
+        st.caption(
+            "Pick a subcommand and options; the preview updates as you change controls. "
+            "Copy the command from the code block (hover → copy)."
+        )
 
-    if not CLI_ROOT.children:
-        st.warning("No CLI commands registered.")
-        return
+        if not CLI_ROOT.children:
+            st.warning("No CLI commands registered.")
+            return
 
-    col1, col2, col3, col4 = st.columns([1, 5, 5, 5], vertical_alignment="center")
+        col1, col2, col3, col4 = st.columns([2, 5, 5, 5], vertical_alignment="center")
 
-    with col1:
-        st.markdown("### hexnet")
+        with col1:
+            st.markdown("### hexnet")
 
-    with col2:
-        cmd_labels = [f"{c.name} — {c.help}" for c in CLI_ROOT.children]
-        cmd_by_label = dict(zip(cmd_labels, CLI_ROOT.children, strict=True))
-        selected_label = st.selectbox("Command", options=cmd_labels, key="cli_builder_command_pick")
-        cmd = cmd_by_label[selected_label]
+        with col2:
+            cmd_labels = [f"{c.name} — {c.help}" for c in CLI_ROOT.children]
+            cmd_by_label = dict(zip(cmd_labels, CLI_ROOT.children, strict=True))
+            selected_label = st.selectbox(
+                "Command", options=cmd_labels, key="cli_builder_command_pick"
+            )
+            cmd = cmd_by_label[selected_label]
 
-    command_args = [a for a in cmd.args if a.group != GLOBAL_GROUP]
-    global_args = [a for a in cmd.args if a.group == GLOBAL_GROUP]
+        command_args = [a for a in cmd.args if a.group != GLOBAL_GROUP]
+        global_args = [a for a in cmd.args if a.group == GLOBAL_GROUP]
 
-    with col3:
-        st.caption("Command options")
-        if command_args:
-            values_cmd = _render_arg_widgets(command_args, cmd.name)
-        else:
-            st.caption("_No command-specific options for this subcommand._")
-            values_cmd = {}
+        with col3:
+            st.caption("Command options")
+            if command_args:
+                values_cmd = _render_arg_widgets(command_args, cmd.name)
+            else:
+                st.caption("_No command-specific options for this subcommand._")
+                values_cmd = {}
 
-    with col4:
-        st.caption("Global options")
-        if global_args:
-            values_global = _render_arg_widgets(global_args, cmd.name)
-        else:
-            st.caption("_No global options for this subcommand._")
-            values_global = {}
+        with col4:
+            st.caption("Global options")
+            if global_args:
+                values_global = _render_arg_widgets(global_args, cmd.name)
+            else:
+                st.caption("_No global options for this subcommand._")
+                values_global = {}
 
-    values = {**values_cmd, **values_global}
-    preview = _build_preview(cmd, values)
+        values = {**values_cmd, **values_global}
+        preview = _build_preview(cmd, values)
 
-    st.markdown("---")
-    st.subheader("Preview")
-    st.code(preview, language="bash")
+        st.markdown("---")
+        st.subheader("Preview")
+        st.code(preview, language="bash")
 
-    st.button(
-        "Run (coming soon)",
-        disabled=True,
-        help="Execution from the UI is not yet implemented",
-        key="cli_builder_run_placeholder",
-    )
+        st.button(
+            "Run (coming soon)",
+            disabled=True,
+            help="Execution from the UI is not yet implemented",
+            key="cli_builder_run_placeholder",
+        )
 
-    st.markdown("---")
-    st.subheader("What your choices mean")
-    _render_cli_choice_glossaries(cmd, values)
+        st.markdown("---")
+        st.subheader("What your choices mean")
+        _render_cli_choice_glossaries(cmd, values)
