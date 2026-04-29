@@ -4,7 +4,7 @@ Project state and context: what was last asked, what’s active, what’s next.
 
 ## Last thing asked / in progress
 
-- **CLI Builder — “What your choices mean”**: registry-backed glossary (activation, loss, learning rate, dataset `type`) from current subcommand + widgets in [`src/hexnets_web/cli_builder.py`](src/hexnets_web/cli_builder.py); sections omitted when the arg is absent or explicitly **— omit —** (`default is None` and coerced `None`). Layout/groups still live in [`src/commands/command.py`](src/commands/command.py) and [`src/hexnets_web/cli_types.py`](src/hexnets_web/cli_types.py).
+- **MLP training curve save bugfix**: [`MLPNetwork.train_animated`](src/networks/MLPNetwork.py) saved the metrics PNG only when `epochs == 1` because the last-epoch check used `self.epochs_completed`, which increments every epoch. Save now triggers on `epoch == epoch_stop - 1` (same half-open range as the loop). Regression test in `tests/test_mlp_network_graph_weights.py`.
 
 ---
 

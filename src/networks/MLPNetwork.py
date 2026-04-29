@@ -204,8 +204,70 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         )
         table_print(["Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"], [[*data]])
 
-    def graph_weights(self, activation_only=True, detail="", output_dir: pathlib.Path = None):
-        pass
+    def graph_weights(
+        self,
+        activation_only=True,
+        detail="",
+        output_dir: Union[pathlib.Path, None] = None,
+    ):
+        parent_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path("figures")
+        parent_dir.mkdir(parents=True, exist_ok=True)
+        title = "Activation Structure" if activation_only else "Weight Matrix"
+        hslug = "-".join(str(h) for h in self.hidden_dims)
+        suffix = f"_{detail}" if detail else ""
+        filename = (
+            f"mlpnet_in{self.input_dim}_h{hslug}_out{self.output_dim}_"
+            f"{title.replace(' ', '_')}{suffix}.png"
+        )
+        full_path = parent_dir / filename
+
+        n_layers = len(self.W)
+        fig_w = max(4 * n_layers, 6)
+        fig, axes = plt.subplots(1, n_layers, figsize=(fig_w, 5))
+        if n_layers == 1:
+            axes = np.array([axes])
+
+        vmin = vmax = None
+        if not activation_only and self.W:
+            vmin = min(float(w.min()) for w in self.W)
+            vmax = max(float(w.max()) for w in self.W)
+
+        for ax, i in zip(axes, range(n_layers)):
+            W = self.W[i]
+            matrix = (W != 0).astype(int) if activation_only else W
+            cmap = "Greys" if activation_only else "viridis"
+            imshow_kw = {"cmap": cmap, "interpolation": "none"}
+            if not activation_only:
+                imshow_kw["vmin"] = vmin
+                imshow_kw["vmax"] = vmax
+            im = ax.imshow(matrix, **imshow_kw)
+            ax.set_title(f"Layer {i} ({W.shape[0]}×{W.shape[1]})")
+            ax.set_xlabel("out")
+            ax.set_ylabel("in")
+            if not activation_only:
+                fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+        subtitle_parts = [
+            f"in={self.input_dim}, hidden=[{hslug}], out={self.output_dim}",
+            f"lr={self.learning_rate_fn.display_name}",
+        ]
+        if detail:
+            subtitle_parts.append(detail)
+        if activation_only:
+            subtitle_parts.append("non-zero weights (dense layers are usually all 1)")
+        plt.suptitle(title)
+        plt.figtext(0.5, 0.02, " · ".join(subtitle_parts), ha="center", fontsize=9)
+        plt.tight_layout(rect=[0, 0.06, 1, 0.96])
+
+        try:
+            plt.savefig(full_path)
+            # Avoid UserWarning on non-interactive backends (e.g. Agg in CI / tests).
+            if "agg" not in str(plt.matplotlib.get_backend()).lower():
+                plt.show()
+        finally:
+            plt.close(fig)
+
+        return str(full_path), fig
 
     def graph_structure(self, detail="", output_dir: pathlib.Path = None, medium="matplotlib"):
         if medium == "matplotlib":
@@ -321,8 +383,14 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self.training_figure.regression_score_detail = "mean exp(-RMSE) per example"
         self.training_figure.r2_detail = "coefficient of determination"
 
+        # Last-epoch save must not use self.epochs_completed in the condition: we increment it every
+        # iteration (unlike Hex), so "epoch == epochs + self.epochs_completed - 1" is wrong for
+        # epochs > 1 (e.g. epoch 99 vs 100 + 99 - 1). Align with a fixed half-open range.
+        epoch_start = self.epochs_completed
+        epoch_stop = epoch_start + epochs
+
         # training loop
-        for epoch in trange(self.epochs_completed, epochs + self.epochs_completed):
+        for epoch in trange(epoch_start, epoch_stop):
             total_loss = 0.0
             regression_score_sum = 0
             count = 0
@@ -411,7 +479,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
             plt.pause(pause)
 
-            if epoch == epochs + self.epochs_completed - 1:
+            if epoch == epoch_stop - 1:
                 logger.debug(f"About to save figure at epoch {epoch}")
                 self.training_figure.save_figure()
                 logger.info("Training complete!")

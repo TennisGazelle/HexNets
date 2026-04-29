@@ -29,7 +29,8 @@ def _training_plot_paths(run_path: pathlib.Path) -> list[pathlib.Path]:
     plots_dir = run_path / "plots"
     if not plots_dir.is_dir():
         return []
-    return sorted(plots_dir.glob("hexnet_training_*.png"))
+    # Hex: hexnet_training_*.png — MLP: mlpnet_training_*.png (same plots/ convention as RunService).
+    return sorted(plots_dir.glob("*net_training_*.png"))
 
 
 def _render_json_viewer_section(run_path: pathlib.Path, json_files: list[str]) -> None:
