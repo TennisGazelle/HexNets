@@ -5,7 +5,7 @@ Python package: [`hexnets_web`](../src/hexnets_web/). Entry script: [`src/stream
 ## Summary (for quick orientation)
 
 * **Entry:** `src/streamlit_app.py` — launch: `make streamlit-run` or `streamlit run src/streamlit_app.py`.
-* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/hexnets_web/glossary_data.py`, node type in `glossary_types.py`; top-level branches: **Datasets** via `build_datasets_glossary_parent()` in `src/data/dataset.py` (`*_dataset.py`), **Loss functions** / **Learning rates** / **Activations** via `build_losses_glossary_parent()` / `build_learning_rates_glossary_parent()` / `build_activations_glossary_parent()` in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py` with per-class `get_glossary_node()`); UI in `glossary_tab.py` / `metrics_explainer.py`), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/hexnet_training_*.png` side by side when those plots exist), **Lesion Lab** (placeholder).
+* **Tabs:** **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Glossary** (searchable nested terms; tree in `src/hexnets_web/glossary_data.py`, node type in `glossary_types.py`; top-level branches: **Datasets** via `build_datasets_glossary_parent()` in `src/data/dataset.py` (`*_dataset.py`), **Loss functions** / **Learning rates** / **Activations** via `build_losses_glossary_parent()` / `build_learning_rates_glossary_parent()` / `build_activations_glossary_parent()` in `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py` with per-class `get_glossary_node()`); UI in `glossary_tab.py` / `metrics_explainer.py`), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist — `hexnet_training_*.png` for Hex runs, `mlpnet_training_*.png` for MLP), **Lesion Lab** (placeholder).
 * **Rotation tab layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
 * **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
 
@@ -151,7 +151,7 @@ When launched, the Streamlit app:
    - **Network Explorer**: Interactive controls and on-demand graph generation
    - **Rotation Comparison**: Pre-generated reference image viewer (25/75 layout)
    - **Glossary**: Search field filters top-level and nested glossary entries (substring match, case-insensitive); top-level expanders are shown in two columns when multiple entries match
-   - **Run Browser**: Two columns — expander tree per run with **Use this run** (no run dropdown); JSON plus training PNG side-by-side when `hexnet_training_*.png` exists, else JSON only
+   - **Run Browser**: Two columns — expander tree per run with **Use this run** (no run dropdown); JSON plus training PNG side-by-side when `plots/*net_training_*.png` exists (hex or MLP), else JSON only
    - **Lesion Lab**: Coming soon placeholder
 
 ### Network Explorer Tab
@@ -196,11 +196,11 @@ When launched, the Streamlit app:
 ### Run Browser Tab
 
 - **Runs root:** `pathlib.Path("runs/").resolve()` (matches `RunService.runs_dir` when the app is started from the repo root).
-- **Layout:** `st.columns([1, 3])` — left: run list; right: JSON (full width) or JSON + training plot in `st.columns([3, 2])` when `hexnet_training_*.png` exists.
+- **Layout:** `st.columns([1, 3])` — left: run list; right: JSON (full width) or JSON + training plot in `st.columns([3, 2])` when `plots/*net_training_*.png` exists.
 - **Selection:** **Use this directory** (inside each run’s expander) sets `st.session_state.run_browser_selected_run` via `st.button(..., on_click=...)` so the callback runs before the rest of the script; the tree labels/`expanded` state and the right column stay in sync on a single click. The button is disabled for the active run. The active run’s expander stays expanded and is titled with `· selected`; a short success callout marks it as driving the right column.
 - **JSON viewer:** Pick a root-level `.json` file for the active run (prioritizes `config.json`, `manifest.json`, `training_metrics.json`; includes any other `*.json` in the run root). Parsed JSON is shown with `st.json`; invalid JSON falls back to `st.code`.
 - **Tree:** Each top-level run is an `st.expander` listing immediate children; `plots/` lists PNG filenames in the tree (names only).
-- **Training plot:** If `plots/hexnet_training_*.png` exists, the right column uses `st.columns([3, 2])` so JSON and `st.image` share the row (narrower plot column keeps tall figures more readable). If there are no matching plots, only the JSON viewer is shown (no empty training block).
+- **Training plot:** If `plots/*net_training_*.png` exists (`hexnet_training_*.png` or `mlpnet_training_*.png`), the right column uses `st.columns([3, 2])` so JSON and `st.image` share the row (narrower plot column keeps tall figures more readable). If there are no matching plots, only the JSON viewer is shown (no empty training block).
 
 ### Lesion Lab Tab
 

@@ -1,6 +1,8 @@
 # Story backlog (local) ↔ GitHub issues
 
-Markdown files in this directory are the **canonical local copy** of backlog stories. There is one file per item in the “Recommended order” list (**`001`–`021`**), matching [`chatgpt_stories.md`](../chatgpt_stories.md). Filenames use **`NNN-kebab-slug.md`** where `NNN` is that position (Phase 1–4), not the epic-grouped order in the main body of that file.
+**Scope:** files here help **align and sequence work** with GitHub issues (`gh`, sync scripts). They are **not** the source of truth for math, dataset definitions, or benchmark design — use [`docs/README.md`](../docs/README.md) (especially [`docs/math/`](../docs/math/), e.g. [`benchmark-families.md`](../docs/math/benchmark-families.md)) and [`src/`](../src/).
+
+Markdown files in this directory are the **canonical local copy** of backlog stories (issue titles, checklists, frontmatter). There is one file per item in the “Recommended order” list (**`001`–`021`**), matching [`chatgpt_stories.md`](../chatgpt_stories.md). Filenames use **`NNN-kebab-slug.md`** where `NNN` is that position (Phase 1–4), not the epic-grouped order in the main body of that file.
 
 Each file has **YAML frontmatter**:
 

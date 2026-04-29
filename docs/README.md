@@ -9,6 +9,7 @@
 | [math/learning_rates.md](math/learning_rates.md) | LR schedules ↔ `src/networks/learning_rate/` |
 | [math/metrics.md](math/metrics.md) | Training metrics ↔ `src/networks/metrics.py` |
 | [math/datasets.md](math/datasets.md) | Datasets ↔ `src/data/dataset.py` hub + `*_dataset.py` modules + CLI `-t`; run `config.json` `dataset` block; glossary `good_for` / `tags` on `GlossaryNode` |
+| [math/benchmark-families.md](math/benchmark-families.md) | Benchmark families A–F, experiment matrix, insights, E2E scope ↔ `e2e_test.sh` |
 | [hexnets_web.md](hexnets_web.md) | Streamlit UI (`src/streamlit_app.py`, `src/hexnets_web/`) |
 
 **Agent-oriented detail:** `.cursor/` (architecture, CLI patterns, file layout).
