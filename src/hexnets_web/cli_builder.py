@@ -220,9 +220,7 @@ def _lookup_registry_class(registry: dict[str, Any], key: str) -> Any | None:
     return None
 
 
-def _iter_cli_registry_glossary_sections(
-    cmd: CliNode, values: dict[str, Any]
-) -> list[tuple[str, GlossaryNode]]:
+def _iter_cli_registry_glossary_sections(cmd: CliNode, values: dict[str, Any]) -> list[tuple[str, GlossaryNode]]:
     """Return (heading, glossary_node) for current command and widget values."""
     specs: tuple[tuple[str, str, dict[str, Any]], ...] = (
         ("activation", "Activation", ACTIVATION_FUNCTIONS),
@@ -249,11 +247,8 @@ def _iter_cli_registry_glossary_sections(
 def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
     sections = _iter_cli_registry_glossary_sections(cmd, values)
     if not sections:
-        st.caption(
-            "No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices)."
-        )
+        st.caption("No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices).")
         return
-
 
     cols = st.columns([1] * len(sections), gap="large")
     for index, (heading, node) in enumerate(sections):
@@ -261,6 +256,7 @@ def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
             with st.container():
                 st.markdown(f"### {heading}")
                 render_glossary_node(node, "", as_expander=False)
+
 
 def render_cli_builder_tab() -> None:
     st.header("CLI Builder")

@@ -27,7 +27,7 @@ def render_glossary_node(node: GlossaryNode, query: str, as_expander: bool = Tru
         st.markdown(f"#### {node.title}")
         render_content()
         if node.children:
-            st.markdown("#### See also" + " · ".join([ c.title for c in node.children ]))
+            st.markdown("#### See also" + " · ".join([c.title for c in node.children]))
 
 
 def render_glossary_tab() -> None:
