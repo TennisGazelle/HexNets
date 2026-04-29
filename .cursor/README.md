@@ -22,6 +22,7 @@ Welcome to the HexNets documentation! This directory contains comprehensive docu
 
 ### Quick Reference
 - **[AI_QUICK_INDEX.md](./AI_QUICK_INDEX.md)** - Quick reference index for AI assistants
+- **[benchmark-families.md](./benchmark-families.md)** - Index → [`docs/math/benchmark-families.md`](../docs/math/benchmark-families.md) (experiment families, E2E scope)
 
 ## Quick Start
 

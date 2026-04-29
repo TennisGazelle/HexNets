@@ -8,8 +8,12 @@ labels:
 - cli
 - research
 - paper
-sync: {}
+sync:
+  last_remote_updated: '2026-04-29T09:07:59Z'
+  content_sha256: c8d9a1962f0dea7550c5dfd2fd2824ce44dea481b15435324bb1a53eceed8df9
+issue: 19
 ---
+
 
 ## Goal
 

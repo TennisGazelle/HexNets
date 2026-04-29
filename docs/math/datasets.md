@@ -32,11 +32,11 @@ Assumptions:
 | `sparse_identity` | `SparseIdentityDataset` | Sparse **x**, `y = x` |
 | `low_rank_linear` | `LowRankLinearDataset` | `y = x (UV^T)^T` with rank ≤ `rank`; CLI `scale` scales **A** |
 
-**Deferred (not implemented yet):** salt–pepper / mask denoise and bit-flip denoise (story 004 items 10, 11, 12, 21). **Additive Gaussian noise** on synthetic (X, Y) is implemented on `BaseDataset` — see below and [stories/006-add-noisy-synthetic-regression-datasets.md](../../stories/006-add-noisy-synthetic-regression-datasets.md).
+**Deferred (not implemented yet):** salt–pepper, mask denoise, and bit-flip denoise (non-Gaussian corruption paths). **Additive Gaussian noise** on synthetic (X, Y) is implemented on `BaseDataset` — see the section below and `BaseDataset._apply_configured_gaussian_noise` in [`src/data/dataset.py`](../../src/data/dataset.py).
 
 ## Glossary (`good_for` and `tags`)
 
-Each dataset’s `get_glossary_node()` may set optional **`good_for`** (one-line experiment intent from the story) and **`tags`** (short labels such as `regression-compatible`, `classification-style`). The Streamlit **Glossary** tab shows them and includes them in search; types live in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py).
+Each dataset’s `get_glossary_node()` may set optional **`good_for`** (one-line experiment intent) and **`tags`** (short labels such as `regression-compatible`, `classification-style`). The Streamlit **Glossary** tab shows them and includes them in search; types live in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py).
 
 ## Wired into `hexnet train` today
 

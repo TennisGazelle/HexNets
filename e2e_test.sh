@@ -75,8 +75,8 @@ e2e_train "3. MLP train" \
     --run-tags e2e,smoke \
     --run-note "e2e smoke mlp"
 
-# 4–9. Benchmark families A–F (non-exhaustive; see stories/benchmark-families-to-test.md)
-print_line "4–9. Benchmark families A–F (runs under runs/e2etest-fam*/ )..."
+# 4–9. Benchmark families A–F (non-exhaustive; see docs/math/benchmark-families.md)
+print_line "Benchmark families A-F (runs under runs/e2etest-fam*/ )..."
 rm -rf runs/e2etest-famA runs/e2etest-famB runs/e2etest-famC runs/e2etest-famD runs/e2etest-famE runs/e2etest-famF
 
 FAM_TAG_BASE="e2e,benchmark"

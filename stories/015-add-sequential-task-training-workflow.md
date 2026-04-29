@@ -7,8 +7,12 @@ labels:
 - epic:transfer-lesioning
 - research
 - cli
-sync: {}
+sync:
+  last_remote_updated: '2026-04-29T09:08:13Z'
+  content_sha256: 211eaf515e238d12cd48c29912149838ada007e63e1bf702577f5dc6c5fd40bd
+issue: 34
 ---
+
 
 ## Goal
 

@@ -7,8 +7,12 @@ labels:
 - epic:experiment-orchestration
 - paper
 - streamlit
-sync: {}
+sync:
+  last_remote_updated: '2026-04-29T09:08:01Z'
+  content_sha256: 0accdd5828d161b10b13e16f48461a38df03a0fc12a94475abdb60c6ca99c2b3
+issue: 20
 ---
+
 
 ## Goal
 
