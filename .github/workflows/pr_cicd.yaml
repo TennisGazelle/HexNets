@@ -195,7 +195,7 @@ jobs:
           git config --global pull.ff only
 
           # Push the version bump commit
-          git add src/hexnet/__init__.py
+          git add pyproject.toml
           git add README.md
           git commit -m "UPDATE: $(make version-print)"
           git push
