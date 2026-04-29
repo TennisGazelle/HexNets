@@ -241,6 +241,7 @@ def render_cli_builder_tab() -> None:
     st.button(
         "Run (coming soon)",
         disabled=True,
+        alignment="right",
         help="Execution from the UI is not yet implemented",
         key="cli_builder_run_placeholder",
     )
