@@ -201,8 +201,8 @@ jobs:
           git push
 
           # tag the commit
-          git tag v$(make version-print)
-          git push origin v$(make version-print)
+          git tag "v$(make version-print)"
+          git push origin "v$(make version-print)"
 
       - name: Make Release
         uses: softprops/action-gh-release@v3
