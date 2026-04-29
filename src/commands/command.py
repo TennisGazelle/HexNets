@@ -12,6 +12,7 @@ from data.dataset import (
     is_registered_dataset_display_name,
     list_registered_dataset_display_names,
 )
+from hexnets_web.cli_types import CliNode, cli_node_from_parser
 
 logger = logging.getLogger(__name__)
 
@@ -96,9 +97,17 @@ class Command(ABC):
     def invoke(self, args: Namespace):
         pass
 
+    @classmethod
+    def get_cli_node(cls) -> CliNode:
+        instance = cls()
+        parser = ArgumentParser(prog=instance.name())
+        instance.configure_parser(parser)
+        return cli_node_from_parser(name=instance.name(), help_text=instance.help(), parser=parser)
+
 
 def add_hex_only_arguments(parser: ArgumentParser, set_defaults: bool = True):
-    parser.add_argument(
+    group = parser.add_argument_group("hex")
+    group.add_argument(
         "-n",
         "--num_dims",
         type=int,
@@ -107,7 +116,7 @@ def add_hex_only_arguments(parser: ArgumentParser, set_defaults: bool = True):
         dest="n",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-r",
         "--rotation",
         help="Value between 0 and 5, (e.g. 0,1,2,3,4,5) of which hexagon rotation to display",
@@ -118,7 +127,8 @@ def add_hex_only_arguments(parser: ArgumentParser, set_defaults: bool = True):
 
 
 def add_global_arguments(parser: ArgumentParser):
-    parser.add_argument(
+    group = parser.add_argument_group("global")
+    group.add_argument(
         "-m",
         "--model",
         help="Model to use",
@@ -128,7 +138,7 @@ def add_global_arguments(parser: ArgumentParser):
         dest="model",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-s",
         "--seed",
         help="Seed for the random number generator",
@@ -137,7 +147,7 @@ def add_global_arguments(parser: ArgumentParser):
         dest="seed",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-a",
         "--activation",
         help="Activation function to use",
@@ -147,7 +157,7 @@ def add_global_arguments(parser: ArgumentParser):
         dest="activation",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-l",
         "--loss",
         help="Loss function to use",
@@ -169,7 +179,8 @@ def add_global_arguments(parser: ArgumentParser):
 
 
 def add_training_arguments(parser: ArgumentParser):
-    parser.add_argument(
+    group = parser.add_argument_group("training")
+    group.add_argument(
         "-lr",
         "--learning-rate",
         help="Learning rate function for the network",
@@ -179,7 +190,7 @@ def add_training_arguments(parser: ArgumentParser):
         dest="learning_rate",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-e",
         "--epochs",
         help="Number of epochs to train for",
@@ -188,7 +199,7 @@ def add_training_arguments(parser: ArgumentParser):
         dest="epochs",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-p",
         "--pause",
         help="Pause between epochs",
@@ -197,7 +208,7 @@ def add_training_arguments(parser: ArgumentParser):
         dest="pause",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-t",
         "--type",
         help="Type of dataset to use",
@@ -206,7 +217,7 @@ def add_training_arguments(parser: ArgumentParser):
         dest="type",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-ds",
         "--dataset-size",
         help="Number of samples in the dataset",
@@ -215,7 +226,7 @@ def add_training_arguments(parser: ArgumentParser):
         dest="dataset_size",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "--dataset-noise",
         help="Add Gaussian noise to synthetic inputs and/or targets (off if omitted)",
         type=str,
@@ -223,14 +234,14 @@ def add_training_arguments(parser: ArgumentParser):
         choices=("inputs", "targets", "both"),
         dest="dataset_noise",
     )
-    parser.add_argument(
+    group.add_argument(
         "--dataset-noise-mu",
         help="Mean of additive Gaussian dataset noise (used when --dataset-noise is set)",
         type=float,
         default=0.0,
         dest="dataset_noise_mu",
     )
-    parser.add_argument(
+    group.add_argument(
         "--dataset-noise-sigma",
         help="Std dev of additive Gaussian dataset noise (used when --dataset-noise is set)",
         type=float,
@@ -238,7 +249,7 @@ def add_training_arguments(parser: ArgumentParser):
         dest="dataset_noise_sigma",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "--dry-run", help="What would be run, do not create a run.", default=False, action="store_true", dest="dry_run"
     )
 

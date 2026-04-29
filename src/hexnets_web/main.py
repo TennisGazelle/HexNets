@@ -2,6 +2,7 @@ import pathlib
 
 import streamlit as st
 
+from hexnets_web.cli_builder import render_cli_builder_tab
 from hexnets_web.glossary_tab import render_glossary_tab
 from hexnets_web.lesion_lab import render_lesion_lab_tab
 from hexnets_web.network_explorer import render_network_explorer_tab
@@ -19,8 +20,15 @@ def run() -> None:
     st.title("HexNet Visualizer")
     st.subheader("Hexagonal Neural Network Visualizer")
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        ["Network Explorer", "Rotation Comparison", "Lesion Lab", "Run Browser", "Glossary"]
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+        [
+            "Network Explorer",
+            "Rotation Comparison",
+            "Lesion Lab",
+            "Run Browser",
+            "Glossary",
+            "CLI Builder",
+        ]
     )
 
     with tab1:
@@ -33,3 +41,5 @@ def run() -> None:
         render_run_browser_tab()
     with tab5:
         render_glossary_tab()
+    with tab6:
+        render_cli_builder_tab()
