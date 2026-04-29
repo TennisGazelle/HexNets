@@ -171,6 +171,7 @@ jobs:
 
       # version bump depending on label
       - name: Version bump on Label
+        id: version-bump
         if: ${{ github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
         run: |
           # if label is patch, run make version-bump-patch
@@ -201,15 +202,18 @@ jobs:
           git push
 
           # tag the commit
-          git tag "v$(make version-print)"
-          git push origin "v$(make version-print)"
+          release_version=$(make version-print)
+          git tag "v$release_version"
+          git push origin "v$release_version"
+          echo "release_version=$release_version" >> $GITHUB_OUTPUT
 
       - name: Make Release
         uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           generate_release_notes: true
-          tag_name: v$(make version-print)
+          tag_name: "v${{ steps.version-bump.outputs.release_version }}"
+     
           files: |
             README.md
             requirements.txt
