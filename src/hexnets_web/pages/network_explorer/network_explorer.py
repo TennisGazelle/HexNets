@@ -1,50 +1,118 @@
 import pathlib
+from textwrap import dedent
 
 import matplotlib.pyplot as plt
 import streamlit as st
 
-from commands.command import get_dataset
-from commands.train_command import LINEAR_SCALE_DEFAULT
 from data.dataset import list_registered_dataset_display_names
 from networks.activation.activations import get_available_activation_functions
+from networks.learning_rate.learning_rate import get_available_learning_rates
 from networks.loss.loss import get_available_loss_functions
 from hexnets_web.figures import create_matplotlib_figure
 from hexnets_web.pages.base_page import BasePage
 from hexnets_web.session import update_network
+from networks.HexagonalNetwork import HexagonalNeuralNetwork
 
 _DATASET_SAMPLE_OPTIONS = (10, 50, 100, 250, 500, 1000)
-
-
-def _effective_dataset_scale(dataset_type: str) -> float:
-    if dataset_type == "linear_scale":
-        return LINEAR_SCALE_DEFAULT
-    if dataset_type == "diagonal_scale":
-        return 1.0
-    return 1.0
 
 
 class NetworkExplorerPage(BasePage):
     def __init__(self, streamlit_dir: pathlib.Path) -> None:
         self._streamlit_dir = streamlit_dir
 
+    @staticmethod
+    def _indices_preview(layer: list, max_len: int = 80) -> str:
+        s = repr(layer)
+        if len(s) <= max_len:
+            return s
+        return s[: max_len - 1] + "…"
+
+    def _render_network_info_panel(self) -> None:
+        update_network()
+        try:
+            net = st.session_state.net
+            layers = net.dir_W[st.session_state.r]["indices"]
+            total_nodes = sum(len(layer) for layer in layers)
+            sizes = [len(layer) for layer in layers]
+            r_key = st.session_state.r
+            total_edges = HexagonalNeuralNetwork.get_parameter_count(st.session_state.n)
+
+            with st.container(border=True):
+                st.markdown("##### Network structure")
+                m1, m2, m3 = st.columns(3)
+                with m1:
+                    st.metric("Total nodes", f"{total_nodes:,}")
+                with m2:
+                    st.metric("Layers", len(layers))
+                with m3:
+                    st.metric("Total Edges", total_edges)
+
+                st.caption(
+                    f"Hex order **n** = `{st.session_state.n}` · layer sizes: " f"`{' → '.join(str(s) for s in sizes)}`"
+                )
+
+                # st.markdown("##### Hyperparameters")
+                # st.markdown(
+                #     "| | |\n"
+                #     "|:--|:--|\n"
+                #     f"| Activation | `{st.session_state.activation}` |\n"
+                #     f"| Loss | `{st.session_state.loss}` |\n"
+                #     f"| Learning rate | `{st.session_state.learning_rate}` |\n"
+                #     f"| Dataset | `{st.session_state.dataset_type}` |\n"
+                #     f"| Samples | `{st.session_state.dataset_num_samples}` |\n"
+                # )
+
+                st.markdown("##### Layers (indices per layer)")
+                for i, layer in enumerate(layers):
+                    with st.container():
+                        st.markdown(f"**Layer {i}** · `{len(layer)}` nodes")
+                        st.code(self._indices_preview(layer), language=None)
+        except Exception as e:
+            st.error(f"Error displaying network info: {e}")
+
     def render(self) -> None:
         st.markdown("---")
         st.markdown("### About")
-        st.write("HexNets is a tool for working with hexagonal neural networks.")
+        st.markdown(dedent("""
+                **HexNets** studies **hexagonal neural networks**: models whose connectivity follows a
+                hex-layer layout (controlled by order **n**) and optional **rotation** **r** of how
+                weights are organized. The goal is to make that geometry **inspectable and reproducible**
+                — same parameters in the CLI, in saved runs, and here — so you can reason about structure,
+                size, and activations without digging through code on every change.
 
+                **This page** is a lightweight **parameter-driven dashboard**. Adjust the hex-specific
+                settings (**n**, **r**) plus activation, loss, learning-rate schedule, and dataset choices;
+                the right-hand panel **recomputes the live network** and shows **derived statistics** (total
+                nodes, layer sizes, per-layer index lists, edge counts, and similar summaries). It does
+                **not** run training loops here — it is for **reading off** what a given configuration
+                implies. Use **Generate Graphs** when you want the usual **structure** and **multi-activation**
+                figures for the current `(n, r)` and hyperparameters.
+                """).strip())
 
         streamlit_dir = self._streamlit_dir
         st.header("Parameters")
 
-        col1, col2 = st.columns([2, 1])
+        activation_opts = sorted(get_available_activation_functions())
+        if st.session_state.activation not in activation_opts:
+            st.session_state.activation = activation_opts[0]
+        loss_opts = sorted(get_available_loss_functions())
+        if st.session_state.loss not in loss_opts:
+            st.session_state.loss = loss_opts[0]
+        lr_opts = sorted(get_available_learning_rates())
+        if st.session_state.learning_rate not in lr_opts:
+            st.session_state.learning_rate = "constant" if "constant" in lr_opts else lr_opts[0]
 
-        with col1:
-            st.session_state.n = st.slider(
+        col_sliders_and_network, col_info = st.columns(2, gap="large")
+
+        with col_sliders_and_network:
+            st.markdown("**Geometry & data**")
+            st.session_state.n = st.number_input(
                 "Number of nodes (n)",
                 min_value=2,
-                max_value=8,
+                max_value=25,
                 value=st.session_state.n,
                 step=1,
+                format="%d",
             )
 
             st.session_state.r = st.slider(
@@ -55,97 +123,36 @@ class NetworkExplorerPage(BasePage):
                 step=1,
             )
 
-            st.session_state.activation = st.selectbox(
-                "Activation", get_available_activation_functions(), index=0
-            )
-
-            st.session_state.loss = st.selectbox(
-                "Loss", get_available_loss_functions(), index=0
-            )
-
-            dataset_names = list_registered_dataset_display_names()
-            if st.session_state.dataset_type not in dataset_names:
-                st.session_state.dataset_type = "identity"
-            st.selectbox("Dataset type", options=dataset_names, key="dataset_type")
-
-            if st.session_state.dataset_num_samples not in _DATASET_SAMPLE_OPTIONS:
-                st.session_state.dataset_num_samples = 100
-            st.selectbox(
-                "Number of data samples",
-                options=list(_DATASET_SAMPLE_OPTIONS),
-                key="dataset_num_samples",
-            )
-
-            if st.button("Generate Graphs"):
+            if st.button("Generate Structure Graph", type="primary"):
                 update_network()
-                with st.spinner(
-                    f"Generating for n={st.session_state.n}, r={st.session_state.r}..."
-                ):
+                with st.spinner(f"Generating for n={st.session_state.n}, r={st.session_state.r}..."):
                     net = st.session_state.net
 
-                    col_structure, col_multi_activation = st.columns(2)
-
-                    with col_structure:
-                        filename, fig = net.graph_structure(
-                            output_dir=streamlit_dir, medium="matplotlib"
-                        )
-                        buf = create_matplotlib_figure(fig)
-                        st.image(buf, use_container_width=True)
-                        plt.close(fig)
-
-                    with col_multi_activation:
-                        filename, fig = net._graph_multi_activation(
-                            detail="", output_dir=streamlit_dir
-                        )
-                        buf = create_matplotlib_figure(fig)
-                        st.image(buf, use_container_width=True)
-                        plt.close(fig)
-
-            if st.button("Train Network"):
-                update_network()
-                ds_type = st.session_state.dataset_type
-                n_samples = st.session_state.dataset_num_samples
-                scale = _effective_dataset_scale(ds_type)
-                with st.spinner(f"Training on {ds_type} dataset ({n_samples} samples)"):
-                    data = get_dataset(
-                        st.session_state.n, n_samples, type=ds_type, scale=scale
-                    )
-                    net = st.session_state.net
-                    loss, reg_score, r2, fig = net.train_animated(
-                        data, epochs=10, pause=0, output_dir=streamlit_dir
-                    )
-                    adj = net.training_metrics[net.r].adjusted_r_squared[-1]
-                    st.session_state.last_metrics = {
-                        "loss": float(loss),
-                        "regression_score": float(reg_score),
-                        "r_squared": float(r2),
-                        "adjusted_r_squared": float(adj),
-                    }
+                    _filename, fig = net.graph_structure(output_dir=streamlit_dir, medium="matplotlib")
                     buf = create_matplotlib_figure(fig)
                     st.image(buf, use_container_width=True)
                     plt.close(fig)
 
-        with col2:
-            try:
-                net = st.session_state.net
-                layers = net.dir_W[st.session_state.r]["indices"]
+            # dataset_names = list_registered_dataset_display_names()
+            # if st.session_state.dataset_type not in dataset_names:
+            #     st.session_state.dataset_type = "identity"
+            # st.selectbox("Dataset type", options=dataset_names, key="dataset_type")
+            # if st.session_state.dataset_num_samples not in _DATASET_SAMPLE_OPTIONS:
+            #     st.session_state.dataset_num_samples = 100
+            # st.selectbox(
+            #     "Number of data samples",
+            #     options=list(_DATASET_SAMPLE_OPTIONS),
+            #     key="dataset_num_samples",
+            # )
 
-                st.subheader("Network Information")
-                st.write(f"**Total nodes:** {sum(len(layer) for layer in layers)}")
-                st.write(f"**Number of layers:** {len(layers)}")
-                st.write(f"**Layer sizes:** {[len(layer) for layer in layers]}")
-                st.write(f"**n (nodes):** {st.session_state.n}")
-                st.write(f"**r (rotation):** {st.session_state.r}")
-                st.write(f"**Activation:** {st.session_state.activation}")
-                st.write(f"**Loss:** {st.session_state.loss}")
-                st.write(f"**Dataset (training):** {st.session_state.dataset_type}")
-                st.write(
-                    f"**Samples (training):** {st.session_state.dataset_num_samples}"
-                )
+            # st.selectbox("Activation", options=activation_opts, key="activation")
+            # st.selectbox("Loss", options=loss_opts, key="loss")
+            # st.selectbox(
+            #     "Learning rate",
+            #     options=lr_opts,
+            #     key="learning_rate",
+            #     help="Schedule name passed to the live network (same registry as CLI).",
+            # )
 
-                with st.expander("Layer Indices"):
-                    for i, layer in enumerate(layers):
-                        st.write(f"Layer {i}: {layer}")
-            except Exception as e:
-                st.error(f"Error displaying network info: {e}")
-
+        with col_info:
+            self._render_network_info_panel()

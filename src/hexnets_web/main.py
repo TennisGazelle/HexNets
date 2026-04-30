@@ -8,8 +8,7 @@ def run() -> None:
 
     initialize_session_state()
 
-    st.title("HexNet Visualizer")
-    st.subheader("Hexagonal Neural Network Visualizer")
+    st.title("Hexagonal Neural Network Visualizer")
 
     pages = [
         st.Page(

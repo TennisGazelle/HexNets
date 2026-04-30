@@ -5,9 +5,7 @@ from hexnets_web.pages.base_page import BasePage
 from hexnets_web.pages.glossary.glossary_data import GLOSSARY_ROOT
 
 
-def render_glossary_node(
-    node: GlossaryNode, query: str, as_expander: bool = True
-) -> None:
+def render_glossary_node(node: GlossaryNode, query: str, as_expander: bool = True) -> None:
     if query and query not in node.search_blob:
         return
 

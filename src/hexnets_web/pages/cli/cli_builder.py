@@ -74,9 +74,7 @@ def _coerce_value(arg: CliArgNode, raw: Any) -> Any:
 def _values_equal(a: Any, b: Any) -> bool:
     if a is None and b is None:
         return True
-    if type(a) is type(b) or (
-        isinstance(a, (int, float)) and isinstance(b, (int, float))
-    ):
+    if type(a) is type(b) or (isinstance(a, (int, float)) and isinstance(b, (int, float))):
         try:
             return a == b
         except Exception:
@@ -102,9 +100,7 @@ def _format_cli_part(arg: CliArgNode, value: Any) -> list[str]:
         return [shlex.quote(text)]
 
     long_opts = [s for s in arg.option_strings if s.startswith("--")]
-    short_opts = [
-        s for s in arg.option_strings if s.startswith("-") and not s.startswith("--")
-    ]
+    short_opts = [s for s in arg.option_strings if s.startswith("-") and not s.startswith("--")]
     opt = long_opts[0] if long_opts else (short_opts[0] if short_opts else arg.dest)
 
     if arg.type_kind == "bool":
@@ -128,11 +124,7 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
         h = _help_kw(arg)
 
         if arg.is_flag:
-            default_on = (
-                bool(arg.default)
-                if arg.default not in (None, argparse.SUPPRESS)
-                else False
-            )
+            default_on = bool(arg.default) if arg.default not in (None, argparse.SUPPRESS) else False
             values[arg.dest] = st.checkbox(label, value=default_on, key=key, **h)
             continue
 
@@ -144,16 +136,12 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
                 values[arg.dest] = None if sel == omit_label else sel
             else:
                 idx = _default_index(arg.choices, arg.default)
-                values[arg.dest] = st.selectbox(
-                    label, options=list(arg.choices), index=idx, key=key, **h
-                )
+                values[arg.dest] = st.selectbox(label, options=list(arg.choices), index=idx, key=key, **h)
             continue
 
         if arg.type_kind == "int":
             if arg.default is None:
-                values[arg.dest] = st.text_input(
-                    label, value="", placeholder="optional", key=key, **h
-                )
+                values[arg.dest] = st.text_input(label, value="", placeholder="optional", key=key, **h)
             else:
                 values[arg.dest] = st.number_input(
                     label,
@@ -167,9 +155,7 @@ def _render_arg_widgets(args: Iterable[CliArgNode], cmd_name: str) -> dict[str, 
 
         if arg.type_kind == "float":
             if arg.default is None:
-                values[arg.dest] = st.text_input(
-                    label, value="", placeholder="optional", key=key, **h
-                )
+                values[arg.dest] = st.text_input(label, value="", placeholder="optional", key=key, **h)
             else:
                 values[arg.dest] = st.number_input(
                     label,
@@ -235,9 +221,7 @@ def _lookup_registry_class(registry: dict[str, Any], key: str) -> Any | None:
     return None
 
 
-def _iter_cli_registry_glossary_sections(
-    cmd: CliNode, values: dict[str, Any]
-) -> list[tuple[str, GlossaryNode]]:
+def _iter_cli_registry_glossary_sections(cmd: CliNode, values: dict[str, Any]) -> list[tuple[str, GlossaryNode]]:
     """Return (heading, glossary_node) for current command and widget values."""
     specs: tuple[tuple[str, str, dict[str, Any]], ...] = (
         ("activation", "Activation", ACTIVATION_FUNCTIONS),
@@ -264,9 +248,7 @@ def _iter_cli_registry_glossary_sections(
 def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
     sections = _iter_cli_registry_glossary_sections(cmd, values)
     if not sections:
-        st.caption(
-            "No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices)."
-        )
+        st.caption("No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices).")
         return
 
     cols = st.columns([1] * len(sections), gap="large")
@@ -297,9 +279,7 @@ class CliBuilderPage(BasePage):
         with col2:
             cmd_labels = [f"{c.name} — {c.help}" for c in CLI_ROOT.children]
             cmd_by_label = dict(zip(cmd_labels, CLI_ROOT.children, strict=True))
-            selected_label = st.selectbox(
-                "Command", options=cmd_labels, key="cli_builder_command_pick"
-            )
+            selected_label = st.selectbox("Command", options=cmd_labels, key="cli_builder_command_pick")
             cmd = cmd_by_label[selected_label]
 
         command_args = [a for a in cmd.args if a.group != GLOBAL_GROUP]

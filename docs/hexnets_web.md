@@ -6,16 +6,16 @@ Python package: [`hexnets_web`](../src/hexnets_web/). Entry script: [`src/stream
 
 * **Entry:** `src/streamlit_app.py` — launch: `make streamlit-run` or `streamlit run src/streamlit_app.py`.
 * **Navigation:** `hexnets_web/main.py` uses `st.navigation(..., position="sidebar")` and `st.Page` scripts under `src/hexnets_web/pages/` (paths relative to `streamlit_app.py`). Default landing page: **CLI Builder**. Each page implements `render()` on a subclass of `hexnets_web.pages.base_page.BasePage`.
-* **Pages:** **CLI Builder** (argparse-driven command preview + inline glossary for selected registry keys), **Network Explorer** (live `HexagonalNeuralNetwork`, generate/train, dataset type + sample count, metrics explainer expander), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Lesion Lab** (placeholder), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist), **Glossary** (searchable nested terms; tree in `src/hexnets_web/pages/glossary/glossary_data.py`, node type in `glossary_types.py`; top-level branches from `build_*_glossary_parent()` in `src/data/dataset.py`, `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`; UI in `pages/glossary/glossary.py` / `metrics_explainer.py`).
+* **Pages:** **CLI Builder** (argparse-driven command preview + inline glossary for selected registry keys), **Network Explorer** (live `HexagonalNeuralNetwork`; three-column parameters — sliders, network selects, structure summary; **Generate Graphs** only), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Lesion Lab** (placeholder), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist), **Glossary** (searchable nested terms; tree in `src/hexnets_web/pages/glossary/glossary_data.py`, node type in `glossary_types.py`; top-level branches from `build_*_glossary_parent()` in `src/data/dataset.py`, `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`; UI in `pages/glossary/glossary.py` / `metrics_explainer.py`).
 * **Rotation Comparison layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
-* **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
+* **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `learning_rate=constant`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
 
 ## Overview
 
 The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers six sidebar pages (CLI Builder first / default):
 
 1. **CLI Builder**: Build and copy `hexnet …` commands from live controls
-2. **Network Explorer**: Interactive parameter controls to generate and visualize networks on-demand, plus a collapsible training metrics explainer
+2. **Network Explorer**: Interactive parameters (three columns: geometry/data sliders, activation/loss/learning-rate, live structure summary) and **Generate Graphs** for structure + multi-activation figures
 3. **Rotation Comparison**: Sliders for `n` and `r` to browse pre-generated reference images for one `(n, r)` at a time (scrub `r` to compare rotations)
 4. **Lesion Lab**: Placeholder for future experiments
 5. **Run Browser**: Read-only browse of `runs/` (same root as `RunService.runs_dir`); run tree with button selection (left); JSON on the right, or JSON + training PNG in a `[3, 2]` split when plots exist
@@ -32,7 +32,7 @@ The Streamlit app is launched from `src/streamlit_app.py` and implemented under 
 #### 1. Session State Management
 ```python
 def initialize_session_state():
-    # Stores network parameters (n, r, activation, loss), training dataset picks,
+    # Stores network parameters (n, r, activation, loss, learning_rate), dataset picks,
     # rotation-comparison viewer keys (rotation_comparison_n / rotation_comparison_r),
     # and a cached network instance
 ```
@@ -160,24 +160,10 @@ When launched, the Streamlit app:
 ### Network Explorer page
 
 **Features**:
-- **Parameter Controls**:
-  - Slider for `n` (number of nodes): 2-8
-  - Slider for `r` (rotation): 0-5
-  - Dropdown for activation function
-  - Dropdown for loss function
-  - Dropdown for **dataset type** (registered display names from `list_registered_dataset_display_names()` in `src/data/dataset.py`, same registry as CLI `get_dataset`)
-  - Dropdown for **number of data samples** (fixed choices: 10, 50, 100, 250, 500, 1000)
+- **Layout** (`st.columns(3)`): **Column 1 — Geometry & data:** sliders for `n` (2–8) and `r` (0–5); dropdowns for **dataset type** (`list_registered_dataset_display_names()` in `src/data/dataset.py`, same registry as CLI `get_dataset`) and **number of data samples** (10, 50, 100, 250, 500, 1000). **Column 2 — Network:** activation, loss, and learning-rate schedule (same registry as CLI via `get_available_learning_rates()`). **Column 3 — Information:** metrics for total nodes, layer count, and `r`; caption with `n` and layer-size chain; markdown table for hyperparameters; bordered blocks per layer with index lists (preview truncated for very long lists).
+- **Actions**: **Generate Graphs** — builds/refreshes the live `HexagonalNeuralNetwork` then renders structure and multi-activation matplotlib figures inline (same as before).
 
-- **Actions**:
-  - **Generate Graphs**: Creates structure and multi-activation graphs on-demand
-  - **Train Network**: Runs a quick training session (10 epochs) with animated visualization on the selected dataset and sample count; `scale` for `get_dataset` matches `TrainCommand` (`linear_scale` → `LINEAR_SCALE_DEFAULT` from `commands/train_command.py`, `diagonal_scale` → `1.0`, else `1.0`)
-
-- **Information Panel**:
-  - Displays network statistics (total nodes, layer count, layer sizes)
-  - Shows current parameter values (including training dataset type and sample count)
-  - Expandable layer indices view
-
-- **Training metrics expander** (collapsed by default): formulas and caveats for loss, regression score (mean exp(−RMSE)), R², and adjusted R² (see `docs/math/metrics.md` and `src/networks/metrics.py`). Includes a toy numeric example. After **Train Network**, the last epoch’s four metrics appear under “Last run (this session)” via `st.session_state.last_metrics`.
+- **Session / network sync:** The info column calls `update_network()` each run so layer indices and sizes match the current `n`, `r`, activation, loss, and learning rate.
 
 **Graph Generation**:
 - Graphs are generated dynamically using `HexagonalNetwork` methods
@@ -293,9 +279,9 @@ The app uses a consistent output directory:
 
 ### Network Instance Lifecycle
 
-1. **Initialization**: Network created on first load with default parameters
-2. **Update**: Network recreated when parameters change (via "Generate Graphs" or "Train Network" buttons)
-3. **Caching**: Network instance stored in `st.session_state.net` to avoid unnecessary recreation
+1. **Initialization**: Network created on first load with default parameters (`initialize_session_state()` + `update_network()` as needed).
+2. **Update (Network Explorer):** `st.session_state.net` is rebuilt when controls change so the structure column stays consistent with `n` / `r` / activation / loss / learning rate; **Generate Graphs** refreshes the network again before plotting.
+3. **Caching**: The live instance is held in `st.session_state.net` between reruns.
 
 ### Error Handling
 

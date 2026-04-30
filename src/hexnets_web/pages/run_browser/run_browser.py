@@ -67,9 +67,7 @@ def _render_run_tree(run_dirs: list[pathlib.Path]) -> None:
         with st.expander(label, expanded=is_selected):
             if is_selected:
                 st.success("This run is selected.")
-            entries = sorted(
-                d.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())
-            )
+            entries = sorted(d.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
             if not entries:
                 st.caption("(empty)")
             else:
@@ -105,9 +103,7 @@ def _render_training_plots(paths: list[pathlib.Path]) -> None:
 class RunBrowserPage(BasePage):
     def render(self) -> None:
         st.header("Run Browser")
-        st.caption(
-            f"Runs directory: `{RUNS_DIR}` (same convention as `RunService.runs_dir`)."
-        )
+        st.caption(f"Runs directory: `{RUNS_DIR}` (same convention as `RunService.runs_dir`).")
 
         run_dirs = _list_run_directories()
         if not run_dirs:
