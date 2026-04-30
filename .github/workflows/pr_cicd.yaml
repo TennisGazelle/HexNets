@@ -35,7 +35,6 @@ jobs:
       - name: Check for 'patch' or 'minor' or 'CI/CD' label
         id: version-label-check
         uses: actions/github-script@v6
-        if: github.event.action == 'opened' || github.event.action == 'reopened'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

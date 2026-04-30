@@ -6,7 +6,7 @@ from hexnets_web.session import initialize_session_state
 # Paste your full Buy Me a Coffee snippet (the whole <script ...></script> block).
 # Use components.html here — Streamlit strips scripts from st.markdown even with
 # unsafe_allow_html=True. Height should clear the button (~50–70).
-_BUY_ME_A_COFFEE_HTML = "<script type='text/javascript' src='https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js' data-name='bmc-button' data-slug='tennisgazelle' data-color='#BD5FFF' data-emoji='☕'  data-font='Lato' data-text='Buy me a coffee' data-outline-color='#000000' data-font-color='#ffffff' data-coffee-color='#FFDD00' ></script>"
+_BUY_ME_A_COFFEE_HTML = "<script type='text/javascript' src='https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js' data-name='bmc-button' data-slug='tennisgazelle' data-color='#BD5FFF' data-emoji='☕'  data-font='Cookie' data-text='Buy me a coffee' data-outline-color='#000000' data-font-color='#ffffff' data-coffee-color='#FFDD00' ></script>"
 
 
 def run() -> None:
