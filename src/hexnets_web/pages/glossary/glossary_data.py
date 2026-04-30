@@ -88,7 +88,7 @@ def _build_glossary_root() -> list[GlossaryNode]:
         aliases=("metrics", "evaluation"),
         english=(
             "Quantities recorded each epoch during training. For formulas and caveats in one place, "
-            "see the **Training metrics** expander on the **Network Explorer** tab."
+            "see the **Training metrics** expander on the **Network Explorer** page."
         ),
         children=(loss, reg_score, r2, adj_r2),
     )
@@ -129,20 +129,37 @@ def _build_glossary_root() -> list[GlossaryNode]:
         ),
         children=(),
     )
-    params = GlossaryNode(
-        title="Hex network parameters",
-        aliases=("hyperparameters", "controls"),
-        english="Main knobs in the Network Explorer tab that define the `HexagonalNeuralNetwork` instance.",
-        children=(param_n, param_r, param_act, param_loss),
+    param_lr = GlossaryNode(
+        title="Learning rate",
+        aliases=("learning rate", "learning_rate"),
+        english=(
+            "The **Learning rate** dropdown selects which **BaseLearningRate** subclass is used to update the network weights. "
+            "See the top-level **Learning rates** glossary for constant, step, and cosine annealing implementations."
+        ),
+        children=(),
+    )
+
+    hex_network_parameters = GlossaryNode(
+        title="HexNet Specific Parameters",
+        aliases=("hexnet parameters", "hexnet controls"),
+        english="Main knobs in the Network Explorer page that define the `HexagonalNeuralNetwork` instance.",
+        children=(param_n, param_r),
+    )
+    network_parameters = GlossaryNode(
+        title="Network Parameters",
+        aliases=("network parameters", "network controls"),
+        english="Main knobs in the Network Explorer page that define the `BaseNeuralNetwork` instance.",
+        children=(param_act, param_loss, param_lr),
     )
 
     root = [
+        network_parameters,
+        hex_network_parameters,
         datasets,
         loss_functions,
         learning_rates,
         activations,
         metrics_parent,
-        params,
     ]
     for n in root:
         _fill_search_blob(n)

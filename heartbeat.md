@@ -1,10 +1,10 @@
 # Heartbeat
 
-Project state and context: what was last asked, what’s active, what’s next.
+Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **Benchmark docs + E2E**: Canonical benchmark families and matrix live in [`docs/math/benchmark-families.md`](docs/math/benchmark-families.md). [`e2e_test.sh`](e2e_test.sh) uses `runs/e2etest-smoke/` for smoke trains, `runs/e2etest-famA`–`famF/` for benchmark families (no activation×loss×lr grid); optional `E2E_EPOCHS` env var.
+- **Streamlit sidebar**: how to add a Buy Me a Coffee `<script>` next to `st.navigation` — use `st.sidebar` + `components.html` after `pg.run()`; wired in `hexnets_web/main.py` as `_BUY_ME_A_COFFEE_HTML`.
 
 ---
 

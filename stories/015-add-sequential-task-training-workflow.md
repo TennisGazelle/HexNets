@@ -20,7 +20,7 @@ Train Task A then Task B in one formal workflow with retention metrics.
 
 ## Why
 
-Your living doc’s strongest near-term research path is sequential training and retention.
+Your living doc.s strongest near-term research path is sequential training and retention.
 
 ## Checklist
 

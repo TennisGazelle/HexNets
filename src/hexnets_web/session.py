@@ -14,6 +14,8 @@ def initialize_session_state():
         st.session_state.activation = "relu"
     if "loss" not in st.session_state:
         st.session_state.loss = "mean_squared_error"
+    if "learning_rate" not in st.session_state:
+        st.session_state.learning_rate = "constant"
     if "rotation_comparison_n" not in st.session_state:
         st.session_state.rotation_comparison_n = 2
     if "rotation_comparison_r" not in st.session_state:
@@ -26,7 +28,7 @@ def initialize_session_state():
         st.session_state.net = HexagonalNeuralNetwork(
             n=st.session_state.n,
             r=st.session_state.r,
-            learning_rate="constant",
+            learning_rate=st.session_state.learning_rate,
             activation=get_activation_function(st.session_state.activation),
             loss=get_loss_function(st.session_state.loss),
         )
@@ -36,7 +38,7 @@ def update_network():
     st.session_state.net = HexagonalNeuralNetwork(
         n=st.session_state.n,
         r=st.session_state.r,
-        learning_rate="constant",
+        learning_rate=st.session_state.learning_rate,
         activation=get_activation_function(st.session_state.activation),
         loss=get_loss_function(st.session_state.loss),
     )

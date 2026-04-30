@@ -38,7 +38,7 @@ class FullLinearDataset(BaseDataset, display_name="full_linear"):
             english=(
                 "Inputs **x** are standard normal in R^d; **A** is a random d×d matrix scaled by "
                 "CLI **scale** (story **A_scale**); targets **y = x A^T** (row-vector convention matching "
-                "the story’s `X @ A.T`)."
+                "the story.s `X @ A.T`)."
             ),
             math_latex=r"y = x A^\top",
             example="If scale=0.5, entries of A are N(0, 0.5²) so the operator is milder.",

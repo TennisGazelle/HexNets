@@ -65,8 +65,11 @@ unit-test:
 
 .PHONY: e2e-test
 e2e-test:
-	./e2e_test.sh
+	./e2e_test.sh E2E_EPOCHS=10
 
+.PHONY: e2e-test-full
+e2e-test-full:
+	./e2e_test.sh E2E_EPOCHS=200
 .PHONY: run
 run:
 	@${HEXNET} adhoc -n 3 -lr 0.001 -t linear_scale -e 200

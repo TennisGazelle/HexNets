@@ -4,7 +4,7 @@ Hexagonal (and MLP baseline) neural network experiments with a small **CLI** (`h
 
 [![ReleaseStaticBadge](https://img.shields.io/badge/Version-0.2.1-darkgreen?style=for-the-badge)](https://github.com/TennisGazelle/HexNets/releases/latest)
 
-[![CI/CD](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml/badge.svg)](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml)
+[![PR and CICD](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml/badge.svg)](https://github.com/TennisGazelle/HexNets/actions/workflows/pr_cicd.yaml)
 
 Streamlit UI: https://tennisgazelle-hexnets-main.streamlit.app/
 
@@ -17,15 +17,15 @@ hexnet --help         # CLI (entry: pyproject → src/cli.py)
 make streamlit-run    # or: streamlit run src/streamlit_app.py
 ```
 
-**Reference images** (for Streamlit rotation tab): `hexnet ref --all` → `reference/*.png`
+**Reference images** (for Streamlit Rotation Comparison page): `hexnet ref --all` → `reference/*.png`
 
 **Tests:** `make unit-test` · **E2E:** `make e2e-test` (optional `E2E_EPOCHS=20` for shorter runs; artifacts under `runs/e2etest-smoke/` and `runs/e2etest-fam*` — see [`docs/math/benchmark-families.md`](docs/math/benchmark-families.md))
 
 ## Streamlit UI
 
-Tabs include **Network Explorer**, **Rotation Comparison**, **Lesion Lab**, **Run Browser**, **Glossary**, and **CLI Builder**.
+Sidebar pages (default **CLI Builder**): **CLI Builder**, **Network Explorer**, **Rotation Comparison**, **Lesion Lab**, **Run Browser**, **Glossary**. Routing uses `st.navigation` + `st.Page`; each route subclasses [`BasePage`](src/hexnets_web/pages/base_page.py) with `render()`.
 
-- **CLI Builder** — Builds a copy/paste `hexnet …` command from each subcommand’s argparse definition. Shared helpers register argparse groups (`hex`, `global`, `training`); the UI splits **global** options (`--model`, `--seed`, `--activation`, `--loss`) into their own column. Metadata follows the same pattern as the glossary: `Command.get_cli_node()` (see [`src/commands/command.py`](src/commands/command.py)) produces a [`CliNode`](src/hexnets_web/cli_types.py) tree; [`src/hexnets_web/cli_data.py`](src/hexnets_web/cli_data.py) aggregates the root node (`CLI_ROOT`).
+- **CLI Builder** — Builds a copy/paste `hexnet …` command from each subcommand.s argparse definition. Shared helpers register argparse groups (`hex`, `global`, `training`); the UI splits **global** options (`--model`, `--seed`, `--activation`, `--loss`) into their own column. Metadata follows the same pattern as the glossary: `Command.get_cli_node()` (see [`src/commands/command.py`](src/commands/command.py)) produces a [`CliNode`](src/hexnets_web/cli_types.py) tree; [`src/hexnets_web/pages/cli/cli_data.py`](src/hexnets_web/pages/cli/cli_data.py) aggregates the root node (`CLI_ROOT`).
 
 ## Nomenclature
 

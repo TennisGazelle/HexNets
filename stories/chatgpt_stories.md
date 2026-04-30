@@ -1,6 +1,6 @@
 Recommended label scheme
 
-Since GitHub Issues does not have true epics by default, I’d do this with labels:
+Since GitHub Issues does not have true epics by default, I.d do this with labels:
 
 epic:core-correctness
 epic:dataset-benchmarks
@@ -335,7 +335,7 @@ Story 15 — Add sequential-task training workflow
 Labels: epic:transfer-lesioning, research, cli
 
 Why
-Your living doc’s strongest near-term research path is sequential training and retention.
+Your living doc.s strongest near-term research path is sequential training and retention.
 
 Checklist
 
@@ -559,4 +559,4 @@ Acceptance criteria
 
 Observable outcome, not intention.
 
-If you want, next I’ll turn these into copy-paste GitHub issue bodies for the first 8 stories, already formatted with checkboxes and label suggestions.
+If you want, next I.ll turn these into copy-paste GitHub issue bodies for the first 8 stories, already formatted with checkboxes and label suggestions.

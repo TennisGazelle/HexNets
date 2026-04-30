@@ -1,5 +1,5 @@
 """
-Streamlit tab: build and preview `hexnet ...` CLI strings from CliNode metadata.
+Streamlit page: build and preview `hexnet ...` CLI strings from CliNode metadata.
 """
 
 from __future__ import annotations
@@ -11,10 +11,11 @@ from typing import Any, Iterable
 import streamlit as st
 
 from data.dataset import DATASET_FUNCTIONS
-from hexnets_web.cli_data import CLI_ROOT
 from hexnets_web.cli_types import CliArgNode, CliNode
-from hexnets_web.glossary_tab import render_glossary_node
 from hexnets_web.glossary_types import GlossaryNode
+from hexnets_web.pages.base_page import BasePage
+from hexnets_web.pages.cli.cli_data import CLI_ROOT
+from hexnets_web.pages.glossary.glossary import render_glossary_node
 from networks.activation import ACTIVATION_FUNCTIONS
 from networks.learning_rate import LEARNING_RATES
 from networks.loss import LOSS_FUNCTIONS
@@ -240,79 +241,81 @@ def _iter_cli_registry_glossary_sections(cmd: CliNode, values: dict[str, Any]) -
         cls = _lookup_registry_class(registry, key)
         if cls is None:
             continue
-        out.append((f"{heading} - {cmd.name}", cls.get_glossary_node()))
+        out.append((heading, cls.get_glossary_node()))
     return out
 
 
 def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
     sections = _iter_cli_registry_glossary_sections(cmd, values)
     if not sections:
-        st.caption("No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices).")
+        st.caption("No glossary entries apply to this subcommand.s options (e.g. only paths or omitted choices).")
         return
 
     cols = st.columns([1] * len(sections), gap="large")
     for index, (heading, node) in enumerate(sections):
         with cols[index]:
-            with st.container():
-                st.markdown(f"### {heading}")
+            st.markdown(f"### {heading}")
+            with st.container(border=True):
                 render_glossary_node(node, "", as_expander=False)
 
 
-def render_cli_builder_tab() -> None:
-    st.header("CLI Builder")
-    st.caption(
-        "Pick a subcommand and options; the preview updates as you change controls. "
-        "Copy the command from the code block (hover → copy)."
-    )
+class CliBuilderPage(BasePage):
+    def render(self) -> None:
+        st.header("CLI Builder")
+        st.caption(
+            "Pick a subcommand and options; the preview updates as you change controls. "
+            "Copy the command from the code block (hover → copy)."
+        )
 
-    if not CLI_ROOT.children:
-        st.warning("No CLI commands registered.")
-        return
+        if not CLI_ROOT.children:
+            st.warning("No CLI commands registered.")
+            return
 
-    col1, col2, col3, col4 = st.columns([1, 5, 5, 5], vertical_alignment="center")
+        col1, col2, col3, col4 = st.columns([2, 5, 5, 5], vertical_alignment="center")
 
-    with col1:
-        st.markdown("### hexnet")
+        with col1:
+            st.markdown("### hexnet")
 
-    with col2:
-        cmd_labels = [f"{c.name} — {c.help}" for c in CLI_ROOT.children]
-        cmd_by_label = dict(zip(cmd_labels, CLI_ROOT.children, strict=True))
-        selected_label = st.selectbox("Command", options=cmd_labels, key="cli_builder_command_pick")
-        cmd = cmd_by_label[selected_label]
+        with col2:
+            cmd_labels = [f"{c.name} — {c.help}" for c in CLI_ROOT.children]
+            cmd_by_label = dict(zip(cmd_labels, CLI_ROOT.children, strict=True))
+            selected_label = st.selectbox("Command", options=cmd_labels, key="cli_builder_command_pick")
+            cmd = cmd_by_label[selected_label]
 
-    command_args = [a for a in cmd.args if a.group != GLOBAL_GROUP]
-    global_args = [a for a in cmd.args if a.group == GLOBAL_GROUP]
+        command_args = [a for a in cmd.args if a.group != GLOBAL_GROUP]
+        global_args = [a for a in cmd.args if a.group == GLOBAL_GROUP]
 
-    with col3:
-        st.caption("Command options")
-        if command_args:
-            values_cmd = _render_arg_widgets(command_args, cmd.name)
-        else:
-            st.caption("_No command-specific options for this subcommand._")
-            values_cmd = {}
+        with col3:
+            with st.container(height=500, border=False):
+                st.caption("Command options")
+                if command_args:
+                    values_cmd = _render_arg_widgets(command_args, cmd.name)
+                else:
+                    st.caption("_No command-specific options for this subcommand._")
+                    values_cmd = {}
 
-    with col4:
-        st.caption("Global options")
-        if global_args:
-            values_global = _render_arg_widgets(global_args, cmd.name)
-        else:
-            st.caption("_No global options for this subcommand._")
-            values_global = {}
+        with col4:
+            st.caption("Global options")
+            if global_args:
+                values_global = _render_arg_widgets(global_args, cmd.name)
+            else:
+                st.caption("_No global options for this subcommand._")
+                values_global = {}
 
-    values = {**values_cmd, **values_global}
-    preview = _build_preview(cmd, values)
+        values = {**values_cmd, **values_global}
+        preview = _build_preview(cmd, values)
 
-    st.markdown("---")
-    st.subheader("Preview")
-    st.code(preview, language="bash")
+        st.markdown("---")
+        st.subheader("Preview")
+        st.code(preview, language="bash")
 
-    st.button(
-        "Run (coming soon)",
-        disabled=True,
-        help="Execution from the UI is not yet implemented",
-        key="cli_builder_run_placeholder",
-    )
+        st.button(
+            "Run (coming soon)",
+            disabled=True,
+            help="Execution from the UI is not yet implemented",
+            key="cli_builder_run_placeholder",
+        )
 
-    st.markdown("---")
-    st.subheader("What your choices mean")
-    _render_cli_choice_glossaries(cmd, values)
+        st.markdown("---")
+        st.subheader("What your choices mean")
+        _render_cli_choice_glossaries(cmd, values)
