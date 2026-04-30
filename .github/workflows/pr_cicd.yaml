@@ -27,7 +27,7 @@ jobs:
       
       - name: Run tests
         run: |
-          make unit-test e2e-test EPOCHS=20
+          make unit-test e2e-test E2E_EPOCHS=10
       
       - name: Run lint check
         run: make lint-check

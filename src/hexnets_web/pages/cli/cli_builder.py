@@ -241,21 +241,21 @@ def _iter_cli_registry_glossary_sections(cmd: CliNode, values: dict[str, Any]) -
         cls = _lookup_registry_class(registry, key)
         if cls is None:
             continue
-        out.append((f"{heading} - {cmd.name}", cls.get_glossary_node()))
+        out.append((heading, cls.get_glossary_node()))
     return out
 
 
 def _render_cli_choice_glossaries(cmd: CliNode, values: dict[str, Any]) -> None:
     sections = _iter_cli_registry_glossary_sections(cmd, values)
     if not sections:
-        st.caption("No glossary entries apply to this subcommand’s options (e.g. only paths or omitted choices).")
+        st.caption("No glossary entries apply to this subcommand.s options (e.g. only paths or omitted choices).")
         return
 
     cols = st.columns([1] * len(sections), gap="large")
     for index, (heading, node) in enumerate(sections):
         with cols[index]:
-            with st.container():
-                st.markdown(f"### {heading}")
+            st.markdown(f"### {heading}")
+            with st.container(border=True):
                 render_glossary_node(node, "", as_expander=False)
 
 
@@ -286,12 +286,13 @@ class CliBuilderPage(BasePage):
         global_args = [a for a in cmd.args if a.group == GLOBAL_GROUP]
 
         with col3:
-            st.caption("Command options")
-            if command_args:
-                values_cmd = _render_arg_widgets(command_args, cmd.name)
-            else:
-                st.caption("_No command-specific options for this subcommand._")
-                values_cmd = {}
+            with st.container(height=500, border=False):
+                st.caption("Command options")
+                if command_args:
+                    values_cmd = _render_arg_widgets(command_args, cmd.name)
+                else:
+                    st.caption("_No command-specific options for this subcommand._")
+                    values_cmd = {}
 
         with col4:
             st.caption("Global options")

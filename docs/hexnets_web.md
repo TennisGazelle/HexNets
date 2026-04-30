@@ -5,7 +5,7 @@ Python package: [`hexnets_web`](../src/hexnets_web/). Entry script: [`src/stream
 ## Summary (for quick orientation)
 
 * **Entry:** `src/streamlit_app.py` — launch: `make streamlit-run` or `streamlit run src/streamlit_app.py`.
-* **Navigation:** `hexnets_web/main.py` uses `st.navigation(..., position="sidebar")` and `st.Page` scripts under `src/hexnets_web/pages/` (paths relative to `streamlit_app.py`). Default landing page: **CLI Builder**. Each page implements `render()` on a subclass of `hexnets_web.pages.base_page.BasePage`.
+* **Navigation:** `hexnets_web/main.py` uses `st.navigation(..., position="sidebar")` and `st.Page` scripts under `src/hexnets_web/pages/` (paths relative to `streamlit_app.py`). Default landing page: **CLI Builder**. Each page implements `render()` on a subclass of `hexnets_web.pages.base_page.BasePage`. Optional **Buy Me a Coffee** (or any third-party `<script>` widget): set `_BUY_ME_A_COFFEE_HTML` in `main.py` and render it with `streamlit.components.v1.html` in `st.sidebar` after `pg.run()` (markdown strips scripts).
 * **Pages:** **CLI Builder** (argparse-driven command preview + inline glossary for selected registry keys), **Network Explorer** (live `HexagonalNeuralNetwork`; three-column parameters — sliders, network selects, structure summary; **Generate Graphs** only), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Lesion Lab** (placeholder), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist), **Glossary** (searchable nested terms; tree in `src/hexnets_web/pages/glossary/glossary_data.py`, node type in `glossary_types.py`; top-level branches from `build_*_glossary_parent()` in `src/data/dataset.py`, `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`; UI in `pages/glossary/glossary.py` / `metrics_explainer.py`).
 * **Rotation Comparison layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
 * **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `learning_rate=constant`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
@@ -174,7 +174,7 @@ When launched, the Streamlit app:
 ### Rotation Comparison page
 
 **Features**:
-- Sliders for `n` (2–8) and `r` (0–5), same ranges as Network Explorer; values live in `st.session_state.rotation_comparison_n` / `rotation_comparison_r` so they do not change the live network’s `n`/`r`.
+- Sliders for `n` (2–8) and `r` (0–5), same ranges as Network Explorer; values live in `st.session_state.rotation_comparison_n` / `rotation_comparison_r` so they do not change the live network.s `n`/`r`.
 - **Layout** (`st.columns([1, 3])`): narrow column has `n` slider, multi-activation image (per `n` only), then `r` slider; wide column has three images for the selected `(n, r)` — physical structure, activation pattern, weight matrix.
 
 **Image Loading**:
@@ -186,7 +186,7 @@ When launched, the Streamlit app:
 
 - **Runs root:** `pathlib.Path("runs/").resolve()` (matches `RunService.runs_dir` when the app is started from the repo root).
 - **Layout:** `st.columns([1, 3])` — left: run list; right: JSON (full width) or JSON + training plot in `st.columns([3, 2])` when `plots/*net_training_*.png` exists.
-- **Selection:** **Use this directory** (inside each run’s expander) sets `st.session_state.run_browser_selected_run` via `st.button(..., on_click=...)` so the callback runs before the rest of the script; the tree labels/`expanded` state and the right column stay in sync on a single click. The button is disabled for the active run. The active run’s expander stays expanded and is titled with `· selected`; a short success callout marks it as driving the right column.
+- **Selection:** **Use this directory** (inside each run.s expander) sets `st.session_state.run_browser_selected_run` via `st.button(..., on_click=...)` so the callback runs before the rest of the script; the tree labels/`expanded` state and the right column stay in sync on a single click. The button is disabled for the active run. The active run.s expander stays expanded and is titled with `· selected`; a short success callout marks it as driving the right column.
 - **JSON viewer:** Pick a root-level `.json` file for the active run (prioritizes `config.json`, `manifest.json`, `training_metrics.json`; includes any other `*.json` in the run root). Parsed JSON is shown with `st.json`; invalid JSON falls back to `st.code`.
 - **Tree:** Each top-level run is an `st.expander` listing immediate children; `plots/` lists PNG filenames in the tree (names only).
 - **Training plot:** If `plots/*net_training_*.png` exists (`hexnet_training_*.png` or `mlpnet_training_*.png`), the right column uses `st.columns([3, 2])` so JSON and `st.image` share the row (narrower plot column keeps tall figures more readable). If there are no matching plots, only the JSON viewer is shown (no empty training block).
@@ -197,7 +197,7 @@ When launched, the Streamlit app:
 
 ### Glossary page
 
-- **Search**: `st.text_input` with case-insensitive substring filtering. Each entry’s index includes its nested children so terms like “identity” match under **Datasets**.
+- **Search**: `st.text_input` with case-insensitive substring filtering. Each entry.s index includes its nested children so terms like “identity” match under **Datasets**.
 - **Layout**: Top-level entries use two columns of expanders when multiple roots are visible; nested definitions stay inside their parent expander.
 - **Content**: Plain-language explanations with optional `st.latex` formulas and examples; glossary tree in `src/hexnets_web/pages/glossary/glossary_data.py` (`GlossaryNode` in `glossary_types.py`). Registered **datasets**, **losses**, **learning rates**, and **activations** each expose `get_glossary_node()` on the class and a hub `build_*_glossary_parent()` (datasets: `src/data/dataset.py`; losses / learning rates / activations: hub files under `src/networks/loss/`, `src/networks/learning_rate/`, `src/networks/activation/`). Page UI: `pages/glossary/glossary.py` (`GlossaryPage`).
 

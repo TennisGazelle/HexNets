@@ -36,7 +36,7 @@ Assumptions:
 
 ## Glossary (`good_for` and `tags`)
 
-Each dataset’s `get_glossary_node()` may set optional **`good_for`** (one-line experiment intent) and **`tags`** (short labels such as `regression-compatible`, `classification-style`). The Streamlit **Glossary** page shows them and includes them in search; types live in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py).
+Each dataset.s `get_glossary_node()` may set optional **`good_for`** (one-line experiment intent) and **`tags`** (short labels such as `regression-compatible`, `classification-style`). The Streamlit **Glossary** page shows them and includes them in search; types live in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py).
 
 ## Wired into `hexnet train` today
 

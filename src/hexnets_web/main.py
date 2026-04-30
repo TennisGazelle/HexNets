@@ -1,6 +1,12 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 from hexnets_web.session import initialize_session_state
+
+# Paste your full Buy Me a Coffee snippet (the whole <script ...></script> block).
+# Use components.html here — Streamlit strips scripts from st.markdown even with
+# unsafe_allow_html=True. Height should clear the button (~50–70).
+_BUY_ME_A_COFFEE_HTML = "<script type='text/javascript' src='https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js' data-name='bmc-button' data-slug='tennisgazelle' data-color='#BD5FFF' data-emoji='☕'  data-font='Lato' data-text='Buy me a coffee' data-outline-color='#000000' data-font-color='#ffffff' data-coffee-color='#FFDD00' ></script>"
 
 
 def run() -> None:
@@ -46,3 +52,8 @@ def run() -> None:
 
     pg = st.navigation(pages, position="sidebar")
     pg.run()
+
+    height = 80
+    if _BUY_ME_A_COFFEE_HTML.strip():
+        with st.sidebar:
+            components.html(_BUY_ME_A_COFFEE_HTML, height=height)

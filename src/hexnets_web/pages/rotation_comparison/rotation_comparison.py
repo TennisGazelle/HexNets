@@ -9,7 +9,7 @@ def _show_multi_activation_column(n: int) -> None:
     st.markdown("**Multi-Activation Overlay**")
     st.caption("Per **n** only (same for every rotation).")
     if multi_activation_img:
-        st.image(multi_activation_img, use_container_width=True)
+        st.image(multi_activation_img, width="stretch")
         st.markdown("All six rotations overlaid on one matrix; each rotation in a different color.")
     else:
         st.warning(f"Multi-activation image not found for n={n}. Generate with: `hexnet ref --all`")
@@ -25,7 +25,7 @@ def _show_three_reference_images(n: int, r: int) -> None:
     with c1:
         st.markdown("**Physical Structure**")
         if structure_img:
-            st.image(structure_img, use_container_width=True)
+            st.image(structure_img, width="stretch")
             st.markdown("The physical structure of the network.")
         else:
             st.warning(f"Structure image not found for n={n}, r={r}")
@@ -33,7 +33,7 @@ def _show_three_reference_images(n: int, r: int) -> None:
     with c2:
         st.markdown("**Activation Pattern**")
         if activation_img:
-            st.image(activation_img, use_container_width=True)
+            st.image(activation_img, width="stretch")
             st.markdown("The activation pattern of the network, via bitmap")
         else:
             st.warning(f"Activation image not found for n={n}, r={r}")
@@ -41,7 +41,7 @@ def _show_three_reference_images(n: int, r: int) -> None:
     with c3:
         st.markdown("**Weight Matrix**")
         if weight_img:
-            st.image(weight_img, use_container_width=True)
+            st.image(weight_img, width="stretch")
             st.markdown("The weight matrix of an untrained network.")
         else:
             st.warning(f"Weight image not found for n={n}, r={r}")
