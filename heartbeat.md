@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **Dataset / `BaseDataset`**: `configure_data`, `InputSamplingMode` (RNG vs UNIFORM), `targets_from_inputs` / `_sample_inputs_rng_impl`; Dataset Generator caches clean `X` + **Regenerate Inputs**. Noise tab still empty.
+- **`ReferenceCommand.invoke` + tests**: Resolve LR with `getattr(args, "learning_rate", "constant")` then `get_learning_rate(..., learning_rate=0.01)` for MLP/hex paths; five `Namespace` fixtures in `tests/commands/test_reference_command.py` include `learning_rate="constant"`. No `get_learning_rate_function` rename in repo (plan branch N/A).
 
 ---
 

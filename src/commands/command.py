@@ -167,6 +167,16 @@ def add_global_arguments(parser: ArgumentParser):
         dest="loss",
     )
 
+    group.add_argument(
+        "-lr",
+        "--learning-rate",
+        help="Learning rate function for the network",
+        type=str,
+        default="constant",
+        choices=get_available_learning_rates(),
+        dest="learning_rate",
+    )
+
     # parser.add_argument(
     #     "-o",
     #     "--optimizer",
@@ -180,16 +190,6 @@ def add_global_arguments(parser: ArgumentParser):
 
 def add_training_arguments(parser: ArgumentParser):
     group = parser.add_argument_group("training")
-    group.add_argument(
-        "-lr",
-        "--learning-rate",
-        help="Learning rate function for the network",
-        type=str,
-        default="constant",
-        choices=get_available_learning_rates(),
-        dest="learning_rate",
-    )
-
     group.add_argument(
         "-e",
         "--epochs",
@@ -269,6 +269,10 @@ def validate_global_arguments(args: Namespace):
     if args.loss not in get_available_loss_functions():
         raise ValueError(f"Invalid loss function: {args.loss}. Must be one of: {get_available_loss_functions()}")
 
+    lr = getattr(args, "learning_rate", None)
+    if lr is not None and lr not in get_available_learning_rates():
+        raise ValueError(f"Invalid learning rate: {lr}. Must be one of: {get_available_learning_rates()}")
+
     act = args.activation.lower()
     loss = args.loss.lower()
 
@@ -334,10 +338,6 @@ def validate_training_arguments(args: Namespace):
         raise ValueError("Number of epochs must be at least 1")
     if args.pause < 0:
         raise ValueError("Pause must be at least 0")
-    if args.learning_rate not in get_available_learning_rates():
-        raise ValueError(
-            f"Invalid learning rate: {args.learning_rate}. Must be one of: {get_available_learning_rates()}"
-        )
     if args.dataset_size < 10:
         raise ValueError("Dataset size must be at least 10")
     if not is_registered_dataset_display_name(args.type):

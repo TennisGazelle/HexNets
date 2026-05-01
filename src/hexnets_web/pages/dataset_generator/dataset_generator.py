@@ -104,9 +104,7 @@ class DatasetGeneratorPage(BasePage):
                     "Input sampling",
                     options=(InputSamplingMode.RNG, InputSamplingMode.UNIFORM),
                     format_func=lambda m: (
-                        "RNG (dataset default)"
-                        if m == InputSamplingMode.RNG
-                        else "UNIFORM on [0, 1)"
+                        "RNG (dataset default)" if m == InputSamplingMode.RNG else "UNIFORM on [0, 1)"
                     ),
                     horizontal=True,
                     key="dg_sample_mode",
@@ -119,9 +117,7 @@ class DatasetGeneratorPage(BasePage):
                 noise_sigma = 0.1
                 noise_seed = 0
                 if add_noise:
-                    add_noise_to_inputs = st.checkbox(
-                        "Add Noise to Inputs", value=True, key="dg_add_noise_to_inputs"
-                    )
+                    add_noise_to_inputs = st.checkbox("Add Noise to Inputs", value=True, key="dg_add_noise_to_inputs")
                     add_noise_to_targets = st.checkbox(
                         "Add Noise to Targets", value=True, key="dg_add_noise_to_targets"
                     )

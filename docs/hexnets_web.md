@@ -6,7 +6,7 @@ Python package: [`hexnets_web`](../src/hexnets_web/). Entry script: [`src/stream
 
 * **Entry:** `src/streamlit_app.py` — launch: `make streamlit-run` or `streamlit run src/streamlit_app.py`.
 * **Navigation:** `hexnets_web/main.py` uses `st.navigation(..., position="sidebar")` and `st.Page` scripts under `src/hexnets_web/pages/` (paths relative to `streamlit_app.py`). Default landing page: **CLI Builder**. Each page implements `render()` on a subclass of `hexnets_web.pages.base_page.BasePage`. Optional **Buy Me a Coffee** (or any third-party `<script>` widget): set `_BUY_ME_A_COFFEE_HTML` in `main.py` and render it with `streamlit.components.v1.html` in `st.sidebar` after `pg.run()` (markdown strips scripts).
-* **Pages:** **CLI Builder** (argparse-driven command preview + inline glossary for selected registry keys), **Network Explorer** (live `HexagonalNeuralNetwork`; three-column parameters — sliders, network selects, structure summary; **Generate Graphs** only), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Lesion Lab** (placeholder), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist), **Dataset Generator** (Dataset / Noise tabs; cached clean `X` via `configure_data`, **RNG** vs **UNIFORM** input sampling, **Regenerate Inputs**, noise toggles, two ECharts scatters), **Glossary** (searchable nested terms; tree in `src/hexnets_web/pages/glossary/glossary_data.py`, node type in `glossary_types.py`; top-level branches from `build_*_glossary_parent()` in `src/data/dataset.py`, `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`; UI in `pages/glossary/glossary.py` / `metrics_explainer.py`).
+* **Pages:** **CLI Builder** (argparse-driven command preview + inline glossary for selected registry keys; **global** argparse group = right-hand column: `--model`, `--seed`, `--activation`, `--loss`, `-lr` / `--learning-rate`; **training** and other groups = left-hand command options), **Network Explorer** (live `HexagonalNeuralNetwork`; `st.columns(2)`: geometry + **Generate Structure Graph** left, structure summary right; session still holds activation / loss / learning-rate defaults used when the network is built — hyperparameter dropdowns are mostly commented out in code), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Lesion Lab** (placeholder), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist), **Dataset Generator** (Dataset / Noise tabs; cached clean `X` via `configure_data`, **RNG** vs **UNIFORM** input sampling, **Regenerate Inputs**, noise toggles, two ECharts scatters), **Glossary** (searchable nested terms; tree in `src/hexnets_web/pages/glossary/glossary_data.py`, node type in `glossary_types.py`; top-level branches from `build_*_glossary_parent()` in `src/data/dataset.py`, `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`; UI in `pages/glossary/glossary.py` / `metrics_explainer.py`).
 * **Rotation Comparison layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
 * **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `learning_rate=constant`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
 
@@ -15,7 +15,7 @@ Python package: [`hexnets_web`](../src/hexnets_web/). Entry script: [`src/stream
 The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers seven sidebar pages (CLI Builder first / default):
 
 1. **CLI Builder**: Build and copy `hexnet …` commands from live controls
-2. **Network Explorer**: Interactive parameters (three columns: geometry/data sliders, activation/loss/learning-rate, live structure summary) and **Generate Graphs** for structure + multi-activation figures
+2. **Network Explorer**: Two columns — geometry (`n`, `r`) and **Generate Structure Graph**; opposite column shows live structure metrics (see **Network Explorer page** below)
 3. **Rotation Comparison**: Sliders for `n` and `r` to browse pre-generated reference images for one `(n, r)` at a time (scrub `r` to compare rotations)
 4. **Lesion Lab**: Placeholder for future experiments
 5. **Run Browser**: Read-only browse of `runs/` (same root as `RunService.runs_dir`); run tree with button selection (left); JSON on the right, or JSON + training PNG in a `[3, 2]` split when plots exist
@@ -148,7 +148,7 @@ streamlit run src/streamlit_app.py
 ### Application Behavior
 
 When launched, the Streamlit app:
-1. Initializes session state with default values (n=2, r=0, activation=relu, loss=mean_squared_error, dataset registry fields, rotation-comparison sliders)
+1. Initializes session state with default values (n=2, r=0, activation=relu, loss=mean_squared_error, learning_rate=constant, dataset registry fields, rotation-comparison sliders)
 2. Creates a network instance and caches it in session state
 3. Displays sidebar navigation with seven pages (default **CLI Builder**):
    - **CLI Builder**: Subcommand pickers, preview, inline glossary for applicable options
@@ -162,10 +162,10 @@ When launched, the Streamlit app:
 ### Network Explorer page
 
 **Features**:
-- **Layout** (`st.columns(3)`): **Column 1 — Geometry & data:** sliders for `n` (2–8) and `r` (0–5); dropdowns for **dataset type** (`list_registered_dataset_display_names()` in `src/data/dataset.py`, same registry as CLI `get_dataset`) and **number of data samples** (10, 50, 100, 250, 500, 1000). **Column 2 — Network:** activation, loss, and learning-rate schedule (same registry as CLI via `get_available_learning_rates()`). **Column 3 — Information:** metrics for total nodes, layer count, and `r`; caption with `n` and layer-size chain; markdown table for hyperparameters; bordered blocks per layer with index lists (preview truncated for very long lists).
-- **Actions**: **Generate Graphs** — builds/refreshes the live `HexagonalNeuralNetwork` then renders structure and multi-activation matplotlib figures inline (same as before).
+- **Layout** (`st.columns(2)`): **Left — Geometry & data:** `n` (`st.number_input`, 2–25), `r` (`st.slider`, 0–5), **Generate Structure Graph** (renders `graph_structure` inline). Dataset / activation / loss / learning-rate **selectboxes** exist in code but are **commented out**; defaults still come from `initialize_session_state()` (`learning_rate` uses the same registry as CLI when reconciling invalid session values). **Right — Information:** `update_network()` then metrics (total nodes, layers, edges), layer-size caption, per-layer index lists (preview truncated for long lists).
+- **Actions**: **Generate Structure Graph** — refreshes the live network and shows one matplotlib structure figure.
 
-- **Session / network sync:** The info column calls `update_network()` each run so layer indices and sizes match the current `n`, `r`, activation, loss, and learning rate.
+- **Session / network sync:** The info column calls `update_network()` each run so layer indices and sizes match the current `n`, `r`, activation, loss, and learning rate from session state.
 
 **Graph Generation**:
 - Graphs are generated dynamically using `HexagonalNetwork` methods

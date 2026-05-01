@@ -25,7 +25,7 @@ make streamlit-run    # or: streamlit run src/streamlit_app.py
 
 Sidebar pages (default **CLI Builder**): **CLI Builder**, **Network Explorer**, **Rotation Comparison**, **Lesion Lab**, **Run Browser**, **Dataset Generator** (cached inputs, RNG/UNIFORM sampling, Input/Outputs scatters), **Glossary**. Routing uses `st.navigation` + `st.Page`; each route subclasses [`BasePage`](src/hexnets_web/pages/base_page.py) with `render()`.
 
-- **CLI Builder** — Builds a copy/paste `hexnet …` command from each subcommand.s argparse definition. Shared helpers register argparse groups (`hex`, `global`, `training`); the UI splits **global** options (`--model`, `--seed`, `--activation`, `--loss`) into their own column. Metadata follows the same pattern as the glossary: `Command.get_cli_node()` (see [`src/commands/command.py`](src/commands/command.py)) produces a [`CliNode`](src/hexnets_web/cli_types.py) tree; [`src/hexnets_web/pages/cli/cli_data.py`](src/hexnets_web/pages/cli/cli_data.py) aggregates the root node (`CLI_ROOT`).
+- **CLI Builder** — Builds a copy/paste `hexnet …` command from each subcommand.s argparse definition. Shared helpers register argparse groups (`hex`, `global`, `training`); the UI splits **global** options (`--model`, `--seed`, `--activation`, `--loss`, `-lr` / `--learning-rate`) into their own column. Metadata follows the same pattern as the glossary: `Command.get_cli_node()` (see [`src/commands/command.py`](src/commands/command.py)) produces a [`CliNode`](src/hexnets_web/cli_types.py) tree; [`src/hexnets_web/pages/cli/cli_data.py`](src/hexnets_web/pages/cli/cli_data.py) aggregates the root node (`CLI_ROOT`).
 
 ## Nomenclature
 

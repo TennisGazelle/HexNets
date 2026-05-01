@@ -148,9 +148,7 @@ class BaseDataset(ABC):
         else:
             clean_x = np.asarray(X, dtype=float, copy=True)
             if clean_x.shape != (self.num_samples, self.d):
-                raise ValueError(
-                    f"Expected X with shape ({self.num_samples}, {self.d}), got {clean_x.shape}"
-                )
+                raise ValueError(f"Expected X with shape ({self.num_samples}, {self.d}), got {clean_x.shape}")
         y = self.targets_from_inputs(clean_x)
         self.data = {
             "X": np.asarray(clean_x, dtype=float, copy=True),

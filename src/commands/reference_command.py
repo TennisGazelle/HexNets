@@ -234,11 +234,12 @@ class ReferenceCommand(Command):
                 raise ValueError("MLP model requires -g/--graph to be specified.")
             activation_function = get_activation_function(args.activation)
             loss_function = get_loss_function(args.loss)
+            learning_rate = get_learning_rate(args.learning_rate)
             net = MLPNetwork(
                 input_dim=3,
                 output_dim=3,
                 hidden_dims=[10, 10],
-                learning_rate="constant",
+                learning_rate=learning_rate,
                 activation=activation_function,
                 loss=loss_function,
             )
@@ -254,6 +255,7 @@ class ReferenceCommand(Command):
 
         activation_function = get_activation_function(args.activation)
         loss_function = get_loss_function(args.loss)
+        learning_rate = get_learning_rate(args.learning_rate)
 
         # Print header if iterating
         is_iterating = len(n_range) > 1 or len(r_range) > 1 or len(graph_types) > 1
@@ -281,9 +283,9 @@ class ReferenceCommand(Command):
                 net = HexagonalNeuralNetwork(
                     n=n,
                     r=r,
-                    learning_rate="constant",
                     activation=activation_function,
                     loss=loss_function,
+                    learning_rate=learning_rate,
                 )
 
                 # Update args.rotation for this iteration (needed for layer_indices_terminal)
