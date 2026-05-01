@@ -232,6 +232,7 @@ class TestReferenceCommand:
             generate_all=False,
             activation="sigmoid",
             loss="mean_squared_error",
+            learning_rate="constant",
             detail="",
             dry_run=True,
             seed=42,
@@ -266,6 +267,7 @@ class TestReferenceCommand:
             generate_all=False,
             activation="sigmoid",
             loss="mean_squared_error",
+            learning_rate="constant",
             detail="test_detail",
             dry_run=False,
             seed=42,
@@ -373,6 +375,7 @@ class TestReferenceCommand:
             generate_all=False,
             activation="sigmoid",
             loss="mean_squared_error",
+            learning_rate="constant",
         )
         
         self.command.invoke(args)
@@ -415,6 +418,7 @@ class TestReferenceCommand:
             generate_all=False,
             activation="sigmoid",
             loss="mean_squared_error",
+            learning_rate="constant",
             detail="",
             dry_run=False,
             seed=42,
@@ -451,6 +455,7 @@ class TestReferenceCommand:
             generate_all=True,
             activation="sigmoid",
             loss="mean_squared_error",
+            learning_rate="constant",
             detail="",
             dry_run=True,  # Use dry-run to avoid creating many files
             seed=42,

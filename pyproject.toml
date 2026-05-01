@@ -23,6 +23,7 @@ dependencies = [
     "matplotlib-inline",
     "tabulate",
     "streamlit",
+    "streamlit-echarts",
     "tqdm"
 ]
 

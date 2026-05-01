@@ -54,8 +54,10 @@ class SoftThresholdDataset(BaseDataset, display_name="soft_threshold"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
         rng = np.random.default_rng(self.seed)
-        X = rng.standard_normal((self.num_samples, self.d)).astype(float)
-        Y = np.sign(X) * np.maximum(np.abs(X) - self.lam, 0.0)
-        self.data = {"X": X, "Y": Y}
+        return rng.standard_normal((self.num_samples, self.d)).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return np.sign(x) * np.maximum(np.abs(x) - self.lam, 0.0)

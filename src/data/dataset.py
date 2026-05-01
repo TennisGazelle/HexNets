@@ -9,9 +9,10 @@ register via `__init_subclass__`.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from enum import Enum
 from importlib import import_module
 from pathlib import Path
-from typing import Iterator, Literal, Tuple
+from typing import Any, Iterator, Literal, Tuple
 
 import numpy as np
 from hexnets_web.glossary_types import GlossaryNode
@@ -20,6 +21,15 @@ DATASET_FUNCTIONS = {}
 
 DatasetNoiseMode = Literal["inputs", "targets", "both"]
 _NOISE_SEED_ENTROPY_TAG = 0x4E015E  # tag for isolated dataset-noise RNG stream
+_UNIFORM_INPUT_ENTROPY_TAG = 0x554E4946  # "UNIF" — stream for InputSamplingMode.UNIFORM
+
+
+class InputSamplingMode(str, Enum):
+    """How `_sample_inputs_impl` draws **X** when no external matrix is supplied."""
+
+    RNG = "rng"
+    UNIFORM = "uniform"
+
 
 # --- static methods ---
 
@@ -81,13 +91,74 @@ class BaseDataset(ABC):
     def get_glossary_node(cls) -> GlossaryNode:
         raise NotImplementedError
 
+    def _uniform_unit_interval_inputs(self) -> np.ndarray:
+        """Independent draws on ``[0, 1)`` (``Generator.random``), shape ``(num_samples, d)``."""
+        dataset_seed = int(getattr(self, "seed", 0) or 0)
+        entropy = [
+            int(self.noise_seed) & 0xFFFFFFFF,
+            _UNIFORM_INPUT_ENTROPY_TAG,
+            self.num_samples,
+            self.d,
+            dataset_seed & 0xFFFFFFFF,
+            sum(ord(c) for c in self.display_name) & 0xFFFFFFFF,
+        ]
+        rng = np.random.default_rng(np.random.SeedSequence(entropy))
+        return rng.random((self.num_samples, self.d)).astype(float)
+
+    def _sample_inputs_impl(
+        self,
+        mode: InputSamplingMode = InputSamplingMode.RNG,
+        **kwargs: Any,
+    ) -> np.ndarray:
+        if mode == InputSamplingMode.UNIFORM:
+            return self._uniform_unit_interval_inputs()
+        return self._sample_inputs_rng_impl(**kwargs)
+
     @abstractmethod
-    def _load_data_impl(self) -> None:
-        raise NotImplementedError("_load_data_impl not implemented")
+    def _sample_inputs_rng_impl(self, **kwargs: Any) -> np.ndarray:
+        """Dataset-native input sampling (used when ``mode`` is ``InputSamplingMode.RNG``)."""
+        pass
+
+    @abstractmethod
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        """Compute clean targets ``Y`` for batch ``X`` of shape ``(n, d)`` (same ``d`` as this dataset)."""
+        pass
+
+    def _as_validated_batch_inputs(self, X: np.ndarray) -> np.ndarray:
+        """Coerce ``X`` to ``float`` and require a 2D batch matrix with second axis ``self.d``."""
+        x = np.asarray(X, dtype=float)
+        if x.ndim != 2 or x.shape[1] != self.d:
+            raise ValueError(f"Expected X with shape (n, {self.d}), got {x.shape}")
+        return x
+
+    def configure_data(
+        self,
+        X: np.ndarray | None,
+        *,
+        sample_mode: InputSamplingMode = InputSamplingMode.RNG,
+    ) -> np.ndarray:
+        """
+        Build ``self.data`` from optional fixed ``X`` or from sampling.
+
+        Returns the **pre-noise** input matrix used (owning copy). ``sample_mode`` is ignored when
+        ``X`` is not ``None``.
+        """
+        if X is None:
+            clean_x = np.asarray(self._sample_inputs_impl(mode=sample_mode), dtype=float, copy=True)
+        else:
+            clean_x = np.asarray(X, dtype=float, copy=True)
+            if clean_x.shape != (self.num_samples, self.d):
+                raise ValueError(f"Expected X with shape ({self.num_samples}, {self.d}), got {clean_x.shape}")
+        y = self.targets_from_inputs(clean_x)
+        self.data = {
+            "X": np.asarray(clean_x, dtype=float, copy=True),
+            "Y": np.asarray(y, dtype=float, copy=True),
+        }
+        self._apply_configured_gaussian_noise()
+        return np.array(clean_x, copy=True)
 
     def load_data(self) -> bool:
-        self._load_data_impl()
-        self._apply_configured_gaussian_noise()
+        self.configure_data(None, sample_mode=InputSamplingMode.RNG)
         return True
 
     def _apply_configured_gaussian_noise(self) -> None:

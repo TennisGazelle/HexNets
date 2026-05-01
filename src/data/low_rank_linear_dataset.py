@@ -29,6 +29,15 @@ class LowRankLinearDataset(BaseDataset, display_name="low_rank_linear"):
         self.gain = float(scale)
         self.seed = seed
         self.rank = max(1, min(int(rank), max(self.d, 1)))
+        seed_i = 0 if self.seed is None else int(self.seed) & 0xFFFFFFFF
+        parent = np.random.SeedSequence([seed_i, 0x10F2, self.d, self.num_samples, self.rank])
+        s_uv, s_x = parent.spawn(2)
+        rng_uv = np.random.default_rng(s_uv)
+        r = self.rank
+        u = rng_uv.standard_normal((self.d, r)).astype(float)
+        v = rng_uv.standard_normal((self.d, r)).astype(float)
+        self._A = (u @ v.T) * self.gain
+        self._rng_inputs = np.random.default_rng(s_x)
         self.data = None
         self.load_data()
 
@@ -54,12 +63,9 @@ class LowRankLinearDataset(BaseDataset, display_name="low_rank_linear"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
-        rng = np.random.default_rng(self.seed)
-        X = rng.standard_normal((self.num_samples, self.d)).astype(float)
-        r = self.rank
-        U = rng.standard_normal((self.d, r)).astype(float)
-        V = rng.standard_normal((self.d, r)).astype(float)
-        A = (U @ V.T) * self.gain
-        Y = X @ A.T
-        self.data = {"X": X, "Y": Y}
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
+        return self._rng_inputs.standard_normal((self.num_samples, self.d)).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return x @ self._A.T

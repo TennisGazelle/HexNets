@@ -58,10 +58,9 @@ class LinearScaleDataset(BaseDataset, display_name="linear_scale"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
-        X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
-        Y = X.copy() * self.scale
-        self.data = {
-            "X": X,
-            "Y": Y,
-        }
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
+        return (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return x.copy() * float(self.scale)
