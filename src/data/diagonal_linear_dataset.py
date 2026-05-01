@@ -31,6 +31,12 @@ class DiagonalLinearDataset(BaseDataset, display_name="diagonal_linear"):
         self.seed = seed
         self.min_scale = float(min_scale)
         self.max_scale = float(max_scale)
+        seed_i = 0 if self.seed is None else int(self.seed) & 0xFFFFFFFF
+        parent = np.random.SeedSequence([seed_i, 0xD1A60, self.d, self.num_samples])
+        s_a, s_x = parent.spawn(2)
+        rng_a = np.random.default_rng(s_a)
+        self._a = rng_a.uniform(self.min_scale, self.max_scale, size=(self.d,))
+        self._rng_inputs = np.random.default_rng(s_x)
         self.data = None
         self.load_data()
 
@@ -56,9 +62,9 @@ class DiagonalLinearDataset(BaseDataset, display_name="diagonal_linear"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
-        rng = np.random.default_rng(self.seed)
-        X = (rng.random((self.num_samples, self.d)) * 2 - 1).astype(float)
-        a = rng.uniform(self.min_scale, self.max_scale, size=(self.d,))
-        Y = X * a
-        self.data = {"X": X, "Y": Y}
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
+        return (self._rng_inputs.random((self.num_samples, self.d)) * 2 - 1).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return x * self._a

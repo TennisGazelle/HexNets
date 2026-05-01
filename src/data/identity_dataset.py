@@ -49,3 +49,7 @@ class IdentityDataset(LinearScaleDataset, display_name="identity"):
             ),
             children=(),
         )
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return x.copy()

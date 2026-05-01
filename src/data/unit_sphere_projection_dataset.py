@@ -52,9 +52,11 @@ class UnitSphereProjectionDataset(BaseDataset, display_name="unit_sphere_project
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
         rng = np.random.default_rng(self.seed)
-        X = rng.standard_normal((self.num_samples, self.d)).astype(float)
-        norm = np.linalg.norm(X, axis=1, keepdims=True) + 1e-12
-        Y = X / norm
-        self.data = {"X": X, "Y": Y}
+        return rng.standard_normal((self.num_samples, self.d)).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        norm = np.linalg.norm(x, axis=1, keepdims=True) + 1e-12
+        return x / norm

@@ -31,6 +31,7 @@ class SparseIdentityDataset(BaseDataset, display_name="sparse_identity"):
         default_k = min(3, max(self.d, 1))
         self.k_nonzero = default_k if k_nonzero is None else int(k_nonzero)
         self.k_nonzero = max(1, min(self.k_nonzero, max(self.d, 1)))
+        self._rng = np.random.default_rng(self.seed)
         self.data = None
         self.load_data()
 
@@ -56,12 +57,15 @@ class SparseIdentityDataset(BaseDataset, display_name="sparse_identity"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
-        rng = np.random.default_rng(self.seed)
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
+        rng = self._rng
         k = self.k_nonzero
-        X = np.zeros((self.num_samples, self.d), dtype=float)
+        x = np.zeros((self.num_samples, self.d), dtype=float)
         idx = np.stack([rng.choice(self.d, size=k, replace=False) for _ in range(self.num_samples)])
         vals = rng.standard_normal((self.num_samples, k))
-        X[np.arange(self.num_samples)[:, None], idx] = vals
-        Y = X.copy()
-        self.data = {"X": X, "Y": Y}
+        x[np.arange(self.num_samples)[:, None], idx] = vals
+        return x
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return x.copy()

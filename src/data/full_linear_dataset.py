@@ -27,6 +27,12 @@ class FullLinearDataset(BaseDataset, display_name="full_linear"):
         self.num_samples = num_samples
         self.A_scale = float(scale)
         self.seed = seed
+        seed_i = 0 if self.seed is None else int(self.seed) & 0xFFFFFFFF
+        parent = np.random.SeedSequence([seed_i, 0xF0111E, self.d, self.num_samples])
+        s_mat, s_x = parent.spawn(2)
+        rng_mat = np.random.default_rng(s_mat)
+        self._A = rng_mat.standard_normal((self.d, self.d)).astype(float) * self.A_scale
+        self._rng_inputs = np.random.default_rng(s_x)
         self.data = None
         self.load_data()
 
@@ -52,9 +58,9 @@ class FullLinearDataset(BaseDataset, display_name="full_linear"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
-        rng = np.random.default_rng(self.seed)
-        X = rng.standard_normal((self.num_samples, self.d)).astype(float)
-        A = rng.standard_normal((self.d, self.d)).astype(float) * self.A_scale
-        Y = X @ A.T
-        self.data = {"X": X, "Y": Y}
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
+        return self._rng_inputs.standard_normal((self.num_samples, self.d)).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return x @ self._A.T

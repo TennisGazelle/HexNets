@@ -6,20 +6,21 @@ Python package: [`hexnets_web`](../src/hexnets_web/). Entry script: [`src/stream
 
 * **Entry:** `src/streamlit_app.py` — launch: `make streamlit-run` or `streamlit run src/streamlit_app.py`.
 * **Navigation:** `hexnets_web/main.py` uses `st.navigation(..., position="sidebar")` and `st.Page` scripts under `src/hexnets_web/pages/` (paths relative to `streamlit_app.py`). Default landing page: **CLI Builder**. Each page implements `render()` on a subclass of `hexnets_web.pages.base_page.BasePage`. Optional **Buy Me a Coffee** (or any third-party `<script>` widget): set `_BUY_ME_A_COFFEE_HTML` in `main.py` and render it with `streamlit.components.v1.html` in `st.sidebar` after `pg.run()` (markdown strips scripts).
-* **Pages:** **CLI Builder** (argparse-driven command preview + inline glossary for selected registry keys), **Network Explorer** (live `HexagonalNeuralNetwork`; three-column parameters — sliders, network selects, structure summary; **Generate Graphs** only), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Lesion Lab** (placeholder), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist), **Glossary** (searchable nested terms; tree in `src/hexnets_web/pages/glossary/glossary_data.py`, node type in `glossary_types.py`; top-level branches from `build_*_glossary_parent()` in `src/data/dataset.py`, `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`; UI in `pages/glossary/glossary.py` / `metrics_explainer.py`).
+* **Pages:** **CLI Builder** (argparse-driven command preview + inline glossary for selected registry keys), **Network Explorer** (live `HexagonalNeuralNetwork`; three-column parameters — sliders, network selects, structure summary; **Generate Graphs** only), **Rotation Comparison** (25/75 layout: sliders + multi-activation left, three reference images right; needs `hexnet ref --all` for full grid), **Lesion Lab** (placeholder), **Run Browser** (`st.columns([1, 3])`: left — runs + **Use this run**; right — JSON file picker, or `st.columns([3, 2])` JSON + `plots/*net_training_*.png` side by side when those plots exist), **Dataset Generator** (Dataset / Noise tabs; cached clean `X` via `configure_data`, **RNG** vs **UNIFORM** input sampling, **Regenerate Inputs**, noise toggles, two ECharts scatters), **Glossary** (searchable nested terms; tree in `src/hexnets_web/pages/glossary/glossary_data.py`, node type in `glossary_types.py`; top-level branches from `build_*_glossary_parent()` in `src/data/dataset.py`, `src/networks/loss/loss.py`, `src/networks/learning_rate/learning_rate.py`, `src/networks/activation/activations.py`; UI in `pages/glossary/glossary.py` / `metrics_explainer.py`).
 * **Rotation Comparison layout:** `st.columns([1, 3])` — left: `n` slider, multi-activation (`hexnet_n{n}_multi_activation.png`) under `n`, then `r` slider; right: three columns for structure, activation, and weight for `(n, r)`.
 * **Defaults:** Network Explorer: `n=2`, `r=0`, `activation=relu`, `loss=mean_squared_error`, `learning_rate=constant`, `dataset_type=identity`, `dataset_num_samples=100`. Rotation Comparison: `rotation_comparison_n=2`, `rotation_comparison_r=0` (see `initialize_session_state()`).
 
 ## Overview
 
-The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers six sidebar pages (CLI Builder first / default):
+The HexNets Streamlit application provides an interactive web interface for visualizing and exploring hexagonal neural networks. It offers seven sidebar pages (CLI Builder first / default):
 
 1. **CLI Builder**: Build and copy `hexnet …` commands from live controls
 2. **Network Explorer**: Interactive parameters (three columns: geometry/data sliders, activation/loss/learning-rate, live structure summary) and **Generate Graphs** for structure + multi-activation figures
 3. **Rotation Comparison**: Sliders for `n` and `r` to browse pre-generated reference images for one `(n, r)` at a time (scrub `r` to compare rotations)
 4. **Lesion Lab**: Placeholder for future experiments
 5. **Run Browser**: Read-only browse of `runs/` (same root as `RunService.runs_dir`); run tree with button selection (left); JSON on the right, or JSON + training PNG in a `[3, 2]` split when plots exist
-6. **Glossary**: Filterable definitions (including nested entries) aligned with metrics and datasets used in the app
+6. **Dataset Generator**: **Dataset** / **Noise** tabs (Noise unused for now). **Dataset**: glossary + **Regenerate Inputs**; **Options** (samples, **Input sampling** `RNG` vs `UNIFORM`, Gaussian noise). Builds `BaseDataset` via `build_registered_dataset()` then **`configure_data`** with session-stored clean `X` so inputs stay fixed while noise / sampling mode changes invalidate via cache key `(dataset, d, num_samples, mode)`. Side-by-side **Input** / **Outputs** ECharts scatters; fixed `d=2` in page code.
+7. **Glossary**: Filterable definitions (including nested entries) aligned with metrics and datasets used in the app
 
 ## Architecture
 
@@ -149,12 +150,13 @@ streamlit run src/streamlit_app.py
 When launched, the Streamlit app:
 1. Initializes session state with default values (n=2, r=0, activation=relu, loss=mean_squared_error, dataset registry fields, rotation-comparison sliders)
 2. Creates a network instance and caches it in session state
-3. Displays sidebar navigation with six pages (default **CLI Builder**):
+3. Displays sidebar navigation with seven pages (default **CLI Builder**):
    - **CLI Builder**: Subcommand pickers, preview, inline glossary for applicable options
    - **Network Explorer**: Interactive controls and on-demand graph generation
    - **Rotation Comparison**: Pre-generated reference image viewer (25/75 layout)
    - **Lesion Lab**: Coming soon placeholder
    - **Run Browser**: Two columns — expander tree per run with **Use this run** (no run dropdown); JSON plus training PNG side-by-side when `plots/*net_training_*.png` exists (hex or MLP), else JSON only
+   - **Dataset Generator**: Dataset/Noise tabs; `configure_data` + cached `X`, RNG/UNIFORM sampling, Input/Outputs scatters (`pages/dataset_generator/dataset_generator.py`)
    - **Glossary**: Search field filters top-level and nested glossary entries (substring match, case-insensitive); top-level expanders are shown in two columns when multiple entries match
 
 ### Network Explorer page

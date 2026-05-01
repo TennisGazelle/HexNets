@@ -53,9 +53,9 @@ All registered datasets subclass [`BaseDataset`](../../src/data/dataset.py). Opt
 
 * `noise_mode`: `None` (default, off), or `"inputs"`, `"targets"`, `"both"`.
 * `noise_mu`, `noise_sigma`: mean and **standard deviation** of i.i.d. additive noise \(\varepsilon \sim \mathcal{N}(\mu, \sigma^2)\) applied to the selected tensor(s) **after** the subclass fills `self.data`.
-* `noise_seed`: integer; with training CLI, this is set to `--seed` so noisy runs are reproducible. The noise RNG uses `numpy.random.SeedSequence([noise_seed, tag])` so it does not alias draws from global `np.random` inside `_load_data_impl`.
+* `noise_seed`: integer; with training CLI, this is set to `--seed` so noisy runs are reproducible. The noise RNG uses `numpy.random.SeedSequence([noise_seed, tag])` so it does not alias draws from global `np.random` during input sampling.
 
-Subclasses implement **`_load_data_impl()`**; **`load_data()`** on the base class runs `_load_data_impl()` then **`_apply_configured_gaussian_noise()`**.
+Subclasses implement **`_sample_inputs_rng_impl()`** (native input distribution) and **`targets_from_inputs(X)`** (clean map to `Y`). **`load_data()`** calls **`configure_data(None, sample_mode=InputSamplingMode.RNG)`**, which samples `X`, sets `Y`, then runs **`_apply_configured_gaussian_noise()`**. For a shared **Uniform(0, 1)** input grid (Streamlit / experiments), use **`configure_data(..., sample_mode=InputSamplingMode.UNIFORM)`** when `X` is `None`.
 
 CLI (shared with `hexnet adhoc`): `--dataset-noise {inputs,targets,both}`, `--dataset-noise-mu`, `--dataset-noise-sigma`.
 
@@ -67,6 +67,6 @@ Older saved `config.json` files may still show `"dataset_type": "linear"` from b
 
 1. Add `src/data/<name>_dataset.py` (filename must end with `_dataset.py`). Subclass `BaseDataset` from `data.dataset` with a unique `display_name` (registration happens in `__init_subclass__`). Importing `data.dataset` loads all such modules automatically.
 2. Give `__init__(..., *, noise_mode=None, noise_mu=0.0, noise_sigma=0.1, noise_seed=0)` (and your own parameters) the same keyword shape as the other built-ins if it should work with **`build_registered_dataset`** without extra CLI wiring; forward the `noise_*` kwargs to `super().__init__(...)`. CLI `-t` choices update automatically.
-3. Implement **`_load_data_impl()`** to populate `self.data` (do not apply noise there). Implement **`get_glossary_node()`** so the Streamlit glossary (and **`build_datasets_glossary_parent()`** in `dataset.py`) can list the dataset without hand-maintained mirror text. Optionally set **`good_for`** and **`tags`** on `GlossaryNode` for discoverability. `GlossaryNode` lives in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py) (stdlib only; importing `data.dataset` does not load the Streamlit library).
+3. Implement **`_sample_inputs_rng_impl()`** and **`targets_from_inputs(self, X)`** (do not apply noise there; the base **`configure_data`** wires `self.data` and noise). Implement **`get_glossary_node()`** so the Streamlit glossary (and **`build_datasets_glossary_parent()`** in `dataset.py`) can list the dataset without hand-maintained mirror text. Optionally set **`good_for`** and **`tags`** on `GlossaryNode` for discoverability. `GlossaryNode` lives in [`src/hexnets_web/glossary_types.py`](../../src/hexnets_web/glossary_types.py) (stdlib only; importing `data.dataset` does not load the Streamlit library).
 
 For architecture and CLI patterns, see [`.cursor/ARCHITECTURE.md`](../../.cursor/ARCHITECTURE.md) and [`.cursor/CLI_PATTERNS.md`](../../.cursor/CLI_PATTERNS.md).

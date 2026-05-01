@@ -5,6 +5,7 @@ import pytest
 
 from data.dataset import (
     DATASET_FUNCTIONS,
+    InputSamplingMode,
     build_datasets_glossary_parent,
     build_registered_dataset,
     list_registered_dataset_display_names,
@@ -115,6 +116,29 @@ def test_fixed_permutation_recovers_with_inverse():
     inv[ds._perm] = np.arange(ds.d)
     for x, y in ds:
         np.testing.assert_array_equal(x, y[inv])
+
+
+def test_configure_data_reuses_external_x():
+    ds = build_registered_dataset("linear_scale", d=3, num_samples=4, scale=2.0, noise_mode=None)
+    x0 = np.linspace(-0.5, 0.5, 12).reshape(4, 3)
+    ds.configure_data(x0)
+    np.testing.assert_allclose(ds.get_data()["X"], x0)
+    np.testing.assert_allclose(ds.get_data()["Y"], x0 * 2.0)
+
+
+def test_uniform_input_sampling_on_unit_interval():
+    ds = build_registered_dataset("identity", d=3, num_samples=100, noise_mode=None)
+    clean = ds.configure_data(None, sample_mode=InputSamplingMode.UNIFORM)
+    assert clean.shape == (100, 3)
+    assert (clean >= 0.0).all() and (clean < 1.0).all()
+    np.testing.assert_array_equal(ds.get_data()["X"], clean)
+
+
+def test_targets_from_inputs_linear_scale():
+    ds = LinearScaleDataset(d=2, num_samples=1, scale=3.0, noise_mode=None)
+    xb = np.array([[1.0, -2.0]])
+    yb = ds.targets_from_inputs(xb)
+    np.testing.assert_array_equal(yb, np.array([[3.0, -6.0]]))
 
 
 def test_import_dataset_subprocess_does_not_import_streamlit():

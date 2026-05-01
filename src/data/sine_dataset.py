@@ -53,8 +53,10 @@ class SineDataset(BaseDataset, display_name="sine"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
         rng = np.random.default_rng(self.seed)
-        X = (rng.random((self.num_samples, self.d)) * 2 - 1).astype(float)
-        Y = np.sin(self.omega * X)
-        self.data = {"X": X, "Y": Y}
+        return (rng.random((self.num_samples, self.d)) * 2 - 1).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return np.sin(self.omega * x)

@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **Streamlit sidebar**: how to add a Buy Me a Coffee `<script>` next to `st.navigation` — use `st.sidebar` + `components.html` after `pg.run()`; wired in `hexnets_web/main.py` as `_BUY_ME_A_COFFEE_HTML`.
+- **Dataset / `BaseDataset`**: `configure_data`, `InputSamplingMode` (RNG vs UNIFORM), `targets_from_inputs` / `_sample_inputs_rng_impl`; Dataset Generator caches clean `X` + **Regenerate Inputs**. Noise tab still empty.
 
 ---
 

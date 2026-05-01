@@ -44,6 +44,11 @@ def run() -> None:
             icon=":material/folder_open:",
         ),
         st.Page(
+            "hexnets_web/pages/dataset_generator/dataset_generator_page.py",
+            title="Dataset Generator",
+            icon=":material/table_chart:",
+        ),
+        st.Page(
             "hexnets_web/pages/glossary/glossary_page.py",
             title="Glossary",
             icon=":material/menu_book:",

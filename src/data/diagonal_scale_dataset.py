@@ -57,12 +57,9 @@ class DiagonalScaleDataset(LinearScaleDataset, display_name="diagonal_scale"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
-        X = (np.random.rand(self.num_samples, self.d) * 2 - 1).astype(float)
-        Y = X.copy()
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        y = x.copy()
         for i in range(self.d):
-            Y[:, i] *= (i + 1) * self.scale
-        self.data = {
-            "X": X,
-            "Y": Y,
-        }
+            y[:, i] *= (i + 1) * self.scale
+        return y

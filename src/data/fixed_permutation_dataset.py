@@ -57,7 +57,9 @@ class FixedPermutationDataset(BaseDataset, display_name="fixed_permutation"):
             children=(),
         )
 
-    def _load_data_impl(self) -> None:
-        X = (self._rng_xy.random((self.num_samples, self.d)) * 2 - 1).astype(float)
-        Y = X[:, self._perm]
-        self.data = {"X": X, "Y": Y}
+    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
+        return (self._rng_xy.random((self.num_samples, self.d)) * 2 - 1).astype(float)
+
+    def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
+        x = self._as_validated_batch_inputs(X)
+        return x[:, self._perm].copy()

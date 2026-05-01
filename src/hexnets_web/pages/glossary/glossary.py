@@ -24,12 +24,12 @@ def render_glossary_node(node: GlossaryNode, query: str, as_expander: bool = Tru
         with st.expander(node.title):
             render_content()
             for c in node.children:
-                render_glossary_node(c, query)
+                render_glossary_node(c, query, as_expander=as_expander)
     else:
         st.markdown(f"#### {node.title}")
         render_content()
         if node.children:
-            st.markdown("#### See also" + " · ".join([c.title for c in node.children]))
+            st.markdown("#### See also " + " · ".join([c.title for c in node.children]))
 
 
 class GlossaryPage(BasePage):
