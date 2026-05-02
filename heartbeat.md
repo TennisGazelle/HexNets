@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **`ReferenceCommand.invoke` + tests**: Resolve LR with `getattr(args, "learning_rate", "constant")` then `get_learning_rate(..., learning_rate=0.01)` for MLP/hex paths; five `Namespace` fixtures in `tests/commands/test_reference_command.py` include `learning_rate="constant"`. No `get_learning_rate_function` rename in repo (plan branch N/A).
+- **`docs/latex/` syntax + PDF build**: `main.tex` loads `amssymb` so `\mathbb{R}` compiles; small math-mode fixes in `implementation.tex` / `introduction.tex` (`\min`, `T \times T`, `\mathrm{layer}`, `\text{otherwise}`, `60^\circ`, `(i+3) \bmod 6`). `make pdf` produces [`docs/latex/main.pdf`](docs/latex/main.pdf) (Docker + `ghcr.io/xu-cheng/texlive-small`). Research Paper Streamlit page embeds that PDF only.
 
 ---
 

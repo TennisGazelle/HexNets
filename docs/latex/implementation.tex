@@ -30,21 +30,21 @@ The layer sizes of N follow an explicit pattern:
 This gives the total number of layers $N_L = 2n - 1$.
 The total number of nodes in a network, however, is:
 
-\[T = \sum_{k=0}^{2n-2} (n + min(k, 2n-2-k))\]
+\[T = \sum_{k=0}^{2n-2} (n + \min(k, 2n-2-k))\]
 For the next few mathematical definitions, let the \textbf{Vertical Direction} orientation of the network, $H_1$, be the assumed direction.
 Furthermore, let's assume the numbering of the network to start from the top left index, traverse left to right, and then top to bottom.
 Let:
 \begin{itemize}
-    \item $A^{i} \in \{0, 1\}^{TxT}$ be the binary adjacency matrix for arbitrary direction $H_i$
-    \item For an neuron, $n$, at $i \in [0, T-1]$, or $n_i$, let $layer(i)$ map it to its layer number $l \in [0, N_{L}-1]$
+    \item $A^{i} \in \{0, 1\}^{T \times T}$ be the binary adjacency matrix for arbitrary direction $H_i$
+    \item For an neuron, $n$, at $i \in [0, T-1]$, or $n_i$, let $\mathrm{layer}(i)$ map it to its layer number $l \in [0, N_{L}-1]$
     \item $S_{l}$ be the set of indices in layer $l$
 \end{itemize}
 
 Then, the $H_1$, the only non-zero entries in $A$ are defined as:
 
 \[A_{ij}=\begin{cases}
-    1 & $i \in S_{l}, j \in S_{l+1},$ for some $l \in [0, N_L-2]$\\
-    0 & otherwise
+    1 & i \in S_{l}, j \in S_{l+1}, \text{ for some } l \in [0, N_L-2]\\
+    0 & \text{otherwise}
 \end{cases}\]
 
 A symptom of this definition for $H_1$ is a block structure that gets created inside $A^1$.
@@ -74,7 +74,7 @@ We can see this pattern hold as $n$ grows for $H_1$ in \ref{fig:adj-matrix-n234}
 
 \subsubsection{Rotations}
 
-As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{i+3\mod6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can be reused.
+As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{(i+3) \bmod 6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can be reused.
 
 
 %

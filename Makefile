@@ -20,12 +20,16 @@
 #   make lint             - Format code with Black (line length 120)
 #   make lint-check       - Check code formatting without making changes (fails if formatting needed)
 #
+# Documentation:
+#   make pdf              - Build docs/latex/main.pdf via Docker (texlive-small)
+#   make pdf-clean        - Remove the built PDF and LaTeX aux files
+#
 # Cleanup:
 #   make clean-ref        - Remove all reference graph files
 #   make clean-figures    - Remove all generated figure files
 #   make clean-runs       - Remove all training run directories
 #   make clean-venv       - Remove the virtual environment
-#   make clean-all        - Remove everything (venv, figures, runs, refs)
+#   make clean-all        - Remove everything (venv, figures, runs, refs, pdf)
 #
 # ============================================================================
 
@@ -35,6 +39,13 @@ PIP := .venv/bin/pip
 BLACK := .venv/bin/black
 HEXNET := .venv/bin/hexnet
 STREAMLIT := .venv/bin/streamlit
+
+LATEX_DIR := docs/latex
+LATEX_IMAGE := ghcr.io/xu-cheng/texlive-small:latest
+LATEX_DOCKER := docker run --rm \
+	-v "$(CURDIR)/$(LATEX_DIR):/workdir" -w /workdir \
+	-u "$(shell id -u):$(shell id -g)" \
+	$(LATEX_IMAGE)
 
 .PHONY: hexnets
 hexnets: install
@@ -138,8 +149,19 @@ streamlit-deploy:
 	@echo ""
 	@echo "============================================================================"
 
+.PHONY: pdf
+pdf:
+	@command -v docker >/dev/null || { echo "docker required for 'make pdf'"; exit 1; }
+	@$(LATEX_DOCKER) latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+	@echo "PDF written to $(LATEX_DIR)/main.pdf"
+
+.PHONY: pdf-clean
+pdf-clean:
+	@command -v docker >/dev/null && $(LATEX_DOCKER) latexmk -C main.tex 2>/dev/null || true
+	@rm -f $(LATEX_DIR)/main.pdf
+
 .PHONY: clean-all
-clean-all: clean-venv clean-figures clean-runs clean-ref
+clean-all: clean-venv clean-figures clean-runs clean-ref pdf-clean
 
 .PHONY: clean-venv
 clean-venv:

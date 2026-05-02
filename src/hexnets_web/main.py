@@ -49,6 +49,11 @@ def run() -> None:
             icon=":material/table_chart:",
         ),
         st.Page(
+            "hexnets_web/pages/research_paper/research_paper_page.py",
+            title="Research Paper",
+            icon=":material/article:",
+        ),
+        st.Page(
             "hexnets_web/pages/glossary/glossary_page.py",
             title="Glossary",
             icon=":material/menu_book:",

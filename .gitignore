@@ -208,3 +208,12 @@ __marimo__/
 docs/latex/Neural_Nets.zip
 figures/
 runs/
+
+# LaTeX build artifacts (keep docs/latex/main.pdf tracked)
+docs/latex/*.aux
+docs/latex/*.log
+docs/latex/*.fls
+docs/latex/*.fdb_latexmk
+docs/latex/*.out
+docs/latex/*.toc
+docs/latex/*.synctex.gz

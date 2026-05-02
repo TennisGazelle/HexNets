@@ -80,6 +80,7 @@ class TrainCommand(Command):
             help="Optional freeform note stored in the run manifest (paper traceability).",
             dest="run_note",
         )
+
         parser.add_argument(
             "--run-tags",
             type=str,

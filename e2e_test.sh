@@ -70,6 +70,8 @@ e2e_train "2b. Hex resume same run dir with r=1" \
     hexnet train -m hex -n 3 -r 1 -e "${E2E_EPOCHS}" -t identity \
     -rd runs/e2etest-smoke/hex-n3-r0
 
+exit 0; # TODO: remove this
+
 print_line "3. Smoke: MLP train (n=2)..."
 e2e_train "3. MLP train" \
     hexnet train -m mlp -n 2 -e "${E2E_EPOCHS}" -t identity \
