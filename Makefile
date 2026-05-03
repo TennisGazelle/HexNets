@@ -151,6 +151,10 @@ streamlit-deploy:
 
 .PHONY: pdf
 pdf:
+	@cp \
+		reference/hexnet_n3_r0_structure.png \
+		reference/hexnet_n3_multi_activation.png \
+		docs/latex/
 	@command -v docker >/dev/null || { echo "docker required for 'make pdf'"; exit 1; }
 	@$(LATEX_DOCKER) latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 	@echo "PDF written to $(LATEX_DIR)/main.pdf"

@@ -1,42 +1,56 @@
 \section{Implementation}
 
 \subsection{Topological Definition}
-A hexagonal neural network is a multilayer perceptron network whose layer sizes increase and then decrease symmetrically, forming a hexagon-like outline if it were to be drawn in 2D.
-
-As expected from feed-forward networks, all neurons in any given layer are fully connected to all neurons in the adjacent layers, but this is not just true in one direction.
-Due to the hexagonal nature of the framework, there are six distinct directions in which one could perform traditional forward and backward neural network propagation.
+A one directional view hexagonal neural network is a multilayer perceptron network whose layer sizes increase and then decrease symmetrically, forming a hexagon-like outline if it were to be drawn in 2D.
+As expected, all neurons in any given layer are fully connected to all neurons in the subsequent layer.
+However, due to the hexagonal nature of the framework, there are three distinct directions in which one could perform traditional forward and backward neural network propagation.
 This renders the structure to contain a unique corresponding arrangement of connections and shared weights given the direction.
-These shared weights may potentially influence the internal network's representation of data in their high-dimensional embedding from one propagation direction to another.
-In other words, training the network with training data from one of these directions could potentially help training the same network with the same data from another angle to escape local optima encountered during gradient descent or other optimization methods.
 
-Below, we present a mathematical generalization of this architecture, show adjacency matrices that will hopefully showcase the patterns that emerge as $n$ grows, optimize memory allocation for arbitrarily large $n$ values, and see the effects of loss and accuracy that training in one direction can have on other directions.
+These shared weights may influence the internal network's representation of data in their high-dimensional embedding from one propagation direction to another in strange ways.
+The shared weights of, say, the first semantic layer of $H_1$ will always have at least one shared weight with $H_2$ (the relative leftmost neuron from $H_2$'s point of view) up until the halfway point of the network.
+This overlap is small but non-neglible as these weights are now subject to the gradient descent paths of two distinct target local optimas.
+Experimentally, we actually see equivalent or better another local optimum, outperforming the two original networks had they been started with the same random seed patterns for their respective weights across the benchmark set (detailed below).
+Since each layer represents a layer of abstraction away from the input reality towards the target reality, it could be speculated that any one layer's abstraction has a cross abstractive coherence bias on another's direction and thus representation.
 
-\subsection{Hexagonal Connectivity and Spatial Directions}
+\subsection{Mathematical Definitions}
 
-A key property of this network is its hexagonal symmetry.  
-Unlike a traditional MLP with strict linearity from left to right, the hexagonal network, $H$, has connections that can be interpreted in three unique spatial directions.
-Although we do have six unique networks, we call these three directions, since forward propagation of one network, say $H_1$, can be interpreted as the backward propagation of the network 3 rotations away; in this example, $H_4$.
-To be explicit, if we visualize the network with the layers centered and stacked vertically (i.e. with the smallest layers at the top and bottom, widest in the middle), then we have the following directions:
-\begin{itemize}
-    \item \textbf{Vertical Direction:} Connections that go straight "down" from one layer to the next.  For simplicity, straight-down propagation can be represented as $H_1$ and its backward propagation as $H_4$.  Note that although $H_1$ and $H_4$ are the same neural network, they are mirror opposites of forward and back propagation.
-    \item \textbf{Down-Right Direction:} Connections that start from one "hexagonal rotation" clockwise from the vertical $H_1$.  These are $H_2$ and its inverse $H_5$
-    \item \textbf{Down-Left Direction:} Connections that start from one hexagonal rotation counter clockwise from $H_1$.  These are $H_3$ and $H_6$.
-\end{itemize}
-
-The layer sizes of N follow an explicit pattern:
+The layer sizes of a HexNet of a parameter size $n$ follow an explicit pattern:
 
 \[L = [n, n+1, ... 2n-1, ..., n+1, n]\]
 
-This gives the total number of layers $N_L = 2n - 1$.
+with a $2n-1$ total layers as well.
 The total number of nodes in a network, however, is:
 
 \[T = \sum_{k=0}^{2n-2} (n + \min(k, 2n-2-k))\]
+
+\subsubsection{Weight Indexing and Layer Sets}
+
+To be explicit, if we visualize the network with the layers centered and stacked vertically (i.e. with the smallest layers at the top and bottom, widest in the middle), then we have the following directions:
+\begin{itemize}
+    \item \textbf{$H_0$:} Top-to-bottom layers (default hexagonal structure)
+    \item \textbf{$H_1$:} Top-right to bottom-left diagonal
+    \item \textbf{$H_2$:} Bottom-right to top-left diagonal
+    \item \textbf{$H_3$:} Bottom-to-top layers (reverse of $H_0$)
+    \item \textbf{$H_4$:} Bottom left to top-right diagonal
+    \item \textbf{$H_5$:} Top left to bottom-right diagonal
+\end{itemize}
+
+\subsubsection{Global W}
+
+For mathematical simplicity, we employ a global weight matrix $W$, a adjacency matrix of size $T x T$ that can represent all possible connections regardless of rotation.
+Given that $H_0$ is directionally opposite $H_4$, they would share exactly the same weights.
+While empirical trials on MLPs show that bidirectional training on the same weights show catastrophic loss, (find reference), we could theoretically use different cells to represent that as a separate network and still maintain directional-abstraction bleeding between immediately neighboring dimensions.
+If this were the case, then $W$ would not be symmetric.
+
+\subsubsection{Directional W}
+We can represent the static MLP view of any arbitrary rotation, $r \in {0, 1, 2, 3, 4, 5}$ as $W_i$ with a mask over $W$ enforcing a layered feedforward structure.
+
 For the next few mathematical definitions, let the \textbf{Vertical Direction} orientation of the network, $H_1$, be the assumed direction.
 Furthermore, let's assume the numbering of the network to start from the top left index, traverse left to right, and then top to bottom.
 Let:
 \begin{itemize}
     \item $A^{i} \in \{0, 1\}^{T \times T}$ be the binary adjacency matrix for arbitrary direction $H_i$
-    \item For an neuron, $n$, at $i \in [0, T-1]$, or $n_i$, let $\mathrm{layer}(i)$ map it to its layer number $l \in [0, N_{L}-1]$
+    \item For node index $i \in [0, T-1]$, let $\mathrm{layer}(i)$ map it to its layer number $l \in [0, N_{L}-1]$
     \item $S_{l}$ be the set of indices in layer $l$
 \end{itemize}
 
