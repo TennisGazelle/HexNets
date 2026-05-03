@@ -32,7 +32,9 @@ class ResearchPaperPage(BasePage):
     def render(self) -> None:
         st.header("Research Paper")
 
-        st.warning("This page embeds the PDF of the research paper for this repo.  This PDF is a work in progress and is protected by a CC-BY-NC-SA license. Unauthorized use or reproduction is prohibited and will be prosecuted.  For more information, contact the author at daniellopez123456789@gmail.com")
+        st.warning(
+            "This page embeds the PDF of the research paper for this repo.  This PDF is a work in progress and is protected by a CC-BY-NC-SA license. Unauthorized use or reproduction is prohibited and will be prosecuted.  For more information, contact the author at daniellopez123456789@gmail.com"
+        )
 
         pdf_path = _pdf_path()
         if not pdf_path.exists():
@@ -59,8 +61,6 @@ class ResearchPaperPage(BasePage):
 
         self._render_rebuild_controls()
 
-
-
     def _render_rebuild_controls(self) -> None:
         if platform.processor() == "":
             return
@@ -70,10 +70,7 @@ class ResearchPaperPage(BasePage):
             has_make = shutil.which("make") is not None
 
             if not (has_docker and has_make):
-                st.info(
-                    "Rebuild requires Docker and `make` on the host (not available "
-                    "on Streamlit Cloud)."
-                )
+                st.info("Rebuild requires Docker and `make` on the host (not available " "on Streamlit Cloud).")
                 return
 
             if st.button("Run `make pdf`"):
