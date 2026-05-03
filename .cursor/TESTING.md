@@ -2,6 +2,8 @@
 
 This document covers testing patterns, conventions, and how to add tests.
 
+**Running tests:** From the repo root, use **`make unit-test`** (uses `.venv` via the Makefile). If you run pytest by hand, activate the venv (`source .venv/bin/activate`) or use `.venv/bin/python -m pytest` so dev deps are available — see [`.cursor/rules/shell-venv.mdc`](./rules/shell-venv.mdc).
+
 ## Current Test Structure
 
 ```

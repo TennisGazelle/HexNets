@@ -20,7 +20,7 @@ make pdf              # build docs/latex/main.pdf via Docker (texlive-small)
 
 **Reference images** (for Streamlit Rotation Comparison page): `hexnet ref --all` → `reference/*.png`
 
-**Tests:** `make unit-test` · **E2E:** `make e2e-test` (optional `E2E_EPOCHS=20` for shorter runs; artifacts under `runs/e2etest-smoke/` and `runs/e2etest-fam*` — see [`docs/math/benchmark-families.md`](docs/math/benchmark-families.md))
+**Tests:** `make unit-test` (uses `.venv`; run `make install` first if needed). **E2E:** `make e2e-test` (optional `E2E_EPOCHS=20` for shorter runs; artifacts under `runs/e2etest-smoke/` and `runs/e2etest-fam*` — see [`docs/math/benchmark-families.md`](docs/math/benchmark-families.md))
 
 ## Streamlit UI
 

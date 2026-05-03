@@ -7,15 +7,18 @@ This is a quick reference for AI assistants working on HexNets. Use this to quic
 0. **Doc sync** - [.cursor/rules/documentation-sync.mdc](./rules/documentation-sync.mdc)
    - Code changes → update `README.md`, `docs/**` (not `docs/latex/` unless explicitly asked), and relevant `.cursor/**` notes concisely.
 
-1. **Memory Management** - [MEMORY_MANAGEMENT.md](./MEMORY_MANAGEMENT.md)
+1. **Shell / venv** - [.cursor/rules/shell-venv.mdc](./rules/shell-venv.mdc)
+   - Run **`make unit-test`** (and other `make` targets) or **`source .venv/bin/activate`** / **`.venv/bin/python`** before ad-hoc `pytest` / `hexnet` — avoids system Python missing `pytest` and wasted retries.
+
+2. **Memory Management** - [MEMORY_MANAGEMENT.md](./MEMORY_MANAGEMENT.md)
    - Always close matplotlib figures with `plt.close(fig)` in finally blocks
    - Memoize network instances when generating multiple graphs
 
-2. **Component Registration** - [ARCHITECTURE.md](./ARCHITECTURE.md#component-registration-pattern)
+3. **Component Registration** - [ARCHITECTURE.md](./ARCHITECTURE.md#component-registration-pattern)
    - Components auto-register via `__init_subclass__` with `display_name`
    - Use discovery functions (`get_available_*()`) for CLI choices
 
-3. **CLI Patterns** - [CLI_PATTERNS.md](./CLI_PATTERNS.md)
+4. **CLI Patterns** - [CLI_PATTERNS.md](./CLI_PATTERNS.md)
    - Commands follow `Command` interface
    - Use helper functions: `add_*_arguments()`, `validate_*_arguments()`
 
@@ -56,6 +59,10 @@ This is a quick reference for AI assistants working on HexNets. Use this to quic
 2. [FILE_STRUCTURE.md](./FILE_STRUCTURE.md#runs-directory) - Run directory structure
 3. [DEVELOPMENT_PATTERNS.md](./DEVELOPMENT_PATTERNS.md#run-management) - Patterns
 
+### Running unit tests
+1. **`make unit-test`** from repo root (uses `.venv` automatically) — [TESTING.md](./TESTING.md), [shell-venv rule](./rules/shell-venv.mdc)
+2. If not using `make`: `source .venv/bin/activate` or `.venv/bin/python -m pytest tests/`
+
 ## Common Gotchas
 
 See [DEVELOPMENT_PATTERNS.md#common-gotchas](./DEVELOPMENT_PATTERNS.md#common-gotchas) for full list:
@@ -66,6 +73,7 @@ See [DEVELOPMENT_PATTERNS.md#common-gotchas](./DEVELOPMENT_PATTERNS.md#common-go
 4. **Backward compatibility** - Handle old config formats
 5. **Seed not set** - Set in validation, not constructor
 6. **Import paths** - Use relative imports (no `src.` prefix)
+7. **System Python vs venv** - `pytest` / editable install live in `.venv`; use `make` targets or activate — [shell-venv rule](./rules/shell-venv.mdc)
 
 ## Quick Lookups
 
