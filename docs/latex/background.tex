@@ -1,23 +1,71 @@
 \section{Background}
 
-\subsection{Human Inspiration}
-Neural Networks are a leading heuristic for general function approximation given how well they are able to lend themselves to arbitrarily complex non linear correlations between high dimensional spaces.
-Their structure is heavily inspired by similar structures in cerebral connections.
-Human cognition and artificial intelligence thus are known to face common challenges, such as managing knowledge across diverse tasks without losing prior knowledge gain.
-Humans and other cognitively advanced organisms generally use \textbf{integration} to share knowledge between tasks through social structures.
-They share tribal knowledge by teaching new cohort members by showing and doing.
-Modern AI systems use the opposite approach, \textbf{compartmentalization}, by focusing the training and testing of such systems into specific "contexts" to avoid interference of clashing data sets.
-Even omni-model AIs use a small ecosystem of these focused AIs that the orchestrator merely summarizes back to the user, giving the illusion of a single model. \footnote{FIND REF}
-This is largely done to prevent a phenomenon known as "catastrophic forgetting" which is most likely to happen when an AI is presented with a continuous stream of new information.
+\subsection{MLPs and Layered Function Approximation}
+% Points to hit:
 
-Compartmentalization can still occur in humans, however.
-For example, an extreme example thereof can be disassociate identity disorder (DID), where memories are split between identities.
+% MLPs as compositions of affine transformations and nonlinearities.
+% Standard feedforward directionality.
+% Fully connected adjacent-layer transformations.
+% This HexNN keeps this adjacent-layer bipartite assumption but changes the topology/directional interpretation.
 
-% these are other uses of NNs where they use them as classification, not super important for studying that kind of trauma
+\subsection{Symmetry and Equivariance in Neural Networks}
+% Points to hit:
 
-%Artificial Neural Networks have already been successfully used in clinical settings that are adjacent to neuroscience.
-%These include the high-accuracy prediction of relevant traumatic brain injury in pediatric populations. \ref{Hale2019ANN_TBI}
+% CNNs encode translational structure.
+% Group equivariant CNNs encode transformations such as rotations/reflections.
+% Spherical CNNs extend symmetry ideas to spherical domains.
+% Your project differs because:
+% the symmetry is imposed on the network topology, not only the input domain or filter group,
+% the same node/weight structure can be reinterpreted directionally.
 
-%% only a few weights are important to any given "task" whether that be classification or regression, the deeper you go
-The robustness of neural networks comes from the breadth of their intra layer connections.
-In a typical MLP, there are several 
+\subsection{Graph Neural Networks}
+% Points to hit:
+
+% GNNs operate over graph-structured data.
+% Message passing uses adjacency to constrain information flow.
+% HexNN can be described as a graph-structured feedforward network, but it is not necessarily a GNN unless you implement message-passing layers.
+% This helps prevent reviewers from saying, “isn’t this just a GNN?”
+
+% Important distinction:
+
+% HexNN is graph-structured, but its current implementation is closer to a sparse/directed MLP with orientation-specific adjacency than to a conventional message-passing GNN.
+
+
+\subsection{Parameter Sharing, Ensembles, and Multi-Head Models}
+
+% Points to hit:
+
+% Ensembles improve robustness through diversity.
+% Parameter sharing can reduce memory and couple learning.
+% Multi-head/shared-backbone systems separate shared representation from task-specific output layers.
+% HexNN can be interpreted as a parameter-sharing ensemble where directional subnetworks are geometrically coupled.
+
+
+\subsection{Continual Learning and Interference}
+
+% Points to hit:
+
+% Sequential learning can cause interference between tasks.
+% Catastrophic forgetting is a known failure mode.
+% Your experiment is not exactly continual learning unless you train orientations/tasks sequentially.
+% The relevant concept is interference through shared parameters.
+
+
+\subsection{Cognitive Motivation}
+% Points to hit:
+
+% Neural networks are historically brain-inspired abstractions.
+% The HexNN structure was partly motivated by questions about compartmentalized behavior and shared internal representation.
+% This paper does not model DID or human identity.
+% The cognitive analogy is heuristic, not empirical.
+
+Ground breaking architectural models that have been proposed are able to uncover different inductive biases that are not possible with the traditional MLP architecture using natural design as motivation.
+CNNs, for example, discovered feature invariance after modeling the convolutional kernals after the visual cortex and its neurophysiological design.
+RNNs and LSTMs resemble the neurophysiological self looping design of the hippocampus and its role in memory and spatial navigation and this was able to introduce the concept of recurrent connections and the idea of memory cells in artificial intelligence.
+So consider the phenomenon found in people who have a disassociate identity disorder (DID), where memories and personalities are split between identities despite having the same brain.
+To borrow speculative language from Douglas Hofstadter, we can imagine a network toplogy that is able to hold different representations of the same data in the same hardware and each "strange loop" working as its own coherent identity but potentially affecting the learned experiences with other identities.
+
+To be clear, this paper does not model DID or aim to benchmark DID like symptoms in a clear method like the research proposed by [blank].
+DID was the human based inspiration given its similar characteristics to extremely compartmentalized behavior, something not usually found in highly emergent cognitive systems, such as humans.
+This inspiration also comes from the primary author's own trauma with a mother with split identities, and a father with hemiplegia after a hemoraggic stroke impaired his ability to move his left side.
+The cognitive analogy is strictly heuristic, not empirical.

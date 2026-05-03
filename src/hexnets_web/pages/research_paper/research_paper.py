@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import shutil
 import subprocess
+import platform
 from datetime import datetime
 from pathlib import Path
 
@@ -30,6 +31,8 @@ def _pdf_path() -> Path:
 class ResearchPaperPage(BasePage):
     def render(self) -> None:
         st.header("Research Paper")
+
+        st.warning("This page embeds the PDF of the research paper for this repo.  This PDF is a work in progress and is protected by a CC-BY-NC-SA license. Unauthorized use or reproduction is prohibited and will be prosecuted.  For more information, contact the author at daniellopez123456789@gmail.com")
 
         pdf_path = _pdf_path()
         if not pdf_path.exists():
@@ -56,7 +59,12 @@ class ResearchPaperPage(BasePage):
 
         self._render_rebuild_controls()
 
+
+
     def _render_rebuild_controls(self) -> None:
+        if platform.processor() == "":
+            return
+
         with st.expander("Rebuild PDF"):
             has_docker = shutil.which("docker") is not None
             has_make = shutil.which("make") is not None

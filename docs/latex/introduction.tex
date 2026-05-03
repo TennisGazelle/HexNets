@@ -1,22 +1,34 @@
 \section{Introduction}
 
-Multilayer perceptrons are traditionally structured as a unidirectional chain of fully-connected layers, where each layer only connects to the next in sequence.
-While this base model has had several iterations that are found in modern day powerful AI systems, most commercial systems stick to this linear direction of deep learning, given how well this can scale.
-Significant progress has been made on this front as geometric deep learning has explored architectures that are robust to different transformations of data.
-For example, they are invariant to affine transformations such as translation, rotation, scaling.
+\subsection{Gap in the Literature}
 
-However, the expressive potential of neural computation may not be limited to such linear structures.
+Modern day neural networks, such as the classic multilayer perceptron (MLP), are traditionally structured as a unidirectional chain of connected layers, where each layer only connects to the next in sequence.
+This imposes a simple ordered sequence of transformations on the input data, where each layer defines a projection from one dimensional space to another, along with some activation function.
+In the context of the latent space, the transformations represent a hierarchical structure of feature abstractions that depend on the ordered sequence of layers.
 
-Arbitrary Neural Networks, for example, have sparse research surrounding it since they are impractical for scaling in terms of memory, unstructured layers, and time for experimentation.
-More heavily researched architectures, however, include group equivariant CNNs, spherical CNNs, and message passing neural networks in efforts to incorporate symmetry into neural processing.
-Specifically, the filters that are used in convolution layers are rotated for angular invariance of features in the context of image recognition.
-While this symmetry tends to help the network stay robust in equivariance of the system, it still is a single network in a linearly trained direction.
+Through these variations, many inductive biases have been successfully encoded such as convolutional locality, invariance to translation, rotation, scaling, and other geometric transformations.
+While many variations of this base model have been iterated on with respect to shared weights, activation functions, and other hyperparameters, the core architectural ordering of the network remains the same and only a few deviations encode geometric transformations of the data, such as 2D or 3D convolution layers popularized in computer vision tasks.
+Convolutional Neural Networks (CNNs) are a prime example of this, where the convolutional filters are rotated for angular invariance of features in the context of image recognition using parameter sharing in a abstraction we commonly refer to as filters or kernels.
 
-Borrowing from this tradition of symmetry, but allowing multidirectional tiling and directionality, consider a Hexagonally constructed neural network.
-We can preserved bipartite connections between layers to retain the fully connected nature of MLPs, but we can gain rotation redundancy of hexagonal tilings, and expose two more networks with shared weights.
+\subsection{Hexagonal Neural Networks}
+
+
+Let's imagine an architecture that uses a 2D topological arrangement of layers, but instead of having a single direction of propagation, it has multiple directions of propagation.
+They would also use parameter sharing, but in a more flexible way; they would be using the rotation of the entire network itself to ask if directionality and rotational interpretation can be used as an architectural constraint to encode more complex inductive biases through disruptive cross training methods and techniques, if any exist.
+
+Moreover, human cognition and artificial intelligence are known to face common challenges, such as managing knowledge across diverse tasks without losing prior knowledge gain.
+This is known as catastrophic forgetting, where a network trained on one task is unable to perform well on a different task.
+This is a known challenge in artificial intelligence, and it is a known challenge in human cognition.
+
 Here, we introduce Hexagonal Neural Networks (HexNNs) that may generalize MLP into a rotationally symmetric, multi-directional structure.
 
 HexNNs replace the standard 1D layer stack with an initial 2D topological arrangement made to resemble regular hexagons.
+In any one direction, they may still be intepreted as a unidirectional chain of connected layers.
+This allows for the same node set may be traversed in a different direction, and the network may be interpreted as a different network in that direction with some overlap of weights between the two networks.
+
+However, this adds a constraint to the data that may be interpreted as the input and output spaces being the same.
+This would not necessarily be well suited for machine learning tasks such as classification that require a fixed input and output space, although future work may explore this further.
+
 Given a size parameter, $n$, the network has equal $n$ length input and output layers, with hidden layers symmetrically increasing and decreasing to $2n-1$.
 Crucially, each node in layer $i$ is connected to all nodes in layer $i+1$, but unlike MLPs, this bipartite adjacency is true for all three cardinal directions of a hexagon.
 This allows for rotation-based reinterpretation of the network's directionality.
@@ -25,17 +37,24 @@ This design enables six distinct orientations of the same network, each correspo
 We define each orientation as a subset of the network, $H_i$, and note that forward propagation of any $H_i$ is equivalent to backwards propagation of its  corresponding opposite network, $H_{(i+3) \bmod 6}$.
 
 \subsection{Open Questions}
-This architectural symmetry leads to several research questions that can uniquely be defined by this structure, but primarily: \textit{if we train a hexagonal neural network, what impact does that have on the performance of the networks in other directions?}
 
-%
-% TODO: write the below as more questions
-%
+As we can see, this new change in architecture may have some interesting implications for the training of the network.
+What are the implications of training the network in one direction, and how does that impact the training of the network in other directions?
+What effects will this have on the performance of the network in other directions?
+Is there an optimal sequencing of training with intermitten rotations that can yield lower overall loss in any one network or an mixture of experts (MoE) approach that can yield lower overall loss than the MLP equivalent?
 
-% Things we can mess with:
-% - alternate training (learn h1, h2, h3, then delta W? or learn all h1, then delta w then all h2, then delta w, then all h3, and then delta w)
+\subsection{Contributions}
 
-% - training in h1, messes with training in h2, and h3, how?
+In this paper, we present a memory efficient implementation using over padded state vectors and orientation specific adjacency matrices.
+We also establish baselines for HexNNs and their equivalent MLPs and compare the performance of the two architectures across various datasets and hyper parameter configurations.
 
-% - are some directions more 'learnable' than others due to asymmetries in initialization or dataset alignment?
+% todo: we don't have this yet
+We also present the inductive bias: [blank]
+Unlike MLPs, HexNNs are able to present [blank] which can tell us if the data is [blank].
+This could be useful for [blank] tasks where modern day neural networks are not able to perform well.
 
-% - what structural features emerge in the weight matrix when optimzated for ALL SIX directions simultaneously
+% This is because the network is now able to see the data from a different perspective, and therefore, it may be able to learn a different representation of the data.
+% This is similar to the idea of transfer learning, where a network trained on one task is able to help train a network on a different task.
+% However, in this case, the network is able to see the data from a different perspective, and therefore, it may be able to learn a different representation of the data.
+% This is a new way of thinking about training neural networks, and it may be able to help us understand how to best train neural networks.
+
