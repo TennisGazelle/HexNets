@@ -8,6 +8,14 @@
 % Fully connected adjacent-layer transformations.
 % This HexNN keeps this adjacent-layer bipartite assumption but changes the topology/directional interpretation.
 
+At the risk of oversimplification, MLPs are a composition of affine transformations and nonlinearities.
+Even when fully adjacent transformations are substituted for clever parameter sharing in various derivative architectures, the directionality of the network is still constrained to the feedforward directionality.
+
+Unlike its derivatives, however, MLPs are not able to encode more complex inductive biases such as rotational invariance or translational invariance.
+Perhaps this comes from the lack of an architectural constraint to not treat all these inputs as independent features.
+
+This HexNN keeps this adjacent-layer bipartite assumption for any arbitrary direction but changes the topology/directional interpretation to potentially allow for more complex inductive biases.
+
 \subsection{Symmetry and Equivariance in Neural Networks}
 % Points to hit:
 
@@ -17,6 +25,33 @@
 % Your project differs because:
 % the symmetry is imposed on the network topology, not only the input domain or filter group,
 % the same node/weight structure can be reinterpreted directionally.
+
+Convolutional Neural Networks (CNNs) are a prime example of how the geometric structure of the network itself can be used to encode more complex inductive biases.
+They encode translational equivariance and locality of features in the input data by using convolutional filters that are "slid" across the input data.
+Their derivative architecture use geometric iterations on their kernels and inputs to help them unlock higher level inductive biases:
+Group equivariants CNNS encode the symmetry of the input data itself to achieve reflective equivariance and Spherical CNNs extend the symmetry ideas to spherical domains for rotational equivariance.
+Capsule Networks project their input data into higher dimensionality with their vector interpretaion to generalize these biases all at once. 
+
+All of these architectures, however, still impose a feed forward directionality on the layer ordering.
+In the case of HexNNs, the symmetry is imposed on the network topology itself, not only the input domain or filter group.
+This allows for the same node/weight structure to be reinterpreted directionally with abstraction bleeding between the different directions.
+
+% \begin{table*}
+%     \centering
+%     \begin{tabular}{c|c|c}
+%         Architecture & Key Difference from MLP & Inductive Biases \\
+%         \hline
+%         \hline
+%         CNN & Convolutional Filters & Translational equivariance; Locality \\
+%         \hline
+%         RNNs (LSTMs, GRUs, etc.) & Recurrent Connections & Equivariance to Temporal Ordering; Statefulness; Causal Structures \\
+%         \hline
+%         Transformers (BERT, GPT, etc.) & Attention Mechanism & Permutational invariance; Global Context; Scalable Attention; Self-Attention \\
+%         \hline
+%         GNNs (GraphSAGE, GAT, etc.) & Message Passing & Graph Structure \\
+%         \hline
+%     \end{tabular}
+% \end{table*}
 
 \subsection{Graph Neural Networks}
 % Points to hit:

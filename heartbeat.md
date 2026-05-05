@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **Agent docs — venv / tests**: Added always-applied [`.cursor/rules/shell-venv.mdc`](.cursor/rules/shell-venv.mdc) (prefer `make` targets or `source .venv` / `.venv/bin/python`); linked from `.cursor/README.md`, `AI_QUICK_INDEX.md`, `TESTING.md`, and root `README.md` tests line.
+- **LaTeX (`docs/latex/main.tex`)**: Fixed bibliography setup: `biblatex` now uses `\addbibresource{citations.bib}` + `\printbibliography` (not `\bibliography`); database moved to `citations.bib`; added missing `conclusion.tex`; example `\cite{kirkpatrick2017overcoming}` in `results.tex`.
 
 ---
 
