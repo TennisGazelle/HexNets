@@ -41,6 +41,13 @@ For mathematical simplicity, we employ a global weight matrix $W$, a adjacency m
 Given that $H_0$ is directionally opposite $H_4$, they would share exactly the same weights.
 While empirical trials on MLPs show that bidirectional training on the same weights show catastrophic loss, (find reference), we could theoretically use different cells to represent that as a separate network and still maintain directional-abstraction bleeding between immediately neighboring dimensions.
 If this were the case, then $W$ would not be symmetric.
+An example of this is shown in Figure \ref{fig:hexnet_n3_multi_activation}.
+
+\begin{figure}
+    \includegraphics[width=1\linewidth]{hexnet_n3_multi_activation.png}
+    \caption{Overlay of the orientation-specific adjacency patterns for a HexNN with n=3. Each color corresponds to one directed orientation.}
+    \label{fig:hexnet_n3_multi_activation}
+\end{figure}
 
 \subsubsection{Directional W}
 We can represent the static MLP view of any arbitrary rotation, $r \in {0, 1, 2, 3, 4, 5}$ as $W_i$ with a mask over $W$ enforcing a layered feedforward structure.
