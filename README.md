@@ -48,7 +48,7 @@ Sidebar pages (default **CLI Builder**): **CLI Builder**, **Network Explorer**, 
 | Command | Role |
 |---------|------|
 | `hexnet ref` | Reference graphs (`-g` types, `--all`, `-m hex\|mlp`) |
-| `hexnet train` | Train hex or MLP; writes under `runs/` (optional `--run-note`, `--run-tags`; optional `--dataset-noise` / `--dataset-noise-mu` / `--dataset-noise-sigma` for synthetic data) |
+| `hexnet train` | Train hex or MLP; writes under `runs/` (optional `--run-note`, `--run-tags`; optional `--dataset-noise` / `--dataset-noise-mu` / `--dataset-noise-sigma` for synthetic data). Start from an existing `runs/.../config.json` shape with `-rc` / `--run-config <path>` or `--run-config-json '<json>'`; any other CLI flags you pass override that template (omit a flag to keep the value from the JSON). Incompatible with `--run-dir` (resume). |
 | `hexnet adhoc` | Quick scripted demo |
 | `hexnet stats <run_dir>` | Inspect a saved run |
 

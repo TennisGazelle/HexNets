@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **LaTeX (`docs/latex/main.tex`)**: Fixed bibliography setup: `biblatex` now uses `\addbibresource{citations.bib}` + `\printbibliography` (not `\bibliography`); database moved to `citations.bib`; added missing `conclusion.tex`; example `\cite{kirkpatrick2017overcoming}` in `results.tex`.
+- **Train CLI**: Implemented `hexnet train -rc` / `--run-config` and `--run-config-json` to start a new run from a `config.json`-shaped template, with explicit CLI flags overriding the file; see [README.md](README.md) CLI table.
 
 ---
 

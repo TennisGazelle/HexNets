@@ -12,6 +12,10 @@ from commands.command import (
     validate_global_arguments,
     get_dataset,
 )
+from commands.run_config_template import (
+    merge_run_config_template_args,
+    validate_run_config_cli_exclusivity,
+)
 from services.run_service import RunService
 from services.logging_config import get_logger
 
@@ -89,6 +93,32 @@ class TrainCommand(Command):
             help='Optional comma-separated tags stored in manifest (e.g. "paper,v1").',
             dest="run_tags",
         )
+
+        parser.add_argument(
+            "-rc",
+            "--run-config",
+            type=pathlib.Path,
+            default=None,
+            required=False,
+            help="Start a new run from this config.json (same schema as runs/.../config.json). CLI flags override the file.",
+            dest="run_config",
+        )
+
+        parser.add_argument(
+            "--run-config-json",
+            type=str,
+            default=None,
+            required=False,
+            help="Same as --run-config but pass a JSON object as a string (shell-escape carefully). CLI flags override.",
+            dest="run_config_json",
+        )
+
+    def __call__(self, args: Namespace):
+        validate_run_config_cli_exclusivity(args)
+        if getattr(args, "run_config", None) is not None or getattr(args, "run_config_json", None) is not None:
+            args = merge_run_config_template_args(args)
+        self.validate_args(args)
+        self.invoke(args)
 
     def validate_args(self, args: Namespace):
         validate_hex_only_arguments(args)

@@ -26,7 +26,7 @@ This yields a central question: whether this directional weight sharing produces
 % This allows for the same node set may be traversed in a different direction, and the network may be interpreted as a different network in that direction with some overlap of weights between the two networks.
 
 Because each orientation exposes input and output layers of equal width, the present formulation is most natural for tasks where input and output vectors have the same dimensionality, such as reconstruction, identity mappings, or vector-to-vector regression.
-This would not necessarily be well suited for machine learning tasks such as classification that require a fixed input and output space, although future work may explore this further.
+Classification tasks may still be represented, but may require additional post processing layers in case the number of features is not the same as the number of classes.
 
 Given a size parameter, $n$, the network has equal $n$ length input and output layers, with hidden layers symmetrically increasing and decreasing to $2n-1$.
 Crucially, each node in layer $i$ is connected to all nodes in layer $i+1$, but unlike MLPs, this bipartite adjacency is true for all three cardinal directions of a hexagon.
