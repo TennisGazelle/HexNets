@@ -62,11 +62,13 @@ Let:
 \end{itemize}
 
 \subsubsection{Directions as Rotations}
-As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{(i+3) \bmod 6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can be reused.
+As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{(i+3) \bmod 6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can all be considered symmetric (or at least will be in this paper).
+But this now introduces rotation as a potentially active participant in the training steps.
 Thus, for forward propagation, you can just iteratively compute:
 
-\[x^{t+1} = f(W^T \times x^t)\]
+\[x_{t+1} = R_k(f_d(W^T \times p_d(x_t)))\]
 
+where $x_t$ is the latent vector at step $t$, $f_d$ is the hex net forward propagation through direction $d$, $R_k$ is the rotation operator at $k$, the selected rotation step, and $p_d is merely a padded mapping of x$
 
 \subsubsection{Adjacency Matrices}
 
@@ -107,27 +109,26 @@ We can see this pattern hold as $n$ grows for $H_1$ in \ref{fig:adj-matrix-n234}
 % TODO: add information about rotation
 %
 
-\subsection{Traditional Neural Network Operations}
+% \subsection{Traditional Neural Network Operations}
 
-The connections between nodes in any neural network serve as weights, and thus the adjacency matrix $A^i$ can be $W^{i} \in \mathbb{R}^{T \times T}$ where all values that are not zero as previously defined are now a real number.
+% The connections between nodes in any neural network serve as weights, and thus the adjacency matrix $A^i$ can be $W^{i} \in \mathbb{R}^{T \times T}$ where all values that are not zero as previously defined are now a real number.
 
-Thus, for forward propagation, you can just iteratively compute:
+% Thus, for forward propagation, you can just iteratively compute:
 
-\[x^{t+1} = f(W^T \times x^t)\]
+% \[x^{t+1} = f(W^T \times x^t)\]
 
-where $f$ is a typical activation function for neural networks, and $x$ is the padded form of the input vector.
-This padding brings $x$ from $n$ dimensions to $T$ dimensions for ease of multiplication with $W$.
+% where $f$ is a typical activation function for neural networks, and $x$ is the padded form of the input vector.
+% This padding brings $x$ from $n$ dimensions to $T$ dimensions for ease of multiplication with $W$.
 
-\subsubsection{Example Flow with $n=2$}
+\subsubsection{Example Training Step Flow with $n=2$}
 
 In a network with $n=2$,
 \begin{itemize}
     \item The layer sizes are $[2, 3, 2]$
     \item The total number of nodes is $T = 7$
     \item The Weight and Adjacency matrices $A, W \in \mathbb{R}^{7 \times 7}$
-    \item The padded input vector $x$ is
-
-    \[x = \begin{bmatrix}
+    \item The padded input vector $p_0(x)$ is
+    \[x_t = \begin{bmatrix}
         x_0 \\
         x_1 \\
         0 \\
@@ -136,14 +137,47 @@ In a network with $n=2$,
         0 \\
         0 \\
     \end{bmatrix}\]
-    \item Computation is simply:
+
+    \item And the padded response vector is
+    \[\text{calculated } y_t = \begin{bmatrix}
+        0 \\
+        0 \\
+        0 \\
+        0 \\
+        0 \\
+        y_0 \\
+        y_1 \\
+    \end{bmatrix}\]
     
 \end{itemize}
 
 % While this emergent sparse-style network lends itself cleanly for memory optimization, this paper will not focus on that since there are \footnote{come back and add more as we see later} mathematical utilization of the all zero matrices.
 % For example, a full forward propagation through $H_1$ can be mathematically equivalent to projecting your feature network from $n$ dimensions to $T$ (front padded by $n$ zeros, and then the remaining back padding with zeros as well), and multiplying the resultant vector by $W^1$ a total of $2(n-1)$ times to get the output vector.
 
-\subsection{Network Variance}
+\section{Benchmark Families}
+
+The full cartesian product of all datasets and all known activation patterns, loss functions, learning rate, optimizers now with the new rotation operator would be thorough, it's not quite feasible for the scope of a paper, but it is considered for future work and exhaustive Hexnet dynamic surveying.
+
+Therefore we define a Benchmark Family is a subset of this cartesian product where hold certain hyperparameter constants and test individual themes with thess operators.
+The theme of each family is described below.
+
+\subsection{Family A - Linear Structure Recovery}
+
+Hyper parameters that we will sweep:
+
+\begin{table*}
+    \centering
+    \begin{tabular}{c|c}
+        Variable & Options \\
+        \hline
+        \hline
+        Models & hex, mlp \\
+        Activations & linear, relu, leaky\_relu \\
+        Losses & mean\_squared\_error, huber \\
+        Learning Rates & constant, exponential\_decay \\
+        Dimension & Ladder up by twos, 2, 4, 6, 8 \\
+    \end{tabular}
+\end{table*}
 
 If we interpret six co-dependent multi layer perceptrons as an ensemble with parameter tying, here are a few variants that we could try finding baselines within the guidance of ensemble based learning.
 
