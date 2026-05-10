@@ -39,6 +39,25 @@ def oddq_col(q: int, r: int) -> int:
     """Column in odd-q vertical layout (for staggered ASCII rows)."""
     return q + (r - (r & 1)) // 2
 
+def axial_to_terminal_xy(q: int, r: int) -> tuple[int, int]:
+    """
+    Integer terminal coordinates for a flat-top hex grid.
+
+    Direction behavior:
+      m0: straight up
+      m1: upper-right
+      m2: lower-right
+      m3: straight down
+      m4: lower-left
+      m5: upper-left
+
+    This matches AXIAL_STEP:
+      (0,-1), (1,-1), (1,0), (0,1), (-1,1), (-1,0)
+    """
+    x = 6 * q
+    y = 4 * r + 2 * q
+    return x, y
+
 
 def step_axial(q: int, r: int, direction: int) -> tuple[int, int]:
     dq, dr = AXIAL_STEP[direction]
@@ -47,22 +66,29 @@ def step_axial(q: int, r: int, direction: int) -> tuple[int, int]:
 
 def axial_to_plot_xy(q: int, r: int) -> tuple[float, float]:
     """
-    Pointy-top axial hex center.
+    Pointy-top hex center coordinates matching the command directions:
 
-    Uses hex radius = 1.0, so neighboring hex centers are spaced exactly
-    such that drawn RegularPolygon hexes touch edge-to-edge.
+        h0 / m0: straight up
+        h1 / m1: upper-right
+        h2 / m2: lower-right
+        h3 / m3: straight down
+        h4 / m4: lower-left
+        h5 / m5: upper-left
+
+    Hex radius is assumed to be 1.0 in plot_maze_hexbin.
+    Adjacent centers are sqrt(3) apart, so hexes touch edge-to-edge.
     """
-    x = math.sqrt(3) * (q + r / 2)
-    y = -1.5 * r
+    x = 1.5 * q
+    y = -math.sqrt(3) * (r + q / 2)
     return x, y
 
 
 def plot_maze_hexbin(ax, ant_q: int, ant_r: int, radius: int) -> None:
     """
-    Draw actual touching hex tiles instead of using matplotlib.hexbin.
+    Draw explicit touching pointy-top hex tiles.
 
-    `hexbin` bins points into its own rectangular data grid, so your axial
-    centers were being interpreted as samples, not as literal hex-cell centers.
+    Do not use ax.hexbin here: hexbin rebins scattered sample points instead
+    of treating your axial coordinates as literal cell centers.
     """
     from matplotlib.patches import RegularPolygon
 
@@ -78,7 +104,7 @@ def plot_maze_hexbin(ax, ant_q: int, ant_r: int, radius: int) -> None:
             (x, y),
             numVertices=6,
             radius=HEX_RADIUS,
-            orientation=math.radians(30),  # pointy-top hex
+            orientation=math.radians(30),  # flat top
             facecolor="orangered" if is_ant else "white",
             edgecolor="0.45",
             linewidth=1.0,
@@ -86,23 +112,21 @@ def plot_maze_hexbin(ax, ant_q: int, ant_r: int, radius: int) -> None:
         )
         ax.add_patch(tile)
 
-    # Optional center dot for the ant, closer to your screenshot style.
     ant_x, ant_y = axial_to_plot_xy(ant_q, ant_r)
     ax.scatter(
         [ant_x],
         [ant_y],
         c=["orangered"],
-        s=90,
+        s=64,
         zorder=10,
         edgecolors="black",
         linewidths=0.8,
     )
 
-    # Tight bounds around the disk.
     centers = [axial_to_plot_xy(q, r) for q, r in iter_disk_cells(radius)]
     xs = [x for x, _ in centers]
     ys = [y for _, y in centers]
-    pad = 1.25
+    pad = 1.35
 
     ax.set_xlim(min(xs) - pad, max(xs) + pad)
     ax.set_ylim(min(ys) - pad, max(ys) + pad)
@@ -125,34 +149,87 @@ def render_narrow(ant_q: int, ant_r: int, radius: int) -> str:
 
 
 def render_wide(ant_q: int, ant_r: int, radius: int) -> str:
-    """Place cells by pointy-top axial x; consecutive screen rows per axial r (no blank r-bands)."""
+    """
+    Render a real touching flat-top hex grid in the terminal.
+
+    Split into:
+      - draw_hex_edges: structural cell boundary
+      - draw_cell_contents: normal cell marker
+      - draw_ant: ant marker overlay
+      - canvas_to_string: final terminal text
+    """
     cells = iter_disk_cells(radius)
-    rs_sorted = sorted({r for _, r in cells})
-    row_of_r = {r: i for i, r in enumerate(rs_sorted)}
-    scale_x = 4.0
-    staged: list[tuple[int, int, str]] = []
+    canvas: dict[tuple[int, int], str] = {}
+
+    def put(x: int, y: int, ch: str) -> None:
+        existing = canvas.get((x, y))
+
+        # Contents should win over edge/background characters.
+        if ch in ("@", "."):
+            canvas[(x, y)] = ch
+            return
+
+        # Do not overwrite cell contents with edges.
+        if existing in ("@", "."):
+            return
+
+        canvas[(x, y)] = ch
+
+    def draw_hex_edges(q: int, r: int) -> None:
+        cx, cy = axial_to_terminal_xy(q, r)
+
+        # Top and bottom horizontal edges.
+        for dx in range(-2, 3):
+            put(cx + dx, cy - 2, "_")
+            put(cx + dx, cy + 2, "_")
+
+        # Upper diagonals.
+        put(cx - 3, cy - 1, "/")
+        put(cx + 3, cy - 1, "\\")
+
+        # Lower diagonals.
+        put(cx - 3, cy + 1, "\\")
+        put(cx + 3, cy + 1, "/")
+
+    def draw_cell_contents(q: int, r: int) -> None:
+        cx, cy = axial_to_terminal_xy(q, r)
+        put(cx, cy, ".")
+
+    def draw_ant(q: int, r: int) -> None:
+        cx, cy = axial_to_terminal_xy(q, r)
+        put(cx, cy, "@")
+
+    def canvas_to_string() -> str:
+        if not canvas:
+            return ""
+
+        min_x = min(x for x, _ in canvas)
+        max_x = max(x for x, _ in canvas)
+        min_y = min(y for _, y in canvas)
+        max_y = max(y for _, y in canvas)
+
+        lines: list[str] = []
+        for y in range(min_y, max_y + 1):
+            line = "".join(
+                canvas.get((x, y), " ")
+                for x in range(min_x, max_x + 1)
+            )
+            lines.append(line.rstrip())
+
+        return "\n".join(lines)
+
+    # 1. Draw structure first.
     for q, r in cells:
-        xf = math.sqrt(3) * (q + r / 2)
-        xi = int(round(xf * scale_x))
-        yi = row_of_r[r]
-        ch = "@" if (q, r) == (ant_q, ant_r) else "."
-        staged.append((xi, yi, ch))
-    staged.sort(key=lambda t: (t[1], t[0]))
-    occupied: dict[tuple[int, int], str] = {}
-    for xi, yi, ch in staged:
-        while (xi, yi) in occupied:
-            xi += 1
-        occupied[(xi, yi)] = ch
-    if not occupied:
-        return ""
-    min_x = min(x for x, _ in occupied)
-    max_x = max(x for x, _ in occupied)
-    min_y = min(y for _, y in occupied)
-    max_y = max(y for _, y in occupied)
-    lines: list[str] = []
-    for y in range(min_y, max_y + 1):
-        lines.append("".join(occupied.get((x, y), " ") for x in range(min_x, max_x + 1)))
-    return "\n\n".join(lines)
+        draw_hex_edges(q, r)
+
+    # 2. Draw default contents.
+    for q, r in cells:
+        draw_cell_contents(q, r)
+
+    # 3. Draw ant last so it overlays the normal marker.
+    draw_ant(ant_q, ant_r)
+
+    return canvas_to_string()
 
 
 def format_frame(
