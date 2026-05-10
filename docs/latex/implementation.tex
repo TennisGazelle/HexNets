@@ -12,7 +12,7 @@ This overlap is small but non-neglible as these weights are now subject to the g
 Experimentally, we actually see equivalent or better another local optimum, outperforming the two original networks had they been started with the same random seed patterns for their respective weights across the benchmark set (detailed below).
 Since each layer represents a layer of abstraction away from the input reality towards the target reality, it could be speculated that any one layer's abstraction has a cross abstractive coherence bias on another's direction and thus representation.
 
-\subsection{Mathematical Definitions}
+\subsection{The Greek Stuff}
 
 The layer sizes of a HexNet of a parameter size $n$ follow an explicit pattern:
 
@@ -61,6 +61,15 @@ Let:
     \item $S_{l}$ be the set of indices in layer $l$
 \end{itemize}
 
+\subsubsection{Directions as Rotations}
+As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{(i+3) \bmod 6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can be reused.
+Thus, for forward propagation, you can just iteratively compute:
+
+\[x^{t+1} = f(W^T \times x^t)\]
+
+
+\subsubsection{Adjacency Matrices}
+
 Then, the $H_1$, the only non-zero entries in $A$ are defined as:
 
 \[A_{ij}=\begin{cases}
@@ -92,10 +101,6 @@ We can see this pattern hold as $n$ grows for $H_1$ in \ref{fig:adj-matrix-n234}
     \caption{Adjacency Matrix showcasing the Block structure for $H_1$}
     \label{fig:adj-matrix-n234}
 \end{figure}
-
-\subsubsection{Rotations}
-
-As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{(i+3) \bmod 6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can be reused.
 
 
 %
