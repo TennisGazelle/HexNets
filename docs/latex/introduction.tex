@@ -16,6 +16,7 @@ Here, we introduce Hexagonal Neural Networks (HexNNs) that generalizes MLPs into
 
 This architecture arranges nodes in a two-dimensional hexagonal topology rather than a single ordered layer stack, like the example shown in Figure \ref{fig:hexnet_n3_r0}.
 This allows for the same set of nodes and edges to be interpreted and traversed under multiple directed orientations.
+An orientation $H_i$ is a directed acyclic subgraph induced by choosing one of the six directed axes of the hexagonal topology.
 Thusly, it is now possible to train one orientation while evaluating how that update affects the other orientations.
 This yields a central question: whether this directional weight sharing produces measurable transfer or interference between orientations.
 
