@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **Train CLI**: Implemented `hexnet train -rc` / `--run-config` and `--run-config-json` to start a new run from a `config.json`-shaped template, with explicit CLI flags overriding the file; see [README.md](README.md) CLI table.
+- **Maze easter egg**: `hexnet maze` adds `--window cli|plot` (matplotlib hexbin + ant scatter vs terminal); see [README.md](README.md) CLI table.
 
 ---
 

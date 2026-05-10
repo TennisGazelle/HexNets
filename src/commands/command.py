@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
+from typing import ClassVar
 import random
 import numpy as np
 import logging
@@ -72,6 +73,8 @@ def get_dataset(
 
 
 class Command(ABC):
+    #: When False, `cli.main` skips `print_header()` before invoking this command.
+    show_cli_banner: ClassVar[bool] = True
 
     def __call__(self, args: Namespace):
         self.validate_args(args)

@@ -5,6 +5,7 @@ from commands.reference_command import ReferenceCommand
 from commands.adhoc_command import AdhocCommand
 from commands.train_command import TrainCommand
 from commands.stats_command import StatsCommand
+from commands.maze_command import MazeCommand
 from services.logging_config import setup_logging, get_logger
 from commands.command import print_header
 
@@ -16,7 +17,7 @@ def parse_args():
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
-    commands = [ReferenceCommand(), AdhocCommand(), TrainCommand(), StatsCommand()]
+    commands = [ReferenceCommand(), AdhocCommand(), TrainCommand(), StatsCommand(), MazeCommand()]
 
     for command in commands:
         subparser = subparsers.add_parser(command.name(), help=command.help())
@@ -38,8 +39,9 @@ def parse_args():
 def main():
     # Initialize logging
     setup_logging(level=logging.INFO)
-    print_header()
     args, command = parse_args()
+    if type(command).show_cli_banner:
+        print_header()
     try:
         command(args)
     except ValueError as e:

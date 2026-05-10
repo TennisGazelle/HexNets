@@ -9,10 +9,11 @@ from __future__ import annotations
 from commands.adhoc_command import AdhocCommand
 from commands.reference_command import ReferenceCommand
 from commands.stats_command import StatsCommand
+from commands.maze_command import MazeCommand
 from commands.train_command import TrainCommand
 from hexnets_web.cli_types import CliNode
 
-_COMMAND_CLASSES = (ReferenceCommand, AdhocCommand, TrainCommand, StatsCommand)
+_COMMAND_CLASSES = (ReferenceCommand, AdhocCommand, TrainCommand, StatsCommand, MazeCommand)
 
 
 def build_cli_root() -> CliNode:
