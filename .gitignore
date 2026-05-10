@@ -221,3 +221,4 @@ docs/latex/*.bbl
 docs/latex/*.blg
 docs/latex/*.bcf
 docs/latex/*.xml
+docs/latex/*ERROR

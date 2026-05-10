@@ -154,31 +154,6 @@ In a network with $n=2$,
 % While this emergent sparse-style network lends itself cleanly for memory optimization, this paper will not focus on that since there are \footnote{come back and add more as we see later} mathematical utilization of the all zero matrices.
 % For example, a full forward propagation through $H_1$ can be mathematically equivalent to projecting your feature network from $n$ dimensions to $T$ (front padded by $n$ zeros, and then the remaining back padding with zeros as well), and multiplying the resultant vector by $W^1$ a total of $2(n-1)$ times to get the output vector.
 
-\section{Benchmark Families}
-
-The full cartesian product of all datasets and all known activation patterns, loss functions, learning rate, optimizers now with the new rotation operator would be thorough, it's not quite feasible for the scope of a paper, but it is considered for future work and exhaustive Hexnet dynamic surveying.
-
-Therefore we define a Benchmark Family is a subset of this cartesian product where hold certain hyperparameter constants and test individual themes with thess operators.
-The theme of each family is described below.
-
-\subsection{Family A - Linear Structure Recovery}
-
-Hyper parameters that we will sweep:
-
-\begin{table*}
-    \centering
-    \begin{tabular}{c|c}
-        Variable & Options \\
-        \hline
-        \hline
-        Models & hex, mlp \\
-        Activations & linear, relu, leaky\_relu \\
-        Losses & mean\_squared\_error, huber \\
-        Learning Rates & constant, exponential\_decay \\
-        Dimension & Ladder up by twos, 2, 4, 6, 8 \\
-    \end{tabular}
-\end{table*}
-
 If we interpret six co-dependent multi layer perceptrons as an ensemble with parameter tying, here are a few variants that we could try finding baselines within the guidance of ensemble based learning.
 
 We will establish some baseline models, and their expected outputs.
