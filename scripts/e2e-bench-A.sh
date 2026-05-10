@@ -26,28 +26,30 @@ for dataset in "${DATASETS[@]}"; do
                 rm -rf "runs/e2etest-famA/hex-${combo_string}"
                 e2e_train "Family A hex: ${combo_string}" \
                     hexnet train \
-                    -m hex -n "${N_DIMENSIONS}" -r 0 \
-                    -e "${E2E_EPOCHS}" \
-                    -t "${dataset}" \
-                    -a "${activation}" \
-                    -l "${loss}" \
-                    -lr "${learning_rate}" \
-                    -rn "e2etest-famA/hex-${combo_string}" \
-                    --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
-                    --run-note "e2e benchmark family A (linear)"&
+                        -m hex -n "${N_DIMENSIONS}" -r 0 \
+                        -e "${E2E_EPOCHS}" \
+                        -t "${dataset}" \
+                        -a "${activation}" \
+                        -l "${loss}" \
+                        -lr "${learning_rate}" \
+                        -rn "e2etest-famA/hex-${combo_string}" \
+                        --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
+                        --run-note "e2e benchmark family A (linear)"\
+                    &
 
                 rm -rf "runs/e2etest-famA/mlp-${combo_string}"
                 e2e_train "Family A mlp: ${combo_string}"
                     hexnet train \
-                    -m mlp -n "${N_DIMENSIONS}" \
-                    -e "${E2E_EPOCHS}" \
-                    -t "${dataset}" \
-                    -a "${activation}" \
-                    -l "${loss}" \
-                    -lr "${learning_rate}" \
-                    -rn "e2etest-famA/mlp-${combo_string}" \
-                    --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
-                    --run-note "e2e benchmark family A (linear)"&
+                        -m mlp -n "${N_DIMENSIONS}" \
+                        -e "${E2E_EPOCHS}" \
+                        -t "${dataset}" \
+                        -a "${activation}" \
+                        -l "${loss}" \
+                        -lr "${learning_rate}" \
+                        -rn "e2etest-famA/mlp-${combo_string}" \
+                        --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
+                        --run-note "e2e benchmark family A (linear)"\
+                    &
             done
         done
         wait
