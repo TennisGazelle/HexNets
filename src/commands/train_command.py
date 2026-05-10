@@ -160,7 +160,7 @@ class TrainCommand(Command):
 
         run = RunService(args)
         net = run.net
-        run.print_paths()
+        # run.print_paths()
         net.show_stats()
 
         if args.dry_run:

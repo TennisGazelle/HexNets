@@ -26,12 +26,12 @@ for dataset in "${DATASETS[@]}"; do
                 rm -rf "runs/e2etest-famA/hex-${combo_string}"
                 e2e_train "Family A hex: ${combo_string}" \
                     hexnet train \
-                        -m hex -n "${N_DIMENSIONS}" -r 0 \
-                        -e "${E2E_EPOCHS}" \
+                        --model hex --num_dims "${N_DIMENSIONS}" --rotation 0 \
+                        --epochs "${E2E_EPOCHS}" \
                         -t "${dataset}" \
-                        -a "${activation}" \
-                        -l "${loss}" \
-                        -lr "${learning_rate}" \
+                        --activation "${activation}" \
+                        --loss "${loss}" \
+                        --learning-rate "${learning_rate}" \
                         -rn "e2etest-famA/hex-${combo_string}" \
                         --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
                         --run-note "e2e benchmark family A (linear)"\
@@ -40,18 +40,18 @@ for dataset in "${DATASETS[@]}"; do
                 rm -rf "runs/e2etest-famA/mlp-${combo_string}"
                 e2e_train "Family A mlp: ${combo_string}"
                     hexnet train \
-                        -m mlp -n "${N_DIMENSIONS}" \
-                        -e "${E2E_EPOCHS}" \
+                        --model mlp --num_dims "${N_DIMENSIONS}" \
+                        --epochs "${E2E_EPOCHS}" \
                         -t "${dataset}" \
-                        -a "${activation}" \
-                        -l "${loss}" \
-                        -lr "${learning_rate}" \
+                        --activation "${activation}" \
+                        --loss "${loss}" \
+                        --learning-rate "${learning_rate}" \
                         -rn "e2etest-famA/mlp-${combo_string}" \
                         --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
                         --run-note "e2e benchmark family A (linear)"\
                     &
             done
         done
-        wait
     done
+    wait
 done
