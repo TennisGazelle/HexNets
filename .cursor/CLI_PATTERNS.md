@@ -11,7 +11,8 @@ commands = [
     ReferenceCommand(),
     AdhocCommand(),
     TrainCommand(),
-    StatsCommand()
+    StatsCommand(),
+    MazeCommand(),
 ]
 
 for command in commands:
@@ -24,6 +25,7 @@ for command in commands:
 - Commands are instantiated once (singleton-like)
 - Each command configures its own subparser
 - Command instance is stored in `args.command`
+- `Command.show_cli_banner` (class attribute, default `True`): when `False`, `cli.main` skips `print_header()` before invoking that command (used by `maze`).
 
 ## Command Interface
 
