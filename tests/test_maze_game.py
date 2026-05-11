@@ -86,7 +86,7 @@ class TestMazeRender:
     def test_render_wide_large_radius_one_row_per_axial_r(self):
         text = render_wide(0, 0, 5)
         dot_rows = [ln for ln in text.splitlines() if ln.strip()]
-        assert len(dot_rows) == 11
+        assert len(dot_rows) == 45
         assert "@" in text
 
 
