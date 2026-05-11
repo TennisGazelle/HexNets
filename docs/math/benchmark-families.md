@@ -15,7 +15,6 @@
 | Noise         | `--dataset-noise` {`inputs`,`targets`,`both`}, `--dataset-noise-sigma`, `--dataset-noise-mu` |
 
 
-**Principle:** do **not** start with every activation × every loss × every dataset × every dimension × every seed. Use **families** first; expand grids only where a family already shows signal.
 
 **Registry extras:** `soft_threshold`, `sparse_identity` are registered for stress / failure studies but are optional in early slates.
 
