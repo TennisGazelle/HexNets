@@ -39,6 +39,7 @@ def oddq_col(q: int, r: int) -> int:
     """Column in odd-q vertical layout (for staggered ASCII rows)."""
     return q + (r - (r & 1)) // 2
 
+
 def axial_to_terminal_xy(q: int, r: int) -> tuple[int, int]:
     """
     Integer terminal coordinates for a flat-top hex grid.
@@ -210,10 +211,7 @@ def render_wide(ant_q: int, ant_r: int, radius: int) -> str:
 
         lines: list[str] = []
         for y in range(min_y, max_y + 1):
-            line = "".join(
-                canvas.get((x, y), " ")
-                for x in range(min_x, max_x + 1)
-            )
+            line = "".join(canvas.get((x, y), " ") for x in range(min_x, max_x + 1))
             lines.append(line.rstrip())
 
         return "\n".join(lines)
