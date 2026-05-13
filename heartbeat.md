@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **Run config (code)**: [`RunConfig`](src/services/run_config/RunConfig.py) in [`src/services/run_config/`](src/services/run_config/) — validates on-disk ``config.json``, normalizes legacy dataset blocks, and merges ``hexnet train --run-config*`` with CLI overrides; [`RunService`](src/services/run_service/RunService.py) keeps **`run_config: RunConfig`** (and a **`config_contents`** property alias to the same dict) and calls **`RunConfig.from_ingested_dict`** on resume ingest.
+- **Hex `model_metadata`**: optional `epr` (epochs per rotation) and `ro` (rotation ordering) — CLI flags `--epr` / `--ro`, `RunConfig` + `HexagonalNeuralNetwork.validate_run_metadata` validation; training loop behavior not wired yet.
 
 ---
 

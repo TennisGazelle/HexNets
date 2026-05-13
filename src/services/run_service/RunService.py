@@ -94,6 +94,12 @@ class RunService:
                 model_metadata = self.run_config.contents["model_metadata"]
                 model_metadata["n"] = args.n
                 model_metadata["r"] = args.rotation
+                epr = getattr(args, "epr", None)
+                ro = getattr(args, "ro", None)
+                if epr is not None:
+                    model_metadata["epr"] = int(epr)
+                    if ro is not None:
+                        model_metadata["ro"] = list(ro)
                 self.net = HexagonalNeuralNetwork(
                     n=model_metadata["n"],
                     r=model_metadata["r"],

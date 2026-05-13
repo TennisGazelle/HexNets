@@ -87,13 +87,15 @@ class ReferenceCommand(Command):
         else:
             # Check if at least something is specified
             # All three (n, r, graph) can be None if not specified
-            if args.n is None and args.rotation is None and args.graph is None:
+            has_epr_ro = getattr(args, "epr", None) is not None or getattr(args, "ro", None) is not None
+            if args.n is None and args.rotation is None and args.graph is None and not has_epr_ro:
                 raise ValueError(
                     "No parameters specified. Please specify at least one of: -n/--num_dims, -r/--rotation, "
-                    "or -g/--graph. Use --all to generate all reference graphs."
+                    "-g/--graph, --epr/--epochs-per-rotation, or --ro/--rotation-ordering. "
+                    "Use --all to generate all reference graphs."
                 )
             # Validate the specified values
-            if args.n is not None or args.rotation is not None:
+            if args.n is not None or args.rotation is not None or has_epr_ro:
                 # Create a temporary args object with defaults for validation
                 temp_args = Namespace(**vars(args))
                 if temp_args.n is None:

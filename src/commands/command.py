@@ -6,6 +6,7 @@ import numpy as np
 import logging
 
 from networks.activation.activations import get_available_activation_functions
+from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from networks.loss.loss import get_available_loss_functions
 from networks.learning_rate.learning_rate import get_available_learning_rates
 from data.dataset import (
@@ -126,6 +127,24 @@ def add_hex_only_arguments(parser: ArgumentParser, set_defaults: bool = True):
         type=int,
         default=0 if set_defaults else None,
         dest="rotation",
+    )
+
+    group.add_argument(
+        "--epr",
+        "--epochs-per-rotation",
+        type=int,
+        default=None,
+        dest="epr",
+        help="Epochs per rotation (hex only; optional; no default).",
+    )
+    group.add_argument(
+        "--ro",
+        "--rotation-ordering",
+        nargs="*",
+        type=int,
+        default=None,
+        dest="ro",
+        help="Rotation ordering: indices 0..5, space-separated (hex only; optional).",
     )
 
 
@@ -262,6 +281,30 @@ def validate_hex_only_arguments(args: Namespace):
         raise ValueError("Number of input nodes must be at least 2")
     if args.rotation < 0 or args.rotation > 5:
         raise ValueError(f"Invalid rotation input: {args.rotation}. Must be a value between 0 and 5.")
+
+    model = getattr(args, "model", "hex")
+    epr = getattr(args, "epr", None)
+    ro = getattr(args, "ro", None)
+    if model != "hex":
+        if epr is not None or ro is not None:
+            raise ValueError("--epr and --rotation-ordering are only valid with --model hex.")
+        return
+
+    if epr is None and ro is None:
+        return
+
+    if not hasattr(args, "epochs") or args.epochs is None:
+        raise ValueError(
+            "--epr and --rotation-ordering require a training epoch count; "
+            "they are not supported on this subcommand (use `hexnet train`)."
+        )
+
+    HexagonalNeuralNetwork.validate_epr_ro_fields(
+        epr=epr,
+        ro=ro,
+        epochs=int(args.epochs),
+        errors_prefix="hex CLI",
+    )
 
 
 def validate_global_arguments(args: Namespace):

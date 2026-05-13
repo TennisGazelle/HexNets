@@ -163,7 +163,7 @@ class RunConfig:
             raise ValueError(f"{errors_prefix}: model_metadata must be an object.")
 
         if model_type == "hex":
-            HexagonalNeuralNetwork.validate_run_metadata(meta)
+            HexagonalNeuralNetwork.validate_run_metadata(meta, epochs=int(config["epochs"]))
         elif model_type == "mlp":
             MLPNetwork.validate_run_metadata(meta, require_square_io_for_train=True)
         else:
@@ -175,6 +175,23 @@ class RunConfig:
         g = p.add_argument_group("hex")
         g.add_argument("-n", "--num_dims", type=int, default=sup, dest="n")
         g.add_argument("-r", "--rotation", type=int, default=sup, dest="rotation")
+        g.add_argument(
+            "--epr",
+            "--epochs-per-rotation",
+            type=int,
+            default=sup,
+            dest="epr",
+            help="Epochs per rotation (hex only; optional).",
+        )
+        g.add_argument(
+            "--ro",
+            "--rotation-ordering",
+            nargs="*",
+            type=int,
+            default=sup,
+            dest="ro",
+            help="Rotation indices 0..5 (hex only; optional; space-separated after --ro).",
+        )
 
         g = p.add_argument_group("global")
         g.add_argument("-m", "--model", type=str, default=sup, choices=["hex", "mlp", "none"], dest="model")
@@ -297,6 +314,19 @@ class RunConfig:
         if model_type == "hex":
             ns_dict["n"] = int(meta["n"])
             ns_dict["rotation"] = int(meta["r"])
+            raw_epr = meta.get("epr")
+            epr_ns = None if raw_epr is None else int(raw_epr)
+            ns_dict["epr"] = epr_ns
+            if epr_ns is None:
+                ns_dict["ro"] = None
+            else:
+                raw_ro = meta.get("ro")
+                if raw_ro is None:
+                    ns_dict["ro"] = None
+                elif not isinstance(raw_ro, list):
+                    raise ValueError(f"{errors_prefix}: model_metadata.ro must be a JSON array or null.")
+                else:
+                    ns_dict["ro"] = [int(x) for x in raw_ro]
         elif model_type == "mlp":
             ns_dict["n"] = int(meta["input_dim"])
             ns_dict["rotation"] = 0
