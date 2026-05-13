@@ -237,7 +237,7 @@ class RunConfig:
         g.add_argument("--dry-run", default=sup, action="store_true", dest="dry_run")
 
         g = p.add_argument_group("run")
-        g.add_argument("-rn", "--run_name", type=str, default=sup, dest="run_name")
+        g.add_argument("-rn", "--run-name", type=str, default=sup, dest="run_name")
         g.add_argument("--run-note", type=str, default=sup, dest="run_note")
         g.add_argument("--run-tags", type=str, default=sup, dest="run_tags")
 
@@ -342,7 +342,7 @@ class RunConfig:
         """
         Build effective args from this template plus explicit CLI overrides.
 
-        Preserves ``original.run_name``, ``run_note``, ``run_tags`` unless overridden on the CLI.
+        Preserves ``original.run-name``, ``run_note``, ``run_tags`` unless overridden on the CLI.
         Clears template source fields and ``run_dir`` for ``RunService``.
         """
         tail = argv_tail if argv_tail is not None else self.train_subcommand_argv()

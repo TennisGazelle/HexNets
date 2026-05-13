@@ -148,7 +148,7 @@ validate_training_arguments(args)    # Check training args, set seed
 - All global arguments
 - All training arguments
 - `-rd, --run-dir`: Load existing run
-- `-rn, --run_name`: Custom run name
+- `-rn, --run-name`: Custom run name
 
 **Example:**
 ```bash
@@ -231,8 +231,8 @@ Some arguments are mutually exclusive:
 
 ```python
 # train command
-if args.run_name and args.run_dir:
-    raise ValueError("Cannot define both run_name and run_dir")
+if args.run-name and args.run_dir:
+    raise ValueError("Cannot define both run-name and run_dir")
 ```
 
 ### Conditional Arguments

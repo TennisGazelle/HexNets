@@ -48,7 +48,7 @@ This document outlines important patterns, conventions, and gotchas that develop
 **Key Points:**
 - `RunService` handles both initialization and loading
 - Run names must be unique (validated)
-- Cannot specify both `run_dir` and `run_name`
+- Cannot specify both `run_dir` and `run-name`
 - Handle backward compatibility when loading old config formats
 
 ## Figure Generation
@@ -56,7 +56,7 @@ This document outlines important patterns, conventions, and gotchas that develop
 ### Reference vs Training Figures
 
 - **Reference figures**: Structure-based, saved to `reference/` directory
-- **Training figures**: Run-specific, saved to `runs/<run_name>/plots/`
+- **Training figures**: Run-specific, saved to `runs/<run-name>/plots/`
 
 ### Figure Service
 
@@ -194,8 +194,8 @@ If a component isn't showing up in CLI choices:
 Run names must be unique. Check before creating:
 
 ```python
-if (RunService.runs_dir / args.run_name).exists():
-    raise ValueError(f"Run named '{args.run_name}' already exists")
+if (RunService.runs_dir / args.run-name).exists():
+    raise ValueError(f"Run named '{args.run-name}' already exists")
 ```
 
 ### 5. Backward Compatibility

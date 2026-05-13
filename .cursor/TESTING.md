@@ -132,7 +132,7 @@ def test_train_command_validation():
         type="identity",
         dataset_size=100,
         seed=42,
-        run_name=None,
+        run-name=None,
         run_dir=None
     )
     
@@ -163,7 +163,7 @@ def test_training_creates_run():
         activation="sigmoid", loss="mean_squared_error",
         learning_rate="constant", epochs=5,
         pause=0, type="identity", dataset_size=50,
-        seed=42, run_name="test_run", run_dir=None
+        seed=42, run-name="test_run", run_dir=None
     )
     
     run = RunService(args)

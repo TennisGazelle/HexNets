@@ -142,7 +142,7 @@ def test_merge_overrides_run_name_from_cli(monkeypatch: pytest.MonkeyPatch, tmp_
     monkeypatch.setattr(
         sys,
         "argv",
-        ["hexnet", "train", "--run-config", str(cfg_path), "--run_name", "cli-name"],
+        ["hexnet", "train", "--run-config", str(cfg_path), "--run-name", "cli-name"],
     )
 
     original = Namespace(

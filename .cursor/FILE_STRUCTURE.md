@@ -151,7 +151,7 @@ runs/
 
 **Naming:**
 - Auto-generated: `YYYY-MM-DD_HH-MM_<6-char-uuid>`
-- Custom: Use `-rn/--run_name` flag
+- Custom: Use `-rn/--run-name` flag
 
 ### `reference/` Directory
 

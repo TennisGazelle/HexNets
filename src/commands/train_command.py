@@ -65,7 +65,7 @@ class TrainCommand(Command):
 
         parser.add_argument(
             "-rn",
-            "--run_name",
+            "--run-name",
             type=str,
             default=None,
             required=False,
@@ -125,14 +125,14 @@ class TrainCommand(Command):
 
         if args.run_name:
             if args.run_dir:
-                raise ValueError("Cannot define desired run_name and have a run_dir, pick one.")
+                raise ValueError("Cannot define desired run-name and have a run_dir, pick one.")
 
             if (RunService.runs_dir / args.run_name).exists():
                 raise ValueError(f"Run named '{args.run_name}' already exists")
 
         if args.run_dir:
             if not args.run_dir.exists():
-                raise ValueError(f"Run Dir '{args.run_dir}' does not exist, use --run_name if it's meant to be new.")
+                raise ValueError(f"Run Dir '{args.run_dir}' does not exist, use --run-name if it's meant to be new.")
 
     def invoke(self, args: Namespace):
         if args.type == "linear_scale":

@@ -76,7 +76,7 @@ class TestTrainCommand:
             self.command.validate_args(_valid_train_args(run_name="new-run"))
 
     def test_validate_args_run_name_and_run_dir_raises(self):
-        with pytest.raises(ValueError, match="run_name and have a run_dir"):
+        with pytest.raises(ValueError, match="run-name and have a run_dir"):
             self.command.validate_args(
                 _valid_train_args(run_name="x", run_dir=Path("runs/x"))
             )

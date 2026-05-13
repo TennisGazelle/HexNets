@@ -58,7 +58,7 @@ hexnet train -m hex -n 3 -r 0 -e 100 -l mean_squared_error -a sigmoid -t identit
 
 ### Run statistics on a saved run
 ```bash
-hexnet stats runs/<run_name>
+hexnet stats runs/<run-name>
 ```
 
 ### List Available Components
@@ -130,5 +130,5 @@ for loss, activation in product(
 | `--type` | `-t` | Dataset type | identity |
 | `--dataset-size` | `-ds` | Number of samples | 250 |
 | `--seed` | `-s` | Random seed | 42 |
-| `--run_name` | `-rn` | Custom run name | auto |
+| `--run-name` | `-rn` | Custom run name | auto |
 | `--run-dir` | `-rd` | Load existing run | None |
