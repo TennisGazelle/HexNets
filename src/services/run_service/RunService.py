@@ -13,18 +13,13 @@ from networks.loss.loss import get_loss_function
 from networks.MLPNetwork import MLPNetwork
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from services.logging_config import get_logger
+from services.train_run_template import TrainRunTemplateConfig
 
 logger = get_logger(__name__)
 
 
 class RunService:
     runs_dir = pathlib.Path("runs/").resolve()
-    _REQUIRED_CONFIG_KEYS = (
-        "model_type",
-        "model_metadata",
-        "loss_type",
-        "activation_type",
-    )
 
     def __init__(self, args):
         def init_run():
@@ -130,10 +125,9 @@ class RunService:
                 raise ValueError(f"Failed to ingest run at {run_abs}.\n{e}") from e
 
             try:
-                RunService._normalize_dataset_in_config(self.config_contents)
+                TrainRunTemplateConfig.validate_disk_config_for_ingest(self.config_contents, self.run_folder_path)
             except ValueError as e:
                 raise ValueError(f"Failed to ingest run at {run_abs}.\n{e}") from e
-            RunService._validate_loaded_run_config(self.config_contents, self.run_folder_path)
 
             self.loss_function = get_loss_function(self.config_contents["loss_type"])
             self.activation_function = get_activation_function(self.config_contents["activation_type"])
@@ -186,35 +180,6 @@ class RunService:
             "sigma": float(getattr(args, "dataset_noise_sigma", 0.1)),
             "noise_seed": int(args.seed),
         }
-
-    @staticmethod
-    def _normalize_dataset_in_config(config: dict) -> None:
-        """Ensure ``config['dataset']`` exists (mutates ``config`` for legacy runs)."""
-        if isinstance(config.get("dataset"), dict):
-            if "noise" not in config["dataset"]:
-                config["dataset"]["noise"] = None
-            return
-        if "dataset_type" in config and "dataset_size" in config:
-            config["dataset"] = {
-                "id": config["dataset_type"],
-                "num_samples": config["dataset_size"],
-                "scale": config.get("dataset_scale"),
-                "noise": None,
-            }
-            return
-        raise ValueError(
-            "Run config is missing both a 'dataset' block and legacy 'dataset_type' / 'dataset_size'. "
-            "This run may be from an incompatible tool version or a partial export."
-        )
-
-    @staticmethod
-    def _validate_loaded_run_config(config: dict, run_dir: pathlib.Path) -> None:
-        missing = [k for k in RunService._REQUIRED_CONFIG_KEYS if k not in config]
-        if missing:
-            raise ValueError(
-                f"Failed to ingest run at {run_dir.resolve()}: config.json is missing required keys: {missing}. "
-                "This run may be from an incompatible tool version or a partial export."
-            )
 
     @staticmethod
     def get_model_hash(args: Namespace) -> str:

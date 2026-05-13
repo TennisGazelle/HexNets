@@ -4,7 +4,7 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- **Maze easter egg**: `hexnet maze` adds `--window cli|plot` (matplotlib hexbin + ant scatter vs terminal); see [README.md](README.md) CLI table.
+- **Train run-template config**: `TrainRunTemplateConfig` in [`src/services/train_run_template/`](src/services/train_run_template/) owns `config.json` normalize/validate (no `RunService` import); `RunService` ingest delegates to it; Hex/MLP/dataset expose schema hooks; removed [`src/commands/run_config_template.py`](src/commands/run_config_template.py).
 
 ---
 

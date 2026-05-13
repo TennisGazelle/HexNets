@@ -4,7 +4,7 @@ import math
 import os
 import pickle
 from tabulate import tabulate
-from typing import List, Dict, Union, Tuple
+from typing import Any, List, Dict, Mapping, Union, Tuple
 import pathlib
 from utils import table_print
 from services.logging_config import get_logger
@@ -55,6 +55,34 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self._init_figure_service()
 
     # --- static methods ---
+    @staticmethod
+    def get_run_metadata_schema() -> Mapping[str, Any]:
+        """Describe ``model_metadata`` keys persisted in run ``config.json`` for ``model_type`` hex."""
+        return {
+            "model_type": "hex",
+            "keys": {
+                "n": {"required": True, "type": "int", "min": 1},
+                "r": {"required": True, "type": "int", "min": 0, "max": 5},
+            },
+        }
+
+    @staticmethod
+    def validate_run_metadata(meta: dict) -> None:
+        """Validate ``model_metadata`` from a run or train template ``config.json``."""
+        if not isinstance(meta, dict):
+            raise ValueError("Run config: hex model_metadata must be an object.")
+        if "n" not in meta or "r" not in meta:
+            raise ValueError("Run config: hex model_metadata requires 'n' and 'r'.")
+        try:
+            n = int(meta["n"])
+            r = int(meta["r"])
+        except (TypeError, ValueError) as e:
+            raise ValueError("Run config: hex model_metadata 'n' and 'r' must be integers.") from e
+        if n < 1:
+            raise ValueError("Run config: hex model_metadata 'n' must be >= 1.")
+        if not 0 <= r <= 5:
+            raise ValueError(f"Run config: hex model_metadata 'r' must be in 0..5 (got {r}).")
+
     @staticmethod
     def _hex_layer_sizes(n):
         return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))

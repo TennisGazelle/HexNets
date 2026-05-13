@@ -10,6 +10,7 @@ from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from services.run_service.RunService import RunService
+from services.train_run_template import TrainRunTemplateConfig
 from utils import read_json_object
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -29,12 +30,12 @@ def test_read_json_object_invalid_json_includes_path_and_hint(tmp_path: Path) ->
 def test_normalize_dataset_missing_legacy_keys_raises() -> None:
     cfg = {"model_type": "hex"}
     with pytest.raises(ValueError, match="dataset"):
-        RunService._normalize_dataset_in_config(cfg)
+        TrainRunTemplateConfig.normalize_disk_config(cfg)
 
 
 def test_normalize_dataset_idempotent_when_nested_present() -> None:
     cfg = {"dataset": {"id": "identity", "num_samples": 10, "scale": None}}
-    RunService._normalize_dataset_in_config(cfg)
+    TrainRunTemplateConfig.normalize_disk_config(cfg)
     assert cfg["dataset"]["id"] == "identity"
     assert cfg["dataset"]["noise"] is None
 
@@ -61,7 +62,7 @@ def test_legacy_config_json_normalizes_dataset_block() -> None:
     """Legacy runs lack ``dataset``; normalization matches flat keys (no full pickle load)."""
     cfg_path = REPO_ROOT / "runs" / "e2etest-hex-train" / "config.json"
     cfg = read_json_object(cfg_path, "config.json")
-    RunService._normalize_dataset_in_config(cfg)
+    TrainRunTemplateConfig.normalize_disk_config(cfg)
     assert cfg["dataset"]["id"] == cfg["dataset_type"]
     assert cfg["dataset"]["num_samples"] == cfg["dataset_size"]
 
