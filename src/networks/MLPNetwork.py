@@ -1,6 +1,6 @@
 import logging
 import pickle
-from typing import List, Union, Tuple
+from typing import Any, List, Mapping, Union, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
@@ -53,6 +53,48 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self._add_layer(hidden_dims[-1], output_dim)
 
     # --- static methods ---
+    @staticmethod
+    def get_run_metadata_schema() -> Mapping[str, Any]:
+        """Describe ``model_metadata`` keys persisted in run ``config.json`` for ``model_type`` mlp."""
+        return {
+            "model_type": "mlp",
+            "keys": {
+                "input_dim": {"required": True, "type": "int", "min": 1},
+                "output_dim": {"required": True, "type": "int", "min": 1},
+                "hidden_dims": {"required": True, "type": "list[int]"},
+            },
+            "train_constraints": ("input_dim must equal output_dim for CLI/train template parity",),
+        }
+
+    @staticmethod
+    def validate_run_metadata(meta: dict, *, require_square_io_for_train: bool = False) -> None:
+        """
+        Validate ``model_metadata`` from a run or train ``config.json``.
+
+        When ``require_square_io_for_train`` is True, enforce ``input_dim == output_dim`` (matches CLI ``--num_dims``).
+        """
+        if not isinstance(meta, dict):
+            raise ValueError("Run config: mlp model_metadata must be an object.")
+        for k in ("input_dim", "output_dim", "hidden_dims"):
+            if k not in meta:
+                raise ValueError(f"Run config: mlp model_metadata requires '{k}'.")
+        try:
+            input_dim = int(meta["input_dim"])
+            output_dim = int(meta["output_dim"])
+        except (TypeError, ValueError) as e:
+            raise ValueError("Run config: mlp model_metadata input_dim and output_dim must be integers.") from e
+        hd = meta["hidden_dims"]
+        if not isinstance(hd, list) or len(hd) == 0:
+            raise ValueError("Run config: mlp model_metadata hidden_dims must be a non-empty list.")
+        try:
+            hidden_dims = [int(x) for x in hd]
+        except (TypeError, ValueError) as e:
+            raise ValueError("Run config: mlp model_metadata hidden_dims must be a list of integers.") from e
+        if len(hidden_dims) == 0:
+            raise ValueError("Run config: mlp model_metadata hidden_dims must be a non-empty list.")
+        if require_square_io_for_train and input_dim != output_dim:
+            raise ValueError("Run config: MLP training expects input_dim == output_dim (matches CLI --num_dims).")
+
     @staticmethod
     def get_parameter_count(input_dim: int, output_dim: int, hidden_dims: List[int]) -> int:
         if len(hidden_dims) == 0:

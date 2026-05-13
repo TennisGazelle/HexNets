@@ -4,6 +4,8 @@ Welcome to the HexNets documentation! This directory contains comprehensive docu
 
 **Shallow index of user-facing theory docs:** [`docs/README.md`](../docs/README.md). **Paper sources** live under `docs/latex/` — agents should not edit that tree unless explicitly asked (see [`.cursor/rules/documentation-sync.mdc`](./rules/documentation-sync.mdc)).
 
+**Shell / venv:** For tests and dev tools, use **`make unit-test`** (and other `make` targets) or **`source .venv/bin/activate`** / **`.venv/bin/python`** — see [`.cursor/rules/shell-venv.mdc`](./rules/shell-venv.mdc).
+
 ## Documentation Files
 
 ### Core Documentation

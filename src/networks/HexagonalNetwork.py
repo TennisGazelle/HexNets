@@ -1,10 +1,9 @@
 import copy
-import logging
 import math
 import os
 import pickle
 from tabulate import tabulate
-from typing import List, Dict, Union, Tuple
+from typing import Any, List, Dict, Mapping, Union, Tuple
 import pathlib
 from utils import table_print
 from services.logging_config import get_logger
@@ -55,6 +54,120 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self._init_figure_service()
 
     # --- static methods ---
+    @staticmethod
+    def get_run_metadata_schema() -> Mapping[str, Any]:
+        """Describe ``model_metadata`` keys persisted in run ``config.json`` for ``model_type`` hex."""
+        return {
+            "model_type": "hex",
+            "keys": {
+                "n": {"required": True, "type": "int", "min": 1},
+                "r": {"required": True, "type": "int", "min": 0, "max": 5},
+                "epr": {
+                    "required": False,
+                    "type": "int",
+                    "description": "Epochs per rotation; when set must satisfy 1 < epr < total epochs.",
+                },
+                "ro": {
+                    "required": False,
+                    "type": "list[int]",
+                    "description": "Rotation ordering (0..5 each); ignored unless epr is set.",
+                },
+            },
+        }
+
+    @staticmethod
+    def validate_epr_ro_fields(
+        *,
+        epr: int | None,
+        ro: list[int] | None,
+        epochs: int,
+        errors_prefix: str = "Run config: hex model_metadata",
+    ) -> None:
+        """
+        Shared rules for optional ``epr`` / ``ro`` (CLI or ``model_metadata``).
+
+        When ``epr`` is unset and ``ro`` is not ``None``, logs a warning and skips ``ro`` validation.
+        When ``epr`` is set, enforces bounds and validates ``ro`` when not ``None``.
+        """
+        if epr is None:
+            if ro is not None:
+                logger.warning(
+                    "%s: 'ro' (rotation ordering) is ignored because 'epr' (epochs per rotation) is not set.",
+                    errors_prefix,
+                )
+            return
+
+        try:
+            epr_i = int(epr)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"{errors_prefix}: 'epr' must be an integer.") from e
+
+        if not (1 < epr_i < int(epochs)):
+            raise ValueError(
+                f"{errors_prefix}: 'epr' must satisfy 1 < epr < epochs " f"(got epr={epr_i}, epochs={int(epochs)})."
+            )
+
+        if ro is None:
+            return
+        if not isinstance(ro, list):
+            raise ValueError(f"{errors_prefix}: 'ro' must be a JSON array of integers.")
+        for i, x in enumerate(ro):
+            try:
+                xi = int(x)
+            except (TypeError, ValueError) as e:
+                raise ValueError(f"{errors_prefix}: 'ro' entry at index {i} must be an integer.") from e
+            if not 0 <= xi <= 5:
+                raise ValueError(f"{errors_prefix}: 'ro' entries must be in 0..5 (got {xi!r} at index {i}).")
+
+    @staticmethod
+    def validate_run_metadata(meta: dict, *, epochs: int) -> None:
+        """Validate ``model_metadata`` from a run or train template ``config.json``."""
+        if not isinstance(meta, dict):
+            raise ValueError("Run config: hex model_metadata must be an object.")
+        if "n" not in meta or "r" not in meta:
+            raise ValueError("Run config: hex model_metadata requires 'n' and 'r'.")
+        try:
+            n = int(meta["n"])
+            r = int(meta["r"])
+        except (TypeError, ValueError) as e:
+            raise ValueError("Run config: hex model_metadata 'n' and 'r' must be integers.") from e
+        if n < 1:
+            raise ValueError("Run config: hex model_metadata 'n' must be >= 1.")
+        if not 0 <= r <= 5:
+            raise ValueError(f"Run config: hex model_metadata 'r' must be in 0..5 (got {r}).")
+
+        prefix = "Run config: hex model_metadata"
+        epr: int | None
+        if "epr" in meta and meta["epr"] is not None:
+            try:
+                epr = int(meta["epr"])
+            except (TypeError, ValueError) as e:
+                raise ValueError(f"{prefix}: 'epr' must be an integer or null.") from e
+        else:
+            epr = None
+
+        if epr is None:
+            if "ro" in meta and meta["ro"] is not None:
+                logger.warning(
+                    "%s: 'ro' (rotation ordering) is ignored because 'epr' (epochs per rotation) is not set.",
+                    prefix,
+                )
+            return
+
+        ro: list[int] | None
+        if "ro" in meta and meta["ro"] is not None:
+            ro_val = meta["ro"]
+            if not isinstance(ro_val, list):
+                raise ValueError(f"{prefix}: 'ro' must be a JSON array or null.")
+            try:
+                ro = [int(x) for x in ro_val]
+            except (TypeError, ValueError) as e:
+                raise ValueError(f"{prefix}: 'ro' must be a JSON array of integers.") from e
+        else:
+            ro = None
+
+        HexagonalNeuralNetwork.validate_epr_ro_fields(epr=epr, ro=ro, epochs=epochs, errors_prefix=prefix)
+
     @staticmethod
     def _hex_layer_sizes(n):
         return list(range(n, 2 * n)) + list(range(2 * n - 2, n - 1, -1))

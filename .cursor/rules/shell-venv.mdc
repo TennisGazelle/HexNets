@@ -1,0 +1,20 @@
+---
+description: Use project venv or Makefile targets when running tests and dev tools
+alwaysApply: true
+---
+
+# Shell and virtualenv (save failed-command churn)
+
+Dev dependencies (`pytest`, `black`, editable `hexnet`, etc.) live in **`.venv/`**, created by **`make install`**. System `python` / `python3` often has **no `pytest`** and may not match `requires-python`.
+
+## Do this first
+
+- **Prefer Makefile targets** from the repo root: `make unit-test`, `make install`, `make lint-check`, `make streamlit-run` — they use **`.venv/bin/...`** via the Makefile’s `PYTHON` / tool variables.
+- **If you run raw commands** in a shell: **`source .venv/bin/activate`** and then `pytest`, `hexnet`, etc.; **or** call **`.venv/bin/python -m pytest`**, **`.venv/bin/pytest`**, **`.venv/bin/hexnet`** without activating.
+
+## Avoid
+
+- `python -m pytest` or `python3 -m pytest` **without** ensuring that interpreter is the venv (wastes turns on “No module named pytest” or wrong env).
+- Assuming `python` exists on PATH (some Linux images only have `python3`).
+
+If `.venv` is missing, run **`make install`** once, then use the patterns above.

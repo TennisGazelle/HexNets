@@ -87,13 +87,15 @@ class ReferenceCommand(Command):
         else:
             # Check if at least something is specified
             # All three (n, r, graph) can be None if not specified
-            if args.n is None and args.rotation is None and args.graph is None:
+            has_epr_ro = getattr(args, "epr", None) is not None or getattr(args, "ro", None) is not None
+            if args.n is None and args.rotation is None and args.graph is None and not has_epr_ro:
                 raise ValueError(
                     "No parameters specified. Please specify at least one of: -n/--num_dims, -r/--rotation, "
-                    "or -g/--graph. Use --all to generate all reference graphs."
+                    "-g/--graph, --epr/--epochs-per-rotation, or --ro/--rotation-ordering. "
+                    "Use --all to generate all reference graphs."
                 )
             # Validate the specified values
-            if args.n is not None or args.rotation is not None:
+            if args.n is not None or args.rotation is not None or has_epr_ro:
                 # Create a temporary args object with defaults for validation
                 temp_args = Namespace(**vars(args))
                 if temp_args.n is None:
@@ -172,9 +174,14 @@ class ReferenceCommand(Command):
         figures_dir = Path("reference")
         figures_dir.mkdir(parents=True, exist_ok=True)
 
+        # args from command line
+        activation_function = get_activation_function(args.activation)
+        loss_function = get_loss_function(args.loss)
+        learning_rate = get_learning_rate(args.learning_rate)
+
         if args.model == "none":
             # Generate learning rate reference figures
-            learning_rates = get_available_learning_rates()
+            all_learning_rates = get_available_learning_rates()
             max_iterations = 500
 
             print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
@@ -187,7 +194,7 @@ class ReferenceCommand(Command):
             figure_service.set_figures_path(figures_dir)
 
             total_generated = 0
-            for lr_name in learning_rates:
+            for lr_name in all_learning_rates:
                 try:
                     if args.dry_run:
                         print(f"{Colors.YELLOW}  [DRY-RUN] Would generate: {lr_name}...{Colors.NC}")
@@ -228,13 +235,10 @@ class ReferenceCommand(Command):
             print()
             return
 
-        if args.model == "mlp":
+        elif args.model == "mlp":
             # MLP model doesn't support iteration, just generate the single graph
             if args.graph is None:
                 raise ValueError("MLP model requires -g/--graph to be specified.")
-            activation_function = get_activation_function(args.activation)
-            loss_function = get_loss_function(args.loss)
-            learning_rate = get_learning_rate(args.learning_rate)
             net = MLPNetwork(
                 input_dim=3,
                 output_dim=3,
@@ -250,71 +254,68 @@ class ReferenceCommand(Command):
                 logger.warning(f"Not Yet Implemented: {args.graph}")
             return
 
-        # Hex model: determine iteration ranges
-        n_range, r_range, graph_types = self._determine_iteration_ranges(args)
+        elif args.model == "hex":
+            # Hex model: determine iteration ranges
+            n_range, r_range, graph_types = self._determine_iteration_ranges(args)
 
-        activation_function = get_activation_function(args.activation)
-        loss_function = get_loss_function(args.loss)
-        learning_rate = get_learning_rate(args.learning_rate)
-
-        # Print header if iterating
-        is_iterating = len(n_range) > 1 or len(r_range) > 1 or len(graph_types) > 1
-        if is_iterating:
-            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
-            print(f"{Colors.BLUE}Generating Reference Graphs{Colors.NC}")
-            if args.generate_all:
-                print(f"{Colors.BLUE}  Mode: ALL (n=2..8, r=0..5, all graph types){Colors.NC}")
-            else:
-                print(f"{Colors.BLUE}  Mode: Iterating over unspecified parameters{Colors.NC}")
-            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
-            print()
-
-        total_generated = 0
-
-        # Iterate through the determined ranges
-        for n in n_range:
-            if is_iterating and len(n_range) > 1:
-                print(f"{Colors.GREEN}{'=' * 40}{Colors.NC}")
-                print(f"{Colors.GREEN}n={n}{Colors.NC}")
-                print(f"{Colors.GREEN}{'=' * 40}{Colors.NC}")
-
-            for r in r_range:
-                # Create network for this n, r combination
-                net = HexagonalNeuralNetwork(
-                    n=n,
-                    r=r,
-                    activation=activation_function,
-                    loss=loss_function,
-                    learning_rate=learning_rate,
-                )
-
-                # Update args.rotation for this iteration (needed for layer_indices_terminal)
-                current_rotation = args.rotation
-                args.rotation = r
-
-                for graph_type in graph_types:
-                    try:
-                        if is_iterating:
-                            if len(r_range) > 1 or len(graph_types) > 1:
-                                print(f"{Colors.YELLOW}  Generating: r={r}, graph={graph_type}...{Colors.NC}")
-
-                        self._generate_graph(net, graph_type, args, figures_dir)
-                        total_generated += 1
-                    except Exception as e:
-                        print(f"{Colors.RED}    Error: {e}{Colors.NC}")
-                        logger.exception(f"Error generating graph for n={n}, r={r}, graph={graph_type}")
-
-                # Restore original rotation
-                args.rotation = current_rotation
-
-            if is_iterating and len(n_range) > 1:
+            # Print header if iterating
+            is_iterating = len(n_range) > 1 or len(r_range) > 1 or len(graph_types) > 1
+            if is_iterating:
+                print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
+                print(f"{Colors.BLUE}Generating Reference Graphs{Colors.NC}")
+                if args.generate_all:
+                    print(f"{Colors.BLUE}  Mode: ALL (n=2..8, r=0..5, all graph types){Colors.NC}")
+                else:
+                    print(f"{Colors.BLUE}  Mode: Iterating over unspecified parameters{Colors.NC}")
+                print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
                 print()
 
-        if is_iterating:
-            print()
-            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
-            print(f"{Colors.GREEN}Generated {total_generated} reference graph(s)!{Colors.NC}")
-            print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
-            print()
-            print(f"Files saved to: {figures_dir}")
-            print()
+            total_generated = 0
+
+            # Iterate through the determined ranges
+            for n in n_range:
+                if is_iterating and len(n_range) > 1:
+                    print(f"{Colors.GREEN}{'=' * 40}{Colors.NC}")
+                    print(f"{Colors.GREEN}n={n}{Colors.NC}")
+                    print(f"{Colors.GREEN}{'=' * 40}{Colors.NC}")
+
+                for r in r_range:
+                    # Create network for this n, r combination
+                    net = HexagonalNeuralNetwork(
+                        n=n,
+                        r=r,
+                        activation=activation_function,
+                        loss=loss_function,
+                        learning_rate=learning_rate,
+                    )
+
+                    # Update args.rotation for this iteration (needed for layer_indices_terminal)
+                    current_rotation = args.rotation
+                    args.rotation = r
+
+                    for graph_type in graph_types:
+                        try:
+                            if is_iterating:
+                                if len(r_range) > 1 or len(graph_types) > 1:
+                                    print(f"{Colors.YELLOW}  Generating: r={r}, graph={graph_type}...{Colors.NC}")
+
+                            self._generate_graph(net, graph_type, args, figures_dir)
+                            total_generated += 1
+                        except Exception as e:
+                            print(f"{Colors.RED}    Error: {e}{Colors.NC}")
+                            logger.exception(f"Error generating graph for n={n}, r={r}, graph={graph_type}")
+
+                    # Restore original rotation
+                    args.rotation = current_rotation
+
+                if is_iterating and len(n_range) > 1:
+                    print()
+
+            if is_iterating:
+                print()
+                print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
+                print(f"{Colors.GREEN}Generated {total_generated} reference graph(s)!{Colors.NC}")
+                print(f"{Colors.BLUE}{'=' * 40}{Colors.NC}")
+                print()
+                print(f"Files saved to: {figures_dir}")
+                print()

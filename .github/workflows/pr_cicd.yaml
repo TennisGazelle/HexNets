@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: '3.12'
       
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v2
+      
       - name: Install dependencies
         run: |
           make install
@@ -31,6 +34,10 @@ jobs:
       
       - name: Run lint check
         run: make lint-check
+      
+      - name: Run pdf
+        run: |
+          make pdf
 
       - name: Check for 'patch' or 'minor' or 'CI/CD' label
         id: version-label-check

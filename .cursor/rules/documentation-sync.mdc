@@ -11,7 +11,7 @@ When you change **behavior, public APIs, CLI, defaults, file layout, or componen
 2. **In scope** (as relevant to the change):
    - Root `README.md`
    - `docs/**/*.md` **except** anything under `docs/latex/`
-   - `.cursor/**/*.md` and `.cursor/rules/*.mdc` when architecture, CLI, layout, or agent onboarding is affected
+   - `.cursor/**/*.md` and `.cursor/rules/*.mdc` when architecture, CLI, layout, or agent onboarding is affected (includes dev shell guidance: [`.cursor/rules/shell-venv.mdc`](./shell-venv.mdc))
    - `heartbeat.md` per `.cursor/rules/heartbeat.mdc`
 3. **`docs/latex/`** (TeX, bundled figures, zip, build artifacts): **do not edit or regenerate** unless the user **explicitly** directs you to. If the paper lags the code, document the gap **outside** `docs/latex/` (e.g. `docs/README.md` or `.cursor/`) or ask the user.
 4. **Token efficiency**: Optimize for future AI reads — tight glossaries, tables, “source of truth” paths, and links to code; avoid duplicate prose across `README.md`, `docs/`, and `.cursor/` unless each adds non-overlapping facts.

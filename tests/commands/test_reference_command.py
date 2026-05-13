@@ -303,6 +303,9 @@ class TestReferenceCommand:
         args = Namespace(
             model="none",
             dry_run=True,
+            activation="sigmoid",
+            loss="mean_squared_error",
+            learning_rate="constant",
         )
         
         mock_path.return_value.mkdir = Mock()
@@ -328,6 +331,9 @@ class TestReferenceCommand:
         args = Namespace(
             model="none",
             dry_run=False,
+            activation="sigmoid",
+            loss="mean_squared_error",
+            learning_rate="constant",
         )
         
         mock_path.return_value.mkdir = Mock()
@@ -351,6 +357,7 @@ class TestReferenceCommand:
             generate_all=False,
             activation="sigmoid",
             loss="mean_squared_error",
+            learning_rate="constant",
         )
         
         with pytest.raises(ValueError, match="MLP model requires"):

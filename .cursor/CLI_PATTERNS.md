@@ -11,7 +11,8 @@ commands = [
     ReferenceCommand(),
     AdhocCommand(),
     TrainCommand(),
-    StatsCommand()
+    StatsCommand(),
+    MazeCommand(),
 ]
 
 for command in commands:
@@ -24,6 +25,7 @@ for command in commands:
 - Commands are instantiated once (singleton-like)
 - Each command configures its own subparser
 - Command instance is stored in `args.command`
+- `Command.show_cli_banner` (class attribute, default `True`): when `False`, `cli.main` skips `print_header()` before invoking that command (used by `maze`).
 
 ## Command Interface
 
@@ -146,7 +148,7 @@ validate_training_arguments(args)    # Check training args, set seed
 - All global arguments
 - All training arguments
 - `-rd, --run-dir`: Load existing run
-- `-rn, --run_name`: Custom run name
+- `-rn, --run-name`: Custom run name
 
 **Example:**
 ```bash
@@ -229,8 +231,8 @@ Some arguments are mutually exclusive:
 
 ```python
 # train command
-if args.run_name and args.run_dir:
-    raise ValueError("Cannot define both run_name and run_dir")
+if args.run-name and args.run_dir:
+    raise ValueError("Cannot define both run-name and run_dir")
 ```
 
 ### Conditional Arguments

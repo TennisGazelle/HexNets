@@ -1,116 +1,35 @@
 #!/bin/bash
 set -euo pipefail
 
-print_line() {
-    echo "===> $1"
-}
+source scripts/e2e-utils.sh
 
-# Override for shorter local runs, e.g. E2E_EPOCHS=20 ./e2e_test.sh
-E2E_EPOCHS="${E2E_EPOCHS:-100}"
+#
+#
+# Reference Graphs
+#
+#
+source scripts/e2e-reference.sh
 
-e2e_train() {
-    local msg="$1"
-    shift
-    echo "================================================"
-    print_line "$msg"
-    "$@"
-    echo "================================================"
-}
 
-DEBUG=0
+#
+#
+# Smoke: hex (new + resume) and MLP under runs/e2etest-smoke/
+#
+#
+# source scripts/e2e-smoke-test.sh
 
-### install the dependencies
-if [ ! -d ".venv" ]; then
-    make install
-fi
-source .venv/bin/activate
-
-# 1. Creating all the reference graphs
-print_line '1. Creating all the reference graphs...'
-if [ ! -d "reference" ]; then
-    hexnet ref --all
-fi
-# ensure the reference graphs are created
-if [ ! -d "reference" ]; then
-    print_line "1. Reference graphs not found"
-    exit 1
-else
-    expected_files_templates=(
-        "reference/hexnet_n{n}_r{r}_structure.png"
-        "reference/hexnet_n{n}_r{r}_Activation_Structure.png"
-        "reference/hexnet_n{n}_r{r}_Weight_Matrix.png"
-        "reference/hexnet_n{n}_multi_activation.png"
-    )
-    for file in "${expected_files_templates[@]}"; do
-        for n in {2..8}; do
-            for r in {0..5}; do
-                file_path=$(echo "$file" | sed "s/{n}/${n}/g" | sed "s/{r}/${r}/g")
-                if [ $DEBUG -eq 1 ]; then
-                    print_line "Checking $file_path"
-                fi
-                if [ ! -f "$file_path" ]; then
-                    print_line "1. Reference graph $file_path not found"
-                    exit 1
-                fi
-            done
-        done
-    done
-    print_line "1. Found all reference graphs"
-fi
-
-# 2. Smoke: hex (new + resume) and MLP under runs/e2etest-smoke/
-print_line "2. Smoke: hex net train (n=3, r=0) and resume (r=1)..."
-rm -rf runs/e2etest-smoke
-e2e_train "2a. Hex train new run" \
-    hexnet train -m hex -n 3 -r 0 -e "${E2E_EPOCHS}" -t identity \
-    -rn e2etest-smoke/hex-n3-r0 \
-    --run-tags e2e,smoke \
-    --run-note "e2e smoke hex new"
-e2e_train "2b. Hex resume same run dir with r=1" \
-    hexnet train -m hex -n 3 -r 1 -e "${E2E_EPOCHS}" -t identity \
-    -rd runs/e2etest-smoke/hex-n3-r0
-
-print_line "3. Smoke: MLP train (n=2)..."
-e2e_train "3. MLP train" \
-    hexnet train -m mlp -n 2 -e "${E2E_EPOCHS}" -t identity \
-    -rn e2etest-smoke/mlp-n2 \
-    --run-tags e2e,smoke \
-    --run-note "e2e smoke mlp"
-
-# 4–9. Benchmark families A–F (non-exhaustive; see docs/math/benchmark-families.md)
+#
+#
+# Benchmark families A–F (non-exhaustive; see docs/math/benchmark-families.md)
+#
+#
 print_line "Benchmark families A-F (runs under runs/e2etest-fam*/ )..."
-rm -rf runs/e2etest-famA runs/e2etest-famB runs/e2etest-famC runs/e2etest-famD runs/e2etest-famE runs/e2etest-famF
+# rm -rf runs/e2etest-famA runs/e2etest-famB runs/e2etest-famC runs/e2etest-famD runs/e2etest-famE runs/e2etest-famF
 
 FAM_TAG_BASE="e2e,benchmark"
 
-# --- Family A: linear structure recovery ---
-print_line "4. Family A — linear structure recovery (hex + sample MLP)"
-FAM_A_TASKS=(
-    identity
-    linear_scale
-    diagonal_scale
-    diagonal_linear
-    full_linear
-    low_rank_linear
-    affine
-    orthogonal_rotation
-)
-for task in "${FAM_A_TASKS[@]}"; do
-    e2e_train "4. Family A hex: ${task}" \
-        hexnet train -m hex -n 4 -r 0 -e "${E2E_EPOCHS}" -t "${task}" \
-        -a linear -l mean_squared_error -lr constant \
-        -rn "e2etest-famA/hex-${task}-n4" \
-        --run-tags "${FAM_TAG_BASE},famA" \
-        --run-note "e2e benchmark family A (linear)"
-done
-for task in identity orthogonal_rotation; do
-    e2e_train "4. Family A MLP: ${task}" \
-        hexnet train -m mlp -n 4 -e "${E2E_EPOCHS}" -t "${task}" \
-        -a linear -l mean_squared_error -lr constant \
-        -rn "e2etest-famA/mlp-${task}-n4" \
-        --run-tags "${FAM_TAG_BASE},famA" \
-        --run-note "e2e benchmark family A (linear) MLP"
-done
+source scripts/e2e-bench-A.sh
+exit 0;
 
 # --- Family B: smooth nonlinear (small activation × loss cross) ---
 print_line "5. Family B — smooth nonlinear (sample grid)"

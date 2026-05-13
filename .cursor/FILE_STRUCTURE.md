@@ -62,6 +62,8 @@ src/
 │   │   └── FigureService.py
 │   ├── run_service/       # Run management and persistence
 │   │   └── RunService.py
+│   ├── run_config/        # On-disk ``config.json`` validation + train-from-file CLI merge
+│   │   └── RunConfig.py
 │   └── logging_config/   # Logging configuration
 │       └── logging_config.py
 ├── utils.py               # Utility functions
@@ -96,7 +98,7 @@ Component directories (`activation/`, `loss/`, `learning_rate/`) contain base cl
 
 ### Run Management
 
-- **`src/services/run_service/RunService.py`**: `RunService` handles run creation, loading, and persistence (`@staticmethod` helpers include `make_run_folder_name`, `get_model_hash`, `get_data_hash`, dataset normalization/validation). Git SHA for manifests comes from **`resolve_git_commit()` in [`src/utils.py`](../src/utils.py)**. **For details, see [CLI_PATTERNS.md](./CLI_PATTERNS.md#run-management)**. **Class member order:** [`.cursor/rules/python-class-member-order.mdc`](./rules/python-class-member-order.mdc).
+- **`src/services/run_service/RunService.py`**: `RunService` handles run creation, loading, and persistence (`@staticmethod` helpers include `make_run_folder_name`, `get_model_hash`, `get_data_hash`). The on-disk `config.json` body lives on **`self.run_config: RunConfig`** (`run_config.contents`); **`config_contents`** is a backward-compatible property to that dict. On load, **`RunConfig.from_ingested_dict`** performs normalize + ingest validation ([`RunConfig.py`](../src/services/run_config/RunConfig.py)). Git SHA for manifests comes from **`resolve_git_commit()` in [`src/utils.py`](../src/utils.py)**. **For details, see [CLI_PATTERNS.md](./CLI_PATTERNS.md#run-management)**. **Class member order:** [`.cursor/rules/python-class-member-order.mdc`](./rules/python-class-member-order.mdc).
 
 ### Training Metrics
 
@@ -149,7 +151,7 @@ runs/
 
 **Naming:**
 - Auto-generated: `YYYY-MM-DD_HH-MM_<6-char-uuid>`
-- Custom: Use `-rn/--run_name` flag
+- Custom: Use `-rn/--run-name` flag
 
 ### `reference/` Directory
 

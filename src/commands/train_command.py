@@ -13,6 +13,7 @@ from commands.command import (
     get_dataset,
 )
 from services.run_service import RunService
+from services.run_config import RunConfig
 from services.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -64,7 +65,7 @@ class TrainCommand(Command):
 
         parser.add_argument(
             "-rn",
-            "--run_name",
+            "--run-name",
             type=str,
             default=None,
             required=False,
@@ -80,6 +81,7 @@ class TrainCommand(Command):
             help="Optional freeform note stored in the run manifest (paper traceability).",
             dest="run_note",
         )
+
         parser.add_argument(
             "--run-tags",
             type=str,
@@ -89,6 +91,33 @@ class TrainCommand(Command):
             dest="run_tags",
         )
 
+        parser.add_argument(
+            "-rc",
+            "--run-config",
+            type=pathlib.Path,
+            default=None,
+            required=False,
+            help="Start a new run from this config.json (same schema as runs/.../config.json). CLI flags override the file.",
+            dest="run_config",
+        )
+
+        parser.add_argument(
+            "--run-config-json",
+            type=str,
+            default=None,
+            required=False,
+            help="Same as --run-config but pass a JSON object as a string (shell-escape carefully). CLI flags override.",
+            dest="run_config_json",
+        )
+
+    def __call__(self, args: Namespace):
+        RunConfig.validate_cli_sources(args)
+        if getattr(args, "run_config", None) is not None or getattr(args, "run_config_json", None) is not None:
+            template = RunConfig.from_cli_sources(args)
+            args = template.merged_train_namespace(original=args)
+        self.validate_args(args)
+        self.invoke(args)
+
     def validate_args(self, args: Namespace):
         validate_hex_only_arguments(args)
         validate_training_arguments(args)
@@ -96,14 +125,14 @@ class TrainCommand(Command):
 
         if args.run_name:
             if args.run_dir:
-                raise ValueError("Cannot define desired run_name and have a run_dir, pick one.")
+                raise ValueError("Cannot define desired run-name and have a run_dir, pick one.")
 
             if (RunService.runs_dir / args.run_name).exists():
                 raise ValueError(f"Run named '{args.run_name}' already exists")
 
         if args.run_dir:
             if not args.run_dir.exists():
-                raise ValueError(f"Run Dir '{args.run_dir}' does not exist, use --run_name if it's meant to be new.")
+                raise ValueError(f"Run Dir '{args.run_dir}' does not exist, use --run-name if it's meant to be new.")
 
     def invoke(self, args: Namespace):
         if args.type == "linear_scale":
@@ -129,7 +158,7 @@ class TrainCommand(Command):
 
         run = RunService(args)
         net = run.net
-        run.print_paths()
+        # run.print_paths()
         net.show_stats()
 
         if args.dry_run:

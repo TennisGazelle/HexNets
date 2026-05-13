@@ -2,6 +2,8 @@
 
 This document covers testing patterns, conventions, and how to add tests.
 
+**Running tests:** From the repo root, use **`make unit-test`** (uses `.venv` via the Makefile). If you run pytest by hand, activate the venv (`source .venv/bin/activate`) or use `.venv/bin/python -m pytest` so dev deps are available — see [`.cursor/rules/shell-venv.mdc`](./rules/shell-venv.mdc).
+
 ## Current Test Structure
 
 ```
@@ -130,7 +132,7 @@ def test_train_command_validation():
         type="identity",
         dataset_size=100,
         seed=42,
-        run_name=None,
+        run-name=None,
         run_dir=None
     )
     
@@ -161,7 +163,7 @@ def test_training_creates_run():
         activation="sigmoid", loss="mean_squared_error",
         learning_rate="constant", epochs=5,
         pause=0, type="identity", dataset_size=50,
-        seed=42, run_name="test_run", run_dir=None
+        seed=42, run-name="test_run", run_dir=None
     )
     
     run = RunService(args)

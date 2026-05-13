@@ -13,18 +13,13 @@ from networks.loss.loss import get_loss_function
 from networks.MLPNetwork import MLPNetwork
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from services.logging_config import get_logger
+from services.run_config import RunConfig
 
 logger = get_logger(__name__)
 
 
 class RunService:
     runs_dir = pathlib.Path("runs/").resolve()
-    _REQUIRED_CONFIG_KEYS = (
-        "model_type",
-        "model_metadata",
-        "loss_type",
-        "activation_type",
-    )
 
     def __init__(self, args):
         def init_run():
@@ -40,25 +35,27 @@ class RunService:
             self.activation_function = get_activation_function(args.activation)
 
             ds = getattr(args, "dataset_scale", None)
-            self.config_contents = {
-                "schema_version": 1,
-                "model_type": args.model,
-                "activation_type": self.activation_function.display_name,
-                "loss_type": self.loss_function.display_name,
-                "learning_rate": args.learning_rate,
-                "epochs": args.epochs,
-                "dataset_type": args.type,
-                "dataset_size": args.dataset_size,
-                "dataset": {
-                    "id": args.type,
-                    "num_samples": args.dataset_size,
-                    "scale": ds,
-                    "noise": RunService._dataset_noise_block_from_args(args),
-                },
-                "random_seed": args.seed,
-                "run_folder_name": self.run_folder_path.name,
-                "model_metadata": {},
-            }
+            self.run_config = RunConfig(
+                {
+                    "schema_version": 1,
+                    "model_type": args.model,
+                    "activation_type": self.activation_function.display_name,
+                    "loss_type": self.loss_function.display_name,
+                    "learning_rate": args.learning_rate,
+                    "epochs": args.epochs,
+                    "dataset_type": args.type,
+                    "dataset_size": args.dataset_size,
+                    "dataset": {
+                        "id": args.type,
+                        "num_samples": args.dataset_size,
+                        "scale": ds,
+                        "noise": RunService._dataset_noise_block_from_args(args),
+                    },
+                    "random_seed": args.seed,
+                    "run_folder_name": self.run_folder_path.name,
+                    "model_metadata": {},
+                }
+            )
 
             git_commit, git_error = resolve_git_commit()
             self.manifest_contents = {
@@ -78,31 +75,41 @@ class RunService:
             self.training_metrics_contents = None
 
             if args.model == "mlp":
-                self.config_contents["model_metadata"]["input_dim"] = args.n
-                self.config_contents["model_metadata"]["hidden_dims"] = [4, 5, 4]
-                self.config_contents["model_metadata"]["output_dim"] = args.n
+                model_metadata = self.run_config.contents["model_metadata"]
+                model_metadata["input_dim"] = args.n
+                model_metadata["hidden_dims"] = [4, 5, 4]
+                model_metadata["output_dim"] = args.n
                 self.net = MLPNetwork(
-                    input_dim=args.n,
-                    output_dim=args.n,
-                    hidden_dims=[4, 5, 4],
+                    input_dim=model_metadata["input_dim"],
+                    output_dim=model_metadata["output_dim"],
+                    hidden_dims=model_metadata["hidden_dims"],
                     learning_rate=args.learning_rate,
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
                 self.manifest_contents["trainable_parameter_count"] = MLPNetwork.get_parameter_count(
-                    args.n, args.n, [4, 5, 4]
+                    model_metadata["input_dim"], model_metadata["output_dim"], model_metadata["hidden_dims"]
                 )
             elif args.model == "hex":
-                self.config_contents["model_metadata"]["n"] = args.n
-                self.config_contents["model_metadata"]["r"] = args.rotation
+                model_metadata = self.run_config.contents["model_metadata"]
+                model_metadata["n"] = args.n
+                model_metadata["r"] = args.rotation
+                epr = getattr(args, "epr", None)
+                ro = getattr(args, "ro", None)
+                if epr is not None:
+                    model_metadata["epr"] = int(epr)
+                    if ro is not None:
+                        model_metadata["ro"] = list(ro)
                 self.net = HexagonalNeuralNetwork(
-                    n=args.n,
-                    r=args.rotation,
+                    n=model_metadata["n"],
+                    r=model_metadata["r"],
                     learning_rate=args.learning_rate,
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
-                self.manifest_contents["trainable_parameter_count"] = HexagonalNeuralNetwork.get_parameter_count(args.n)
+                self.manifest_contents["trainable_parameter_count"] = HexagonalNeuralNetwork.get_parameter_count(
+                    model_metadata["n"]
+                )
             else:
                 raise ValueError(f"Invalid model: {args.model}")
 
@@ -114,7 +121,7 @@ class RunService:
 
             run_abs = self.run_folder_path.resolve()
             try:
-                self.config_contents = read_json_object(self.config_path, "run config (config.json)")
+                data = read_json_object(self.config_path, "run config (config.json)")
             except ValueError as e:
                 raise ValueError(f"Failed to ingest run at {run_abs}.\n{e}") from e
             try:
@@ -130,33 +137,33 @@ class RunService:
                 raise ValueError(f"Failed to ingest run at {run_abs}.\n{e}") from e
 
             try:
-                RunService._normalize_dataset_in_config(self.config_contents)
+                self.run_config = RunConfig.from_ingested_dict(data, self.run_folder_path)
             except ValueError as e:
                 raise ValueError(f"Failed to ingest run at {run_abs}.\n{e}") from e
-            RunService._validate_loaded_run_config(self.config_contents, self.run_folder_path)
 
-            self.loss_function = get_loss_function(self.config_contents["loss_type"])
-            self.activation_function = get_activation_function(self.config_contents["activation_type"])
+            cfg = self.run_config.contents
+            self.loss_function = get_loss_function(cfg["loss_type"])
+            self.activation_function = get_activation_function(cfg["activation_type"])
             # Handle backward compatibility: if learning_rate is a float, use constant
-            learning_rate_config = self.config_contents.get("learning_rate", "constant")
+            learning_rate_config = cfg.get("learning_rate", "constant")
             if isinstance(learning_rate_config, (int, float)):
                 learning_rate_config = "constant"
 
             # load the network
-            if self.config_contents["model_type"] == "mlp":
+            if cfg["model_type"] == "mlp":
                 self.net = MLPNetwork(
-                    input_dim=self.config_contents["model_metadata"]["input_dim"],
-                    output_dim=self.config_contents["model_metadata"]["output_dim"],
-                    hidden_dims=self.config_contents["model_metadata"]["hidden_dims"],
+                    input_dim=cfg["model_metadata"]["input_dim"],
+                    output_dim=cfg["model_metadata"]["output_dim"],
+                    hidden_dims=cfg["model_metadata"]["hidden_dims"],
                     learning_rate=learning_rate_config,
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
 
-            elif self.config_contents["model_type"] == "hex":
+            elif cfg["model_type"] == "hex":
                 self.net = HexagonalNeuralNetwork(
-                    n=self.config_contents["model_metadata"]["n"],
-                    r=self.config_contents["model_metadata"]["r"],
+                    n=cfg["model_metadata"]["n"],
+                    r=cfg["model_metadata"]["r"],
                     learning_rate=learning_rate_config,
                     activation=self.activation_function,
                     loss=self.loss_function,
@@ -186,35 +193,6 @@ class RunService:
             "sigma": float(getattr(args, "dataset_noise_sigma", 0.1)),
             "noise_seed": int(args.seed),
         }
-
-    @staticmethod
-    def _normalize_dataset_in_config(config: dict) -> None:
-        """Ensure ``config['dataset']`` exists (mutates ``config`` for legacy runs)."""
-        if isinstance(config.get("dataset"), dict):
-            if "noise" not in config["dataset"]:
-                config["dataset"]["noise"] = None
-            return
-        if "dataset_type" in config and "dataset_size" in config:
-            config["dataset"] = {
-                "id": config["dataset_type"],
-                "num_samples": config["dataset_size"],
-                "scale": config.get("dataset_scale"),
-                "noise": None,
-            }
-            return
-        raise ValueError(
-            "Run config is missing both a 'dataset' block and legacy 'dataset_type' / 'dataset_size'. "
-            "This run may be from an incompatible tool version or a partial export."
-        )
-
-    @staticmethod
-    def _validate_loaded_run_config(config: dict, run_dir: pathlib.Path) -> None:
-        missing = [k for k in RunService._REQUIRED_CONFIG_KEYS if k not in config]
-        if missing:
-            raise ValueError(
-                f"Failed to ingest run at {run_dir.resolve()}: config.json is missing required keys: {missing}. "
-                "This run may be from an incompatible tool version or a partial export."
-            )
 
     @staticmethod
     def get_model_hash(args: Namespace) -> str:
@@ -254,6 +232,11 @@ class RunService:
         return [part.strip() for part in str(raw).split(",") if part.strip()]
 
     # --- instance methods ---
+    @property
+    def config_contents(self) -> dict[str, Any]:
+        """Backward-compatible view of ``config.json``; prefer ``run_config`` / ``run_config.contents``."""
+        return self.run_config.contents
+
     def set_training_metrics(self, training_metrics: dict):
         self.training_metrics_contents = training_metrics.copy()
 
@@ -279,7 +262,7 @@ class RunService:
         self.get_figures_path().mkdir(parents=True, exist_ok=True)
 
         with open(self.config_path, "w") as f:
-            json.dump(self.config_contents, f, indent=3)
+            json.dump(self.run_config.contents, f, indent=3)
 
         with open(self.manifest_path, "w") as f:
             json.dump(self.manifest_contents, f, indent=3)

@@ -13,6 +13,7 @@ from commands.command import (
 from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
+from networks.learning_rate.learning_rate import get_learning_rate
 
 import numpy as np
 
@@ -38,15 +39,16 @@ class AdhocCommand(Command):
     def invoke(self, args: Namespace):
         loss_function = get_loss_function(args.loss)
         activation_function = get_activation_function(args.activation)
+        learning_rate_function = get_learning_rate(args.learning_rate)
         net = HexagonalNeuralNetwork(
             n=args.n,
             r=args.rotation,
-            learning_rate=args.learning_rate,
+            learning_rate=learning_rate_function,
             activation=activation_function,
             loss=loss_function,
         )
 
-        net.graph_weights(activation_only=False, detail="untrained")
+        # net.graph_weights(activation_only=False, detail="untrained")
 
         # alternate between rotations 0 and 1
         for i in range(50):
@@ -60,9 +62,9 @@ class AdhocCommand(Command):
                 noise_sigma=args.dataset_noise_sigma,
                 noise_seed=args.seed + i,
             )
-            for rotation in range(3):
+            for rotation in range(6):
                 net.rotate(rotation)
-                net.graph_weights(activation_only=False, detail=f"r{rotation}_i{i}")
+                # net.graph_weights(activation_only=False, detail=f"r{rotation}_i{i}")
                 net.train_animated(data, epochs=args.epochs, pause=args.pause)
 
         # net.graph_weights(activation_only=False, detail="untrained")

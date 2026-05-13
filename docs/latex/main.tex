@@ -2,11 +2,22 @@
 \documentclass[twocolumn]{article}
 \usepackage{graphicx} % Required for inserting images
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{mathtools}
+\usepackage[backend=biber,style=numeric]{biblatex}
+\addbibresource{citations.bib}
 
-\title{Hexagonal Network Structures}
-\author{Daniel Lopez}
-\date{August 2025}
+\title{Hexagons are the Bestagons: A Novel Neural Network Topology}
+% \author{Daniel Lopez, Cezareo Rodriguez}
+\author{
+Daniel Lopez \quad Cezareo Rodriguez\\
+SimpleRose Inc.,\\
+St. Louis, MO\\
+\texttt{\{daniel, cezareo\}@simplerose.com}
+}
+
+
+\date{May 2026}
 
 \begin{document}
 
@@ -22,5 +33,9 @@
 \input{background}
 \input{implementation}
 \input{data}
+\input{results}
+\input{conclusion}
+
+\printbibliography
 
 \end{document}

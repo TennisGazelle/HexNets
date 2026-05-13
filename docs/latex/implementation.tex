@@ -1,50 +1,82 @@
 \section{Implementation}
 
-\subsection{Hexagonal Neural Network}
-A hexagonal neural network is a multilayer perceptron network whose layer sizes increase and then decrease symmetrically, forming a hexagon-like outline if it were to be drawn in 2D.
-
-As expected from feed-forward networks, all neurons in any given layer are fully connected to all neurons in the adjacent layers, but this is not just true in one direction.
-Due to the hexagonal nature of the framework, there are six distinct directions in which one could perform traditional forward and backward neural network propagation.
+\subsection{Topological Definition}
+A one directional view hexagonal neural network is a multilayer perceptron network whose layer sizes increase and then decrease symmetrically, forming a hexagon-like outline if it were to be drawn in 2D.
+As expected, all neurons in any given layer are fully connected to all neurons in the subsequent layer.
+However, due to the hexagonal nature of the framework, there are three distinct directions in which one could perform traditional forward and backward neural network propagation.
 This renders the structure to contain a unique corresponding arrangement of connections and shared weights given the direction.
-These shared weights may potentially influence the internal network's representation of data in their high-dimensional embedding from one propagation direction to another.
-In other words, training the network with training data from one of these directions could potentially help training the same network with the same data from another angle to escape local optima encountered during gradient descent or other optimization methods.
 
-Below, we present a mathematical generalization of this architecture, show adjacency matrices that will hopefully showcase the patterns that emerge as $n$ grows, optimize memory allocation for arbitrarily large $n$ values, and see the effects of loss and accuracy that training in one direction can have on other directions.
+These shared weights may influence the internal network's representation of data in their high-dimensional embedding from one propagation direction to another in strange ways.
+The shared weights of, say, the first semantic layer of $H_1$ will always have at least one shared weight with $H_2$ (the relative leftmost neuron from $H_2$'s point of view) up until the halfway point of the network.
+This overlap is small but non-neglible as these weights are now subject to the gradient descent paths of two distinct target local optimas.
+Experimentally, we actually see equivalent or better another local optimum, outperforming the two original networks had they been started with the same random seed patterns for their respective weights across the benchmark set (detailed below).
+Since each layer represents a layer of abstraction away from the input reality towards the target reality, it could be speculated that any one layer's abstraction has a cross abstractive coherence bias on another's direction and thus representation.
 
-\subsection{Hexagonal Connectivity and Spatial Directions}
+\subsection{The Greek Stuff}
 
-A key property of this network is its hexagonal symmetry.  
-Unlike a traditional MLP with strict linearity from left to right, the hexagonal network, $H$, has connections that can be interpreted in three unique spatial directions.
-Although we do have six unique networks, we call these three directions, since forward propagation of one network, say $H_1$, can be interpreted as the backward propagation of the network 3 rotations away; in this example, $H_4$.
-To be explicit, if we visualize the network with the layers centered and stacked vertically (i.e. with the smallest layers at the top and bottom, widest in the middle), then we have the following directions:
-\begin{itemize}
-    \item \textbf{Vertical Direction:} Connections that go straight "down" from one layer to the next.  For simplicity, straight-down propagation can be represented as $H_1$ and its backward propagation as $H_4$.  Note that although $H_1$ and $H_4$ are the same neural network, they are mirror opposites of forward and back propagation.
-    \item \textbf{Down-Right Direction:} Connections that start from one "hexagonal rotation" clockwise from the vertical $H_1$.  These are $H_2$ and its inverse $H_5$
-    \item \textbf{Down-Left Direction:} Connections that start from one hexagonal rotation counter clockwise from $H_1$.  These are $H_3$ and $H_6$.
-\end{itemize}
-
-The layer sizes of N follow an explicit pattern:
+The layer sizes of a HexNet of a parameter size $n$ follow an explicit pattern:
 
 \[L = [n, n+1, ... 2n-1, ..., n+1, n]\]
 
-This gives the total number of layers $N_L = 2n - 1$.
+with a $2n-1$ total layers as well.
 The total number of nodes in a network, however, is:
 
-\[T = \sum_{k=0}^{2n-2} (n + min(k, 2n-2-k))\]
+\[T = \sum_{k=0}^{2n-2} (n + \min(k, 2n-2-k))\]
+
+\subsubsection{Weight Indexing and Layer Sets}
+
+To be explicit, if we visualize the network with the layers centered and stacked vertically (i.e. with the smallest layers at the top and bottom, widest in the middle), then we have the following directions:
+\begin{itemize}
+    \item \textbf{$H_0$:} Top-to-bottom layers (default hexagonal structure)
+    \item \textbf{$H_1$:} Top-right to bottom-left diagonal
+    \item \textbf{$H_2$:} Bottom-right to top-left diagonal
+    \item \textbf{$H_3$:} Bottom-to-top layers (reverse of $H_0$)
+    \item \textbf{$H_4$:} Bottom left to top-right diagonal
+    \item \textbf{$H_5$:} Top left to bottom-right diagonal
+\end{itemize}
+
+\subsubsection{Global W}
+
+For mathematical simplicity, we employ a global weight matrix $W$, a adjacency matrix of size $T x T$ that can represent all possible connections regardless of rotation.
+Given that $H_0$ is directionally opposite $H_4$, they would share exactly the same weights.
+While empirical trials on MLPs show that bidirectional training on the same weights show catastrophic loss, (find reference), we could theoretically use different cells to represent that as a separate network and still maintain directional-abstraction bleeding between immediately neighboring dimensions.
+If this were the case, then $W$ would not be symmetric.
+An example of this is shown in Figure \ref{fig:hexnet_n3_multi_activation}.
+
+\begin{figure}
+    \includegraphics[width=1\linewidth]{hexnet_n3_multi_activation.png}
+    \caption{Overlay of the orientation-specific adjacency patterns for a HexNN with n=3. Each color corresponds to one directed orientation.}
+    \label{fig:hexnet_n3_multi_activation}
+\end{figure}
+
+\subsubsection{Directional W}
+We can represent the static MLP view of any arbitrary rotation, $r \in {0, 1, 2, 3, 4, 5}$ as $W_i$ with a mask over $W$ enforcing a layered feedforward structure.
+
 For the next few mathematical definitions, let the \textbf{Vertical Direction} orientation of the network, $H_1$, be the assumed direction.
 Furthermore, let's assume the numbering of the network to start from the top left index, traverse left to right, and then top to bottom.
 Let:
 \begin{itemize}
-    \item $A^{i} \in \{0, 1\}^{TxT}$ be the binary adjacency matrix for arbitrary direction $H_i$
-    \item For an neuron, $n$, at $i \in [0, T-1]$, or $n_i$, let $layer(i)$ map it to its layer number $l \in [0, N_{L}-1]$
+    \item $A^{i} \in \{0, 1\}^{T \times T}$ be the binary adjacency matrix for arbitrary direction $H_i$
+    \item For node index $i \in [0, T-1]$, let $\mathrm{layer}(i)$ map it to its layer number $l \in [0, N_{L}-1]$
     \item $S_{l}$ be the set of indices in layer $l$
 \end{itemize}
+
+\subsubsection{Directions as Rotations}
+As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{(i+3) \bmod 6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can all be considered symmetric (or at least will be in this paper).
+But this now introduces rotation as a potentially active participant in the training steps.
+Thus, for forward propagation, you can just iteratively compute:
+
+\[x_{t+1} = R_k(f_d(W^T \times p_d(x_t)))\]
+
+where $x_t$ is the latent vector at step $t$, $f_d$ is the hex net forward propagation through direction $d$, $R_k$ is the rotation operator at $k$, the selected rotation step, and $p_d is merely a padded mapping of x$
+
+\subsubsection{Adjacency Matrices}
 
 Then, the $H_1$, the only non-zero entries in $A$ are defined as:
 
 \[A_{ij}=\begin{cases}
-    1 & $i \in S_{l}, j \in S_{l+1},$ for some $l \in [0, N_L-2]$\\
-    0 & otherwise
+    1 & i \in S_{l}, j \in S_{l+1}, \text{ for some } l \in [0, N_L-2]\\
+    0 & \text{otherwise}
 \end{cases}\]
 
 A symptom of this definition for $H_1$ is a block structure that gets created inside $A^1$.
@@ -72,36 +104,31 @@ We can see this pattern hold as $n$ grows for $H_1$ in \ref{fig:adj-matrix-n234}
     \label{fig:adj-matrix-n234}
 \end{figure}
 
-\subsubsection{Rotations}
-
-As previously noted, properties such as layer sizes and layer weights for $H_i$ will be the reverse for the geometric opposite network, $H_{i+3\mod6}$, and therefore, adjacency matrices, weight matrices, and other relevant matrices can be reused.
-
 
 %
 % TODO: add information about rotation
 %
 
-\subsection{Traditional Neural Network Operations}
+% \subsection{Traditional Neural Network Operations}
 
-The connections between nodes in any neural network serve as weights, and thus the adjacency matrix $A^i$ can be $W^{i} \in \mathbb{R}^{T \times T}$ where all values that are not zero as previously defined are now a real number.
+% The connections between nodes in any neural network serve as weights, and thus the adjacency matrix $A^i$ can be $W^{i} \in \mathbb{R}^{T \times T}$ where all values that are not zero as previously defined are now a real number.
 
-Thus, for forward propagation, you can just iteratively compute:
+% Thus, for forward propagation, you can just iteratively compute:
 
-\[x^{t+1} = f(W^T \times x^t)\]
+% \[x^{t+1} = f(W^T \times x^t)\]
 
-where $f$ is a typical activation function for neural networks, and $x$ is the padded form of the input vector.
-This padding brings $x$ from $n$ dimensions to $T$ dimensions for ease of multiplication with $W$.
+% where $f$ is a typical activation function for neural networks, and $x$ is the padded form of the input vector.
+% This padding brings $x$ from $n$ dimensions to $T$ dimensions for ease of multiplication with $W$.
 
-\subsubsection{Example Flow with $n=2$}
+\subsubsection{Example Training Step Flow with $n=2$}
 
 In a network with $n=2$,
 \begin{itemize}
     \item The layer sizes are $[2, 3, 2]$
     \item The total number of nodes is $T = 7$
     \item The Weight and Adjacency matrices $A, W \in \mathbb{R}^{7 \times 7}$
-    \item The padded input vector $x$ is
-
-    \[x = \begin{bmatrix}
+    \item The padded input vector $p_0(x)$ is
+    \[x_t = \begin{bmatrix}
         x_0 \\
         x_1 \\
         0 \\
@@ -110,14 +137,22 @@ In a network with $n=2$,
         0 \\
         0 \\
     \end{bmatrix}\]
-    \item Computation is simply:
+
+    \item And the padded response vector is
+    \[\text{calculated } y_t = \begin{bmatrix}
+        0 \\
+        0 \\
+        0 \\
+        0 \\
+        0 \\
+        y_0 \\
+        y_1 \\
+    \end{bmatrix}\]
     
 \end{itemize}
 
 % While this emergent sparse-style network lends itself cleanly for memory optimization, this paper will not focus on that since there are \footnote{come back and add more as we see later} mathematical utilization of the all zero matrices.
 % For example, a full forward propagation through $H_1$ can be mathematically equivalent to projecting your feature network from $n$ dimensions to $T$ (front padded by $n$ zeros, and then the remaining back padding with zeros as well), and multiplying the resultant vector by $W^1$ a total of $2(n-1)$ times to get the output vector.
-
-\subsection{Network Variance}
 
 If we interpret six co-dependent multi layer perceptrons as an ensemble with parameter tying, here are a few variants that we could try finding baselines within the guidance of ensemble based learning.
 

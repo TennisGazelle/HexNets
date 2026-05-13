@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Iterator, Literal, Tuple
+from typing import Any, Iterator, Literal, Mapping, Tuple
 
 import numpy as np
 from hexnets_web.glossary_types import GlossaryNode
@@ -211,6 +211,59 @@ for _path in sorted(Path(__file__).resolve().parent.iterdir()):
 
 def list_registered_dataset_display_names() -> list[str]:
     return sorted(DATASET_FUNCTIONS.keys())
+
+
+def get_run_dataset_block_schema() -> Mapping[str, Any]:
+    """
+    Describe the persisted ``dataset`` object in run ``config.json``.
+
+    All registered synthetic datasets share this envelope; ``id`` must match a registered display name.
+    """
+    return {
+        "keys": {
+            "id": {"required": True, "type": "str"},
+            "num_samples": {"required": True, "type": "int"},
+            "scale": {"required": False},
+            "noise": {"required": False},
+        },
+        "registered_dataset_ids": tuple(sorted(DATASET_FUNCTIONS.keys())),
+    }
+
+
+def validate_run_dataset_block(
+    ds: Any,
+    *,
+    dataset_type: str,
+    dataset_size: int,
+    errors_prefix: str = "Run config",
+) -> None:
+    """
+    Validate ``dataset`` JSON for ingest or train-from-template.
+
+    Requires ``dataset_type`` / ``dataset_size`` top-level fields to match ``ds['id']`` and ``ds['num_samples']``.
+    """
+    if not isinstance(ds, dict):
+        raise ValueError(f"{errors_prefix}: 'dataset' must be an object after normalization.")
+    if not is_registered_dataset_display_name(dataset_type):
+        raise ValueError(f"{errors_prefix}: unknown dataset_type {dataset_type!r}.")
+    if ds.get("id") != dataset_type:
+        raise ValueError(
+            f"{errors_prefix}: dataset.id must match dataset_type "
+            f"(got id={ds.get('id')!r}, dataset_type={dataset_type!r})."
+        )
+    if ds.get("num_samples") != dataset_size:
+        raise ValueError(
+            f"{errors_prefix}: dataset.num_samples must match dataset_size "
+            f"(got num_samples={ds.get('num_samples')!r}, dataset_size={dataset_size!r})."
+        )
+    noise = ds.get("noise")
+    if noise is None:
+        return
+    if not isinstance(noise, dict):
+        raise ValueError(f"{errors_prefix}: dataset.noise must be null or an object.")
+    mode = noise.get("mode")
+    if mode not in ("inputs", "targets", "both"):
+        raise ValueError(f"{errors_prefix}: dataset.noise.mode must be one of inputs, targets, both when noise is set.")
 
 
 def is_registered_dataset_display_name(display_name: str) -> bool:

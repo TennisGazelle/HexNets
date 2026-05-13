@@ -1,4 +1,72 @@
-\section{Result}
+\section{Data}
+
+\section{Benchmark Families}
+
+The full cartesian product of all datasets and all known activation patterns, loss functions, learning rate, optimizers now with the new rotation operator would be thorough, it's not quite feasible for the scope of a paper, but it is considered for future work and exhaustive Hexnet dynamic surveying.
+
+Therefore we define a Benchmark Family is a subset of this cartesian product where hold certain hyperparameter constants and test individual themes with thess operators.
+The theme of each family along with our findings are detailed below. The datasets are defined afterwards.
+
+\subsection{Family A - Linear Structure Recovery}
+
+Hyper parameters that we will sweep:
+
+\begin{table}
+    \centering
+    \begin{tabular}{c|c}
+        Variable & Options \\
+        \hline
+        \hline
+        Models & hex, mlp \\
+        \hline
+        Activations & linear, relu, leaky\_relu \\
+        \hline
+        Losses & mean\_squared\_error, huber \\
+        \hline
+        Learning Rates & constant, exponential\_decay \\
+        \hline
+        Dimension & Ladder up by twos, 2, 4, 6, 8 \\
+    \end{tabular}
+    \label{tab:Benchmark A Hyper parameters}
+\end{table}
+
+\begin{table}
+    \centering
+    \begin{tabular}{c|c}
+        Dataset & Notes \\
+        \hline
+        \hline
+        identity & stuff \\
+        \hline
+        linear\_scale & stuff \\
+        \hline
+        diagonal\_scale & stuff \\
+        \hline
+        diagonal\_linear & stuff \\
+        \hline
+        full\_linear & stuff \\
+        \hline
+        low\_rank\_linear & stuff \\
+        \hline
+        affine & stuff \\
+        \hline
+        orthogonal\_rotation & stuff \\
+        \hline
+    \end{tabular}
+\end{table}
+
+This helps us achieve parity with MLP with basic data sets and basic flow validation.
+% CLAIM 1: - verified by file 
+We see hex geometry perform just as well as equivalent MLP architecture, then it may be safe to assume isotropic maps are not trivially penalized.
+
+% CLAIM 2: - verified by file 
+We also see that on diagonal\_scale, diagonal\_linear, and low\_rank\_linear datasets, Hexnet performs better.
+
+Hex Net loss and regression values fluctuate harshly after the rotation operator is applied, but this interference helps over all loss reach lower optimas on average.
+
+% CLAIM 3: - verified by file 
+When we specifically tested the orthogonal\_rotation dataset, we noticed that it differed in performance to the other affine transformations encoded in datasets.
+
 
 \subsection{Base Case}
 Baselines for $H_0$ have been created where loss function, activation functions, and n are variable, and we can measure their performance with regression metrics such as scalar loss (according to the respective loss function), accuracy (root mean square deviation, as is standard for regression based data sets) and $R^2$ (the coefficient of determination).
@@ -10,3 +78,58 @@ I did things here (identity dataset, linear dataset, chat gpt outputted)
 \subsection{Real Data Sets}
 
 I did things with real data here
+
+% 4. Data and Experimental Setup
+
+% 4.1 Objectives
+% - In-orientation performance.
+% - Cross-orientation transfer.
+% - Directional interference.
+% - Comparison to MLP baselines.
+
+% 4.2 Synthetic Datasets
+% 4.2.1 Identity Mapping
+% - Tests implementation sanity.
+% - Equal input/output dimensionality.
+% - Expected to be learnable by all reasonable baselines.
+
+% 4.2.2 Linear Transformations
+% - Tests simple structured mappings.
+% - Include dense, diagonal, low-rank, and orthogonal matrices if available.
+
+% 4.2.3 Nonlinear Synthetic Functions
+% - Tests whether behavior persists beyond linear mappings.
+
+% 4.3 Real Datasets
+% - Describe dataset source.
+% - Describe preprocessing.
+% - Explain dimensionality matching.
+% - Specify regression/classification metrics.
+
+% 4.4 Baselines
+% 4.4.1 Standard MLP
+% 4.4.2 Parameter-Matched MLP
+% 4.4.3 Six Independent MLPs
+% 4.4.4 Shared-Backbone Multi-Head Model
+
+% 4.5 Metrics
+% - Training loss.
+% - MSE/RMSE.
+% - R^2.
+% - Directional transfer matrix.
+% - Interference/retention score.
+
+% 4.6 Training Protocols
+% 4.6.1 Single-Orientation Training
+% 4.6.2 Sequential-Orientation Training
+% 4.6.3 Joint-Orientation Training
+% 4.6.4 Hyperparameter Sweeps
+
+% 5. Preliminary Results
+
+% 5.1 Base Case Results
+% 5.2 Cross-Orientation Transfer
+% 5.3 Opposite vs. Adjacent Direction Coupling
+% 5.4 Sequential Direction Interference
+% 5.5 Baseline Comparison
+% 5.6 Sensitivity to n, Activation, and Loss
