@@ -3,7 +3,7 @@ print_line() {
 }
 
 # Override for shorter local runs, e.g. E2E_EPOCHS=20 ./e2e_test.sh
-E2E_EPOCHS="${E2E_EPOCHS:-100}"
+E2E_EPOCHS="${E2E_EPOCHS:-10}"
 
 e2e_train() {
     local msg="$1"

@@ -1,4 +1,4 @@
-# NOT MEAN TO BE RUN ON ITS OWN
+# NOT MEANT TO BE RUN ON ITS OWN
 
 print_line 'Creating all the reference graphs...'
 if [ ! -d "reference" ]; then
