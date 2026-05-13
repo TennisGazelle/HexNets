@@ -35,6 +35,7 @@ for dataset in "${DATASETS[@]}"; do
                         -rn "e2etest-famA/hex-${combo_string}" \
                         --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
                         --run-note "e2e benchmark family A (linear)"\
+                        --dry-run
                     &
 
                 rm -rf "runs/e2etest-famA/mlp-${combo_string}"
@@ -49,6 +50,7 @@ for dataset in "${DATASETS[@]}"; do
                         -rn "e2etest-famA/mlp-${combo_string}" \
                         --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
                         --run-note "e2e benchmark family A (linear)"\
+                        --dry-run
                     &
             done
         done
