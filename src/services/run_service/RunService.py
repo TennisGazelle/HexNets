@@ -107,7 +107,9 @@ class RunService:
                     activation=self.activation_function,
                     loss=self.loss_function,
                 )
-                self.manifest_contents["trainable_parameter_count"] = HexagonalNeuralNetwork.get_parameter_count(model_metadata["n"])
+                self.manifest_contents["trainable_parameter_count"] = HexagonalNeuralNetwork.get_parameter_count(
+                    model_metadata["n"]
+                )
             else:
                 raise ValueError(f"Invalid model: {args.model}")
 

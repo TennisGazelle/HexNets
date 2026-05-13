@@ -104,8 +104,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
         if not (1 < epr_i < int(epochs)):
             raise ValueError(
-                f"{errors_prefix}: 'epr' must satisfy 1 < epr < epochs "
-                f"(got epr={epr_i}, epochs={int(epochs)})."
+                f"{errors_prefix}: 'epr' must satisfy 1 < epr < epochs " f"(got epr={epr_i}, epochs={int(epochs)})."
             )
 
         if ro is None:
@@ -118,9 +117,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             except (TypeError, ValueError) as e:
                 raise ValueError(f"{errors_prefix}: 'ro' entry at index {i} must be an integer.") from e
             if not 0 <= xi <= 5:
-                raise ValueError(
-                    f"{errors_prefix}: 'ro' entries must be in 0..5 (got {xi!r} at index {i})."
-                )
+                raise ValueError(f"{errors_prefix}: 'ro' entries must be in 0..5 (got {xi!r} at index {i}).")
 
     @staticmethod
     def validate_run_metadata(meta: dict, *, epochs: int) -> None:
@@ -169,9 +166,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         else:
             ro = None
 
-        HexagonalNeuralNetwork.validate_epr_ro_fields(
-            epr=epr, ro=ro, epochs=epochs, errors_prefix=prefix
-        )
+        HexagonalNeuralNetwork.validate_epr_ro_fields(epr=epr, ro=ro, epochs=epochs, errors_prefix=prefix)
 
     @staticmethod
     def _hex_layer_sizes(n):
