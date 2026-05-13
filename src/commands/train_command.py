@@ -13,7 +13,7 @@ from commands.command import (
     get_dataset,
 )
 from services.run_service import RunService
-from services.train_run_template import TrainRunTemplateConfig
+from services.run_config import RunConfig
 from services.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -111,9 +111,9 @@ class TrainCommand(Command):
         )
 
     def __call__(self, args: Namespace):
-        TrainRunTemplateConfig.validate_cli_sources(args)
+        RunConfig.validate_cli_sources(args)
         if getattr(args, "run_config", None) is not None or getattr(args, "run_config_json", None) is not None:
-            template = TrainRunTemplateConfig.from_cli_sources(args)
+            template = RunConfig.from_cli_sources(args)
             args = template.merged_train_namespace(original=args)
         self.validate_args(args)
         self.invoke(args)

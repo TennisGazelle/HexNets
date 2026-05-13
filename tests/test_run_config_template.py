@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from services.train_run_template import TrainRunTemplateConfig
+from services.run_config import RunConfig
 
 
 def _minimal_hex_config(**patch: object) -> dict:
@@ -37,7 +37,7 @@ def _minimal_hex_config(**patch: object) -> dict:
 
 
 def test_run_config_to_namespace_hex() -> None:
-    ns = TrainRunTemplateConfig(_minimal_hex_config()).to_namespace()
+    ns = RunConfig(_minimal_hex_config()).to_namespace()
     assert ns.model == "hex"
     assert ns.epochs == 50
     assert ns.n == 3
@@ -50,14 +50,14 @@ def test_run_config_to_namespace_hex() -> None:
 
 
 def test_run_config_learning_rate_numeric_becomes_constant_string() -> None:
-    ns = TrainRunTemplateConfig(_minimal_hex_config(learning_rate=0.01)).to_namespace()
+    ns = RunConfig(_minimal_hex_config(learning_rate=0.01)).to_namespace()
     assert ns.learning_rate == "constant"
 
 
 def test_run_config_dataset_noise_round_trip() -> None:
     cfg = _minimal_hex_config()
     cfg["dataset"]["noise"] = {"mode": "inputs", "mu": 0.1, "sigma": 0.2}
-    ns = TrainRunTemplateConfig(cfg).to_namespace()
+    ns = RunConfig(cfg).to_namespace()
     assert ns.dataset_noise == "inputs"
     assert ns.dataset_noise_mu == pytest.approx(0.1)
     assert ns.dataset_noise_sigma == pytest.approx(0.2)
@@ -66,7 +66,7 @@ def test_run_config_dataset_noise_round_trip() -> None:
 def test_validate_exclusivity_config_and_json() -> None:
     args = Namespace(run_config=Path("/tmp/x.json"), run_config_json="{}", run_dir=None)
     with pytest.raises(ValueError, match="only one"):
-        TrainRunTemplateConfig.validate_cli_sources(args)
+        RunConfig.validate_cli_sources(args)
 
 
 def test_validate_exclusivity_config_and_run_dir(tmp_path: Path) -> None:
@@ -74,7 +74,7 @@ def test_validate_exclusivity_config_and_run_dir(tmp_path: Path) -> None:
     cfg_path.write_text(json.dumps(_minimal_hex_config()), encoding="utf-8")
     args = Namespace(run_config=cfg_path, run_config_json=None, run_dir=tmp_path / "run")
     with pytest.raises(ValueError, match="run-dir"):
-        TrainRunTemplateConfig.validate_cli_sources(args)
+        RunConfig.validate_cli_sources(args)
 
 
 def test_merge_cli_overrides_epochs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -90,7 +90,7 @@ def test_merge_cli_overrides_epochs(monkeypatch: pytest.MonkeyPatch, tmp_path: P
         run_note=None,
         run_tags=None,
     )
-    merged = TrainRunTemplateConfig.from_cli_sources(original).merged_train_namespace(original=original)
+    merged = RunConfig.from_cli_sources(original).merged_train_namespace(original=original)
     assert merged.epochs == 99
     assert merged.run_config is None
     assert merged.run_dir is None
@@ -110,12 +110,12 @@ def test_merge_keeps_file_epochs_without_cli_flag(monkeypatch: pytest.MonkeyPatc
         run_note=None,
         run_tags=None,
     )
-    merged = TrainRunTemplateConfig.from_cli_sources(original).merged_train_namespace(original=original)
+    merged = RunConfig.from_cli_sources(original).merged_train_namespace(original=original)
     assert merged.epochs == 77
 
 
 def test_parse_explicit_overrides_ignores_unknown_tokens() -> None:
-    ns = TrainRunTemplateConfig.parse_explicit_cli_overrides(["--run-config", "ignored.json", "-e", "3"])
+    ns = RunConfig.parse_explicit_cli_overrides(["--run-config", "ignored.json", "-e", "3"])
     assert ns.epochs == 3
 
 
@@ -131,7 +131,7 @@ def test_merge_from_json_string(monkeypatch: pytest.MonkeyPatch) -> None:
         run_note=None,
         run_tags=None,
     )
-    merged = TrainRunTemplateConfig.from_cli_sources(original).merged_train_namespace(original=original)
+    merged = RunConfig.from_cli_sources(original).merged_train_namespace(original=original)
     assert merged.epochs == 10
     assert merged.n == 4
 
@@ -153,5 +153,5 @@ def test_merge_overrides_run_name_from_cli(monkeypatch: pytest.MonkeyPatch, tmp_
         run_note=None,
         run_tags=None,
     )
-    merged = TrainRunTemplateConfig.from_cli_sources(original).merged_train_namespace(original=original)
+    merged = RunConfig.from_cli_sources(original).merged_train_namespace(original=original)
     assert merged.run_name == "cli-name"

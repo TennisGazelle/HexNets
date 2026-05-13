@@ -22,8 +22,8 @@ from networks.MLPNetwork import MLPNetwork
 from utils import read_json_object
 
 
-class TrainRunTemplateConfig:
-    """Central validation and CLI-merge for on-disk run config used by ``hexnet train``."""
+class RunConfig:
+    """Validation and CLI merge for on-disk run ``config.json`` (train-from-file and resume ingest)."""
 
     INGEST_REQUIRED_KEYS: tuple[str, ...] = (
         "model_type",
@@ -77,14 +77,14 @@ class TrainRunTemplateConfig:
         return lr
 
     @classmethod
-    def from_path(cls, path: pathlib.Path) -> TrainRunTemplateConfig:
+    def from_path(cls, path: pathlib.Path) -> RunConfig:
         cfg = read_json_object(path, "run config template")
         if not isinstance(cfg, dict):
             raise ValueError("Run config template must be a JSON object.")
         return cls(cfg)
 
     @classmethod
-    def from_json_string(cls, raw: str) -> TrainRunTemplateConfig:
+    def from_json_string(cls, raw: str) -> RunConfig:
         try:
             cfg = json.loads(raw)
         except json.JSONDecodeError as e:
@@ -123,6 +123,12 @@ class TrainRunTemplateConfig:
                 f"Failed to ingest run at {run_dir.resolve()}: config.json is missing required keys: {missing}. "
                 "This run may be from an incompatible tool version or a partial export."
             )
+
+    @classmethod
+    def from_ingested_dict(cls, data: dict[str, Any], run_dir: pathlib.Path) -> RunConfig:
+        """Normalize and validate ``data`` from disk, then wrap it (mutates ``data`` in place)."""
+        cls.validate_disk_config_for_ingest(data, run_dir)
+        return cls(data)
 
     @classmethod
     def validate_for_train_template_dict(
@@ -238,7 +244,7 @@ class TrainRunTemplateConfig:
                 setattr(ns, key, val)
 
     @classmethod
-    def from_cli_sources(cls, original: Namespace) -> TrainRunTemplateConfig:
+    def from_cli_sources(cls, original: Namespace) -> RunConfig:
         path = getattr(original, "run_config", None)
         raw_json = getattr(original, "run_config_json", None)
         if path is not None:
@@ -246,6 +252,11 @@ class TrainRunTemplateConfig:
         if raw_json is not None:
             return cls.from_json_string(raw_json)
         raise ValueError("from_cli_sources called without run_config or run_config_json")
+
+    @property
+    def contents(self) -> dict[str, Any]:
+        """Mutable on-disk ``config.json`` payload (same mapping as ``json`` read/write)."""
+        return self._raw
 
     def validate(self, *, errors_prefix: str = "Run config template") -> None:
         self.validate_for_train_template_dict(self._raw, errors_prefix=errors_prefix)

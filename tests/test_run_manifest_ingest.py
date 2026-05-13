@@ -10,7 +10,7 @@ from networks.HexagonalNetwork import HexagonalNeuralNetwork
 from networks.activation.activations import get_activation_function
 from networks.loss.loss import get_loss_function
 from services.run_service.RunService import RunService
-from services.train_run_template import TrainRunTemplateConfig
+from services.run_config import RunConfig
 from utils import read_json_object
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -30,12 +30,12 @@ def test_read_json_object_invalid_json_includes_path_and_hint(tmp_path: Path) ->
 def test_normalize_dataset_missing_legacy_keys_raises() -> None:
     cfg = {"model_type": "hex"}
     with pytest.raises(ValueError, match="dataset"):
-        TrainRunTemplateConfig.normalize_disk_config(cfg)
+        RunConfig.normalize_disk_config(cfg)
 
 
 def test_normalize_dataset_idempotent_when_nested_present() -> None:
     cfg = {"dataset": {"id": "identity", "num_samples": 10, "scale": None}}
-    TrainRunTemplateConfig.normalize_disk_config(cfg)
+    RunConfig.normalize_disk_config(cfg)
     assert cfg["dataset"]["id"] == "identity"
     assert cfg["dataset"]["noise"] is None
 
@@ -62,7 +62,7 @@ def test_legacy_config_json_normalizes_dataset_block() -> None:
     """Legacy runs lack ``dataset``; normalization matches flat keys (no full pickle load)."""
     cfg_path = REPO_ROOT / "runs" / "e2etest-hex-train" / "config.json"
     cfg = read_json_object(cfg_path, "config.json")
-    TrainRunTemplateConfig.normalize_disk_config(cfg)
+    RunConfig.normalize_disk_config(cfg)
     assert cfg["dataset"]["id"] == cfg["dataset_type"]
     assert cfg["dataset"]["num_samples"] == cfg["dataset_size"]
 
@@ -127,9 +127,10 @@ def test_new_run_manifest_has_traceability_fields(
     assert m["run_note"] == "bench run"
     assert m["run_tags"] == ["paper", "v1"]
     assert m["trainable_parameter_count"] > 0
-    assert run.config_contents["schema_version"] == 1
-    assert run.config_contents["random_seed"] == 99
-    assert run.config_contents["dataset"]["id"] == "identity"
-    assert run.config_contents["dataset"]["scale"] is None
-    noise = run.config_contents["dataset"]["noise"]
+    assert run.config_contents is run.run_config.contents
+    assert run.run_config.contents["schema_version"] == 1
+    assert run.run_config.contents["random_seed"] == 99
+    assert run.run_config.contents["dataset"]["id"] == "identity"
+    assert run.run_config.contents["dataset"]["scale"] is None
+    noise = run.run_config.contents["dataset"]["noise"]
     assert noise == {"mode": "inputs", "mu": 0.0, "sigma": 0.05, "noise_seed": 99}
