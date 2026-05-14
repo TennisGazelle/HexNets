@@ -57,7 +57,7 @@ Full argument patterns: [`.cursor/CLI_PATTERNS.md`](.cursor/CLI_PATTERNS.md).
 
 ## Layout
 
-- `src/` — application code (`networks/`, `commands/`, `data/`, `services/` — including [`RunConfig`](src/services/run_config/RunConfig.py) for run `config.json` validation and train-from-file merge, `streamlit_app.py`, `hexnets_web/`)
+- `src/` — application code (`networks/`, `commands/`, `data/`, `services/`, `streamlit_app.py`, `hexnets_web/`)
 - `figures/`, `runs/`, `reference/` — created at install or runtime (`Makefile` creates `figures/` and `runs/`)
 
 Legacy / scratch: `hexnet.py` (root) is **not** the installed package entrypoint; prefer `hexnet` CLI after `make install`.

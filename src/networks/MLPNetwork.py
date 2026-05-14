@@ -218,18 +218,20 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
     def show_stats(self):
         logger.info("MLP Network Stats:")
-        data = [
-            ["layer_sizes", [self.input_dim] + self.hidden_dims + [self.output_dim]],
-            ["lr", self.learning_rate_fn.display_name],
-            ["epochs completed", self.epochs_completed],
-            ["loss_method", self.loss.display_name],
-            ["activation_method", self.activation.display_name],
-        ]
-        logger.info("\n" + tabulate(data, headers=["Parameter", "Value"], tablefmt="grid"))
 
-        # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
-        # print(f"regression_score:\t{self.training_metrics.regression_score[-1]:.3f}")
-        # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
+        layer_sizes = [self.input_dim] + self.hidden_dims + [self.output_dim]
+        table_print(
+            ["layer_sizes", "lr", "epochs completed", "loss_method", "activation_method"],
+            [
+                [
+                    layer_sizes,
+                    self.learning_rate_fn.display_name,
+                    self.epochs_completed,
+                    self.loss.display_name,
+                    self.activation.display_name,
+                ]
+            ]
+        )
 
     def show_latest_metrics(self):
         metrics = self.training_metrics

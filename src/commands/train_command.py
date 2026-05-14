@@ -110,6 +110,15 @@ class TrainCommand(Command):
             dest="run_config_json",
         )
 
+        parser.add_argument(
+            "-f",
+            "--force",
+            default=False,
+            action="store_true",
+            help="Force overwrite of existing run",
+            dest="force_overwrite",
+        )
+
     def __call__(self, args: Namespace):
         RunConfig.validate_cli_sources(args)
         if getattr(args, "run_config", None) is not None or getattr(args, "run_config_json", None) is not None:
@@ -128,7 +137,10 @@ class TrainCommand(Command):
                 raise ValueError("Cannot define desired run-name and have a run_dir, pick one.")
 
             if (RunService.runs_dir / args.run_name).exists():
-                raise ValueError(f"Run named '{args.run_name}' already exists")
+                if args.force_overwrite:
+                    logger.warning(f"Run named '{args.run_name}' already exists, forcing overwrite")
+                else:
+                    raise ValueError(f"Run named '{args.run_name}' already exists")
 
         if args.run_dir:
             if not args.run_dir.exists():
@@ -167,7 +179,7 @@ class TrainCommand(Command):
 
         run.output_run_files()
 
-        # net.graph_structure(output_dir=run.get_figures_path())
+        net.graph_structure(output_dir=run.get_figures_path())
         net.graph_weights(activation_only=False, output_dir=run.get_figures_path())
         net.train_animated(
             data,
@@ -175,7 +187,7 @@ class TrainCommand(Command):
             pause=args.pause,
             output_dir=run.get_figures_path(),
         )
-        net.graph_weights(activation_only=False, output_dir=run.get_figures_path(), detail="trained")
+        # net.graph_weights(activation_only=False, output_dir=run.get_figures_path(), detail="trained")
 
         run.set_training_metrics(net.get_metrics_json())
         net.save(run.get_network_weights_path())

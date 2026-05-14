@@ -147,7 +147,13 @@
             "args": [
                 "train",
                 "-m", "mlp",
-                "-t", "identity",
+                "-n", "5",
+                "-t", "unit_sphere_projection",
+                "-ds", "1000",
+                "-e", "200",
+                "-lr", "exponential_decay",
+                "-rn", "sphere_linear_huber_exp_decay",
+                "-f",
             ]
         },
         {
