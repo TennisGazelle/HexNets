@@ -1,14 +1,11 @@
 import pathlib
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Rectangle
 
 from services.figure_service.figure import Figure
-from services.logging_config import get_logger
-
-logger = get_logger(__name__)
 
 
 class DynamicWeightsFigure(Figure):
@@ -24,6 +21,8 @@ class DynamicWeightsFigure(Figure):
     Pass ``highlight_channel`` (e.g. hex rotation ``r``) to draw all outlines in
     the same tab10 color as ``TrainingFigure`` uses for that channel.
     """
+
+    save_log_label = "weights figure"
 
     def __init__(self, title: str, filename: str, layer_shapes: List[Tuple[int, int]]):
         super().__init__(filename)
@@ -135,18 +134,26 @@ class DynamicWeightsFigure(Figure):
                 ec = highlight_edgecolor if highlight_edgecolor is not None else "k"
                 self._apply_highlight_mask(k, np.asarray(hm, dtype=bool), matrix, edgecolor=ec)
 
-        self.fig.canvas.draw()
+        self._canvas_draw()
 
-    def save_figure(self):
-        filename_path = pathlib.Path(self.filename) if isinstance(self.filename, str) else self.filename
-        filename_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Saving weights figure to {filename_path.absolute()}")
-        try:
-            self.fig.savefig(filename_path)
-            logger.debug(f"Successfully saved weights figure to {filename_path.absolute()}")
-        except Exception as e:
-            logger.error(f"Error saving weights figure: {e}")
-            raise
+    @staticmethod
+    def export_matrices_to_path(
+        weight_matrices: List[np.ndarray],
+        path: Union[pathlib.Path, str],
+        *,
+        title: str,
+        activation_only: bool = False,
+        panel_titles: Optional[List[str]] = None,
+    ) -> str:
+        """Persist weight matrices using the shared static heatmap renderer."""
+        from services.figure_service.weight_heatmap import render_weight_panels
 
-    def show_figure(self):
-        self.fig.show()
+        saved_path, _ = render_weight_panels(
+            weight_matrices,
+            activation_only=activation_only,
+            title=title,
+            panel_titles=panel_titles,
+            path=path,
+            show=False,
+        )
+        return saved_path or str(path)

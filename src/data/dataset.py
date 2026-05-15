@@ -57,7 +57,26 @@ class BaseDataset(ABC):
         self.noise_sigma = float(noise_sigma)
         self.noise_seed = int(noise_seed)
 
+    def _init_standard_fields(
+        self,
+        d: int,
+        num_samples: int,
+        *,
+        scale: float | np.float64 = 1.0,
+        seed: int | None = None,
+        load: bool = True,
+    ) -> None:
+        """Shared constructor tail for synthetic datasets (d, num_samples, optional scale/seed)."""
+        self.d = d
+        self.num_samples = num_samples
+        self.scale = float(scale)
+        self.seed = seed
+        self.data = None
+        if load:
+            self.load_data()
+
     def __init_subclass__(cls, **kwargs):
+        register = kwargs.pop("register", True)
         display_name = kwargs.pop(
             "display_name",
             cls.__name__.replace("Dataset", "").lower(),
@@ -66,6 +85,9 @@ class BaseDataset(ABC):
             raise TypeError(f"Unexpected keyword arguments for {cls.__name__}: {tuple(kwargs)}")
 
         cls.display_name = display_name
+
+        if not register:
+            return
 
         if display_name in DATASET_FUNCTIONS:
             raise ValueError(f"Dataset function {display_name} already exists")
@@ -194,6 +216,38 @@ def randomized_enumerate(
     np.random.shuffle(index_array)
     for index in index_array:
         yield int(index), dataset.__getitem__(index)
+
+
+class GaussianInputProjectionDataset(BaseDataset, register=False):
+    """Standard-normal inputs; concrete subclasses supply ``targets_from_inputs``."""
+
+    def __init__(
+        self,
+        d: int = 2,
+        num_samples: int = 100,
+        scale: float | np.float64 = 1.0,
+        seed: int | None = None,
+        *,
+        noise_mode: DatasetNoiseMode | None = None,
+        noise_mu: float = 0.0,
+        noise_sigma: float = 0.1,
+        noise_seed: int = 0,
+    ):
+        super().__init__(
+            noise_mode=noise_mode,
+            noise_mu=noise_mu,
+            noise_sigma=noise_sigma,
+            noise_seed=noise_seed,
+        )
+        self._init_standard_fields(d, num_samples, scale=scale, seed=seed)
+
+    @classmethod
+    def get_glossary_node(cls) -> GlossaryNode:
+        raise NotImplementedError
+
+    def _sample_inputs_rng_impl(self, **kwargs: Any) -> np.ndarray:
+        rng = np.random.default_rng(self.seed)
+        return rng.standard_normal((self.num_samples, self.d)).astype(float)
 
 
 for _path in sorted(Path(__file__).resolve().parent.iterdir()):

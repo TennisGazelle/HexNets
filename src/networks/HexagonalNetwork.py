@@ -1,8 +1,6 @@
-import copy
 import math
 import os
 import pickle
-from tabulate import tabulate
 from typing import Any, List, Dict, Mapping, Union, Tuple
 import pathlib
 from utils import table_print
@@ -21,14 +19,9 @@ from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
 from networks.network import BaseNeuralNetwork
 
-from networks.activation.LeakyRelu import LeakyReLU
-from networks.activation.Relu import ReLU
 from networks.activation.Sigmoid import Sigmoid
 
-from networks.loss.HuberLoss import HuberLoss
-from networks.loss.LogCoshLoss import LogCoshLoss
 from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
-from networks.loss.QuantileLoss import QuantileLoss
 from data.dataset import BaseDataset, randomized_enumerate
 
 # === Hexagonal Neural Network ===
@@ -52,7 +45,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self.dir_W = self._init_dir_W()
         self._sync_global_to_dir()
         self._setup_training_metrics()
-        self._init_figure_service()
+        self._init_figure_service(training_filename_prefix="hexnet_training_")
 
     # --- static methods ---
     @staticmethod
@@ -251,18 +244,20 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def set_training_metrics(self, channel: int, metrics: Metrics):
         self.training_metrics[channel] = metrics
 
-    def _init_figure_service(self):
-        from services.figure_service.FigureService import REGRESSION_SCORE_DETAIL, R2_DETAIL
+    def _metrics_for_display(self) -> Metrics:
+        return self.training_metrics[self.r]
 
-        self.figure_service = FigureService()
-        self.figure_service.set_figures_path(None)
-        self.training_figure = self.figure_service.init_training_figure(
-            f"hexnet_training_{self.loss}_{self.activation}.png",
-            f"Training {self.display_name}",
-            self.loss.display_name,
-            REGRESSION_SCORE_DETAIL,
-            R2_DETAIL,
-        )
+    def _metrics_table_headers(self) -> List[str]:
+        return ["Rotation", "Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"]
+
+    def _metrics_table_row_prefix(self) -> List[Any]:
+        return [self.r]
+
+    def _training_metrics_r2_n(self) -> int:
+        return self.n
+
+    def _training_metrics_r2_p(self) -> int:
+        return self.n
 
     def _rotation_forward_edge_mask(self) -> np.ndarray:
         """Directed feedforward edges for rotation ``r`` on ``global_W`` indices (row=u, col=v).
@@ -715,24 +710,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             ],
         )
 
-    def show_latest_metrics(self):
-        metrics = self.training_metrics[self.r]
-        data = (
-            [0.0, 0.0, 0.0, 0.0, 0]
-            if len(metrics.loss) == 0
-            else [
-                metrics.loss[-1],
-                metrics.regression_score[-1],
-                metrics.r_squared[-1],
-                metrics.adjusted_r_squared[-1] if metrics.adjusted_r_squared else 0.0,
-                self.epochs_completed,
-            ]
-        )
-        table_print(
-            ["Rotation", "Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"],
-            [[self.r, *data]],
-        )
-
     def train_animated(
         self,
         data: BaseDataset,
@@ -791,11 +768,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         # training loop
         for epoch in trange(self.epochs_completed, self.epochs_completed + epochs):
             total_loss = 0.0
-            # correct = 0
-            # count = 0
-            # ss_res_sum = 0.0
-            # sum_y = 0.0
-            # sum_y2 = 0.0
+            self.training_metrics[self.r].reset_epoch_tally()
 
             for index, (x_input, y_target) in randomized_enumerate(data):
                 self.data_iteration = index
@@ -862,42 +835,25 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
             epoch_loss = total_loss / len(data)
             epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_regression_score_and_r2(
-                self.n, p=self.n
+                self._training_metrics_r2_n(), p=self._training_metrics_r2_p()
             )
             self.training_metrics[self.r].add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
-            self.training_figure.update_figure(
-                {
-                    "loss": epoch_loss,
-                    "regression_score": epoch_reg_score,
-                    "r_squared": epoch_r2,
-                    "adjusted_r_squared": epoch_adj_r2,
+            self._finalize_training_epoch(
+                epoch_loss=epoch_loss,
+                epoch_reg_score=epoch_reg_score,
+                epoch_r2=epoch_r2,
+                epoch_adj_r2=epoch_adj_r2,
+                training_channel=self.r,
+                weights_figure=weights_figure,
+                pause=pause,
+                show_training_metrics=show_training_metrics,
+                show_weights_live=show_weights_live,
+                is_last_epoch=(epoch == self.epochs_completed + epochs - 1),
+                weights_update_kwargs={
+                    "highlight_masks": [self._rotation_forward_edge_mask()],
+                    "highlight_channel": self.r,
                 },
-                self.r,
-                redraw=show_training_metrics,
             )
-
-            self.apply_delta_W()
-
-            if show_weights_live and weights_figure is not None:
-                weights_figure.update_figure(
-                    self.get_weight_matrices_for_live_plot(),
-                    highlight_masks=[self._rotation_forward_edge_mask()],
-                    highlight_channel=self.r,
-                )
-
-            if show_training_metrics or show_weights_live:
-                plt.pause(pause)
-
-            if epoch == self.epochs_completed + epochs - 1:
-                logger.debug(f"About to save figure at epoch {epoch}")
-                self.training_figure.save_figure()
-                logger.info("")
-                logger.info("Training complete!")
-                self.show_latest_metrics()
-                logger.info(f"Training figure saved to: {self.training_figure.filename}")
-                if weights_figure is not None:
-                    weights_figure.save_figure()
-                    logger.info(f"Weights figure saved to: {weights_figure.filename}")
 
         # todo: keep track of epochs completed for each rotation
         if self.r == 0:

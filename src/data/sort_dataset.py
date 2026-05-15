@@ -23,12 +23,7 @@ class SortDataset(BaseDataset, display_name="sort"):
             noise_sigma=noise_sigma,
             noise_seed=noise_seed,
         )
-        self.d = d
-        self.num_samples = num_samples
-        self.scale = float(scale)
-        self.seed = seed
-        self.data = None
-        self.load_data()
+        self._init_standard_fields(d, num_samples, scale=scale, seed=seed)
 
     @classmethod
     def get_glossary_node(cls) -> GlossaryNode:

@@ -1,10 +1,6 @@
-import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 from services.figure_service.figure import Figure
-from services.logging_config import get_logger
-
-logger = get_logger(__name__)
 
 
 class LearningRateRefFigure(Figure):
@@ -26,22 +22,6 @@ class LearningRateRefFigure(Figure):
         (self.line,) = self.ax.plot([], [], label=f"LR: {self.learning_rate_name}")
         self.ax.legend()
 
-    def save_figure(self):
-        filename_path = pathlib.Path(self.filename) if isinstance(self.filename, str) else self.filename
-        filename_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Saving figure to {filename_path.absolute()}")
-        try:
-            self.fig.savefig(filename_path)
-            logger.debug(f"Successfully saved figure to {filename_path.absolute()}")
-        except Exception as e:
-            logger.error(f"Error saving figure: {e}")
-            raise
-
-    def show_figure(self):
-        self.fig.show()
-
     def update_figure(self, iterations: np.ndarray, learning_rates: np.ndarray):
-        self.line.set_data(iterations, learning_rates)
-        self.ax.relim()
-        self.ax.autoscale_view()
-        self.fig.canvas.draw()
+        self._refresh_line(self.ax, self.line, learning_rates, x=iterations)
+        self._canvas_draw()

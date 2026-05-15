@@ -1,35 +1,10 @@
 import numpy as np
 
-from data.dataset import BaseDataset, DatasetNoiseMode
+from data.dataset import GaussianInputProjectionDataset
 from hexnets_web.glossary_types import GlossaryNode
 
 
-class SimplexProjectionDataset(BaseDataset, display_name="simplex_projection"):
-    def __init__(
-        self,
-        d: int = 2,
-        num_samples: int = 100,
-        scale: float | np.float64 = 1.0,
-        seed: int | None = None,
-        *,
-        noise_mode: DatasetNoiseMode | None = None,
-        noise_mu: float = 0.0,
-        noise_sigma: float = 0.1,
-        noise_seed: int = 0,
-    ):
-        super().__init__(
-            noise_mode=noise_mode,
-            noise_mu=noise_mu,
-            noise_sigma=noise_sigma,
-            noise_seed=noise_seed,
-        )
-        self.d = d
-        self.num_samples = num_samples
-        self.scale = float(scale)
-        self.seed = seed
-        self.data = None
-        self.load_data()
-
+class SimplexProjectionDataset(GaussianInputProjectionDataset, display_name="simplex_projection"):
     @staticmethod
     def _proj_simplex(v: np.ndarray) -> np.ndarray:
         """Euclidean projection of vector v onto the probability simplex."""
@@ -63,10 +38,6 @@ class SimplexProjectionDataset(BaseDataset, display_name="simplex_projection"):
             ),
             children=(),
         )
-
-    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
-        rng = np.random.default_rng(self.seed)
-        return rng.standard_normal((self.num_samples, self.d)).astype(float)
 
     def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
         x = self._as_validated_batch_inputs(X)

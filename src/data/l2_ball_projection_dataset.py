@@ -1,35 +1,10 @@
 import numpy as np
 
-from data.dataset import BaseDataset, DatasetNoiseMode
+from data.dataset import GaussianInputProjectionDataset
 from hexnets_web.glossary_types import GlossaryNode
 
 
-class L2BallProjectionDataset(BaseDataset, display_name="l2_ball_projection"):
-    def __init__(
-        self,
-        d: int = 2,
-        num_samples: int = 100,
-        scale: float | np.float64 = 1.0,
-        seed: int | None = None,
-        *,
-        noise_mode: DatasetNoiseMode | None = None,
-        noise_mu: float = 0.0,
-        noise_sigma: float = 0.1,
-        noise_seed: int = 0,
-    ):
-        super().__init__(
-            noise_mode=noise_mode,
-            noise_mu=noise_mu,
-            noise_sigma=noise_sigma,
-            noise_seed=noise_seed,
-        )
-        self.d = d
-        self.num_samples = num_samples
-        self.r = float(scale)
-        self.seed = seed
-        self.data = None
-        self.load_data()
-
+class L2BallProjectionDataset(GaussianInputProjectionDataset, display_name="l2_ball_projection"):
     @classmethod
     def get_glossary_node(cls) -> GlossaryNode:
         return GlossaryNode(
@@ -52,12 +27,9 @@ class L2BallProjectionDataset(BaseDataset, display_name="l2_ball_projection"):
             children=(),
         )
 
-    def _sample_inputs_rng_impl(self, **kwargs) -> np.ndarray:
-        rng = np.random.default_rng(self.seed)
-        return rng.standard_normal((self.num_samples, self.d)).astype(float)
-
     def targets_from_inputs(self, X: np.ndarray) -> np.ndarray:
         x = self._as_validated_batch_inputs(X)
         norm = np.linalg.norm(x, axis=1, keepdims=True) + 1e-12
-        scale_row = np.minimum(1.0, self.r / norm)
+        radius = float(self.scale)
+        scale_row = np.minimum(1.0, radius / norm)
         return x * scale_row

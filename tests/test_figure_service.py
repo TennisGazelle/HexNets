@@ -196,11 +196,6 @@ class TestLearningRateRefFigure:
         
         self.figure.line.set_data.assert_called_once_with(iterations, lr_values)
 
-    def test_show_figure(self):
-        """Test showing figure"""
-        self.figure.show_figure()
-        self.figure.fig.show.assert_called_once()
-
 
 class TestTrainingFigure:
     """Test cases for TrainingFigure"""
@@ -363,11 +358,6 @@ class TestTrainingFigure:
         assert self.figure.training_metrics[0]["loss"][0] == 0.5
         assert self.figure.training_metrics[0]["loss"][1] == 0.4
 
-    def test_show_figure(self):
-        """Test showing training figure"""
-        self.figure.show_figure()
-        self.figure.fig.show.assert_called_once()
-
 
 class TestRefFigure:
     """Test cases for RefFigure"""
@@ -396,11 +386,6 @@ class TestRefFigure:
         # This is a simple implementation
         self.figure.save_figure()
         self.figure.fig.savefig.assert_called_once()
-
-    def test_show_figure(self):
-        """Test showing reference figure"""
-        self.figure.show_figure()
-        self.figure.fig.show.assert_called_once()
 
 
 class TestFigureServiceEdgeCases:

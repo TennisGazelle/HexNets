@@ -48,6 +48,13 @@ class Metrics:
         self.r_squared.append(r_squared)
         self.adjusted_r_squared.append(adjusted_r_squared)
 
+    def reset_epoch_tally(self) -> None:
+        self.regression_score_sum = 0.0
+        self.ss_res_sum = 0.0
+        self.y_sum = 0.0
+        self.y2_sum = 0.0
+        self.count = 0
+
     def tally_regression_score_r2(self, y_pred: np.ndarray, y_target: np.ndarray):
         diff_squared = (y_pred - y_target) ** 2
         rmse = np.sqrt(np.mean(diff_squared))
