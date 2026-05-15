@@ -1,14 +1,8 @@
 \section{Background}
 
 \subsection{MLPs and Layered Function Approximation}
-% Points to hit:
 
-% MLPs as compositions of affine transformations and nonlinearities.
-% Standard feedforward directionality.
-% Fully connected adjacent-layer transformations.
-% This HexNN keeps this adjacent-layer bipartite assumption but changes the topology/directional interpretation.
-
-MLPs can be described as a composition of affine transformations and (typically) non linear activation functions.
+MLPs can be described as a composition of affine transformations and (typically) non linear activation functions \cite{cybenko1989approximation,hornik1989multilayer}.
 Iterations on derivative architectures modify this basic pattern with tricks like weight sharing, recurrence, attention blocks, or structured sparsity.
 However, they still maintain the feedforward directionality of the network.
 
@@ -17,113 +11,83 @@ These biases must be introduced through some creative license on network feature
 
 HexNNs, as introduced in this paper, keeps this adjacent-layer bipartite structure from MLPs but changes its own topology to allow for multiple feedforward interpretations from the same graph, potentially allowing for more complex inductive biases.
 
+%%% SUGGESTION: Existing text: "more complex inductive biases"
+%%% SUGGESTION: This is reasonable but still broad. Consider explicitly naming which biases are hypothesized rather than implied.
+
 \subsection{Symmetry and Equivariance in Neural Networks}
-% Points to hit:
 
-% CNNs encode translational structure.
-% Group-equivariant CNNs encode transformations such as rotations/reflections.
-% Spherical CNNs extend symmetry ideas to spherical domains.
-% Your project differs because:
-% the symmetry is imposed on the network topology, not only the input domain or filter group,
-% the same node/weight structure can be reinterpreted directionally.
-
-Convolutional Neural Networks (CNNs) are a prime example of how the architural constraints of the input domain can be used to encode more complex inductive biases.
+Convolutional Neural Networks (CNNs) are a prime example of how the architural constraints of the input domain can be used to encode more complex inductive biases \cite{lecun1998gradient,fukushima1980neocognitron}.
 They encode translational equivariance and locality of features in the input data by using convolutional filters that are "slid" across the input data.
-Their derivative architecture use geometric iterations on their kernels and inputs to help them unlock higher level inductive biases:
-Group-equivariants CNNS encode the symmetry of the input data itself to achieve rotation, reflection, or other group equivariances equivariance and Spherical CNNs extend the symmetry ideas to spherical domains for rotational equivariance.
-Capsule Networks project their input data into higher dimensionality with their vector interpretaion and yield complex understandings of part-whole relationships in their latent space.
+Their derivative architecture use geometric iterations on their kernels and inputs to help them unlock higher level inductive biases.
+Group-equivariant CNNs encode the symmetry of the input data itself to achieve rotation, reflection, or other group equivariances \cite{cohen2016group,worrall2017harmonic}.
+Capsule Networks project their input data into higher dimensionality with vector-style representations and model part-whole relationships \cite{sabour2017dynamic}.
 
 All of these architectures, however, still impose a feed forward directionality on the layer ordering.
 In the case of HexNNs, the symmetry is imposed on the network topology itself, not only the input domain or filter group.
 This allows for the same node/weight structure to be reinterpreted directionally with abstraction bleeding between the different directions.
 
-% \begin{table*}
-%     \centering
-%     \begin{tabular}{c|c|c}
-%         Architecture & Key Difference from MLP & Inductive Biases \\
-%         \hline
-%         \hline
-%         CNN & Convolutional Filters & Translational equivariance; Locality \\
-%         \hline
-%         RNNs (LSTMs, GRUs, etc.) & Recurrent Connections & Equivariance to Temporal Ordering; Statefulness; Causal Structures \\
-%         \hline
-%         Transformers (BERT, GPT, etc.) & Attention Mechanism & Permutational invariance; Global Context; Scalable Attention; Self-Attention \\
-%         \hline
-%         GNNs (GraphSAGE, GAT, etc.) & Message Passing & Graph Structure \\
-%         \hline
-%     \end{tabular}
-% \end{table*}
+%%% SUGGESTION: Existing text: "abstraction bleeding"
+%%% SUGGESTION: This wording is evocative but not technically precise.
+%%% SUGGESTION: Consider replacing with something like:
+%%% SUGGESTION: "cross-orientation parameter coupling"
+%%% SUGGESTION: or
+%%% SUGGESTION: "shared representational influence between orientations"
 
 \subsection{Graph Neural Networks}
-% Points to hit:
 
-% GNNs operate over graph-structured data.
-% Message passing uses adjacency to constrain information flow.
-% HexNN can be described as a graph-structured feedforward network, but it is not necessarily a GNN unless you implement message-passing layers.
-% This helps prevent reviewers from saying, “isn’t this just a GNN?”
+Graph neural networks operate on data whose structure is represented by a graph \cite{scarselli2009graph,gilmer2017neural}.
+In message-passing GNNs, node representations are updated by aggregating information from neighboring nodes according to an adjacency relation.
 
-% Important distinction:
-
-% HexNN is graph-structured, but its current implementation is closer to a sparse/directed MLP with orientation-specific adjacency than to a conventional message-passing GNN.
-Graph neural networks operate on data whose structure is represented by a graph. 
-In message-passing GNNs, node representations are updated by aggregating information from neighboring nodes according to an adjacency relation. 
-
-HexNNs also use an adjacency structure, but the present formulation differs from standard GNNs in two ways:
-First, the graph defines the architecture itself rather than the input data. 
-Second, computation proceeds through orientation-specific feedforward traversals rather than repeated permutation-invariant neighborhood aggregation. 
+HexNNs also use an adjacency structure, but the present formulation differs from standard GNNs in two ways.
+First, the graph defines the architecture itself rather than the input data.
+Second, computation proceeds through orientation-specific feedforward traversals rather than repeated permutation-invariant neighborhood aggregation.
 For this reason, the current HexNN implementation is better understood as a graph-structured or sparse MLP topology rather than a conventional message-passing GNN.
 
+%%% SUGGESTION: This subsection is important defensively.
+%%% SUGGESTION: Reviewers will likely ask whether HexNNs are simply GNNs with fixed adjacency.
+%%% SUGGESTION: The distinction between "graph as architecture" vs "graph as data" is a strong clarification.
 
 \subsection{Parameter Sharing, Ensembles, and Multi-Head Models}
 
-% Points to hit:
-
-% Ensembles improve robustness through diversity.
-% Parameter sharing can reduce memory and couple learning.
-% Multi-head/shared-backbone systems separate shared representation from task-specific output layers.
-% HexNN can be interpreted as a parameter-sharing ensemble where directional subnetworks are geometrically coupled.
-
-Parameter sharing is commonly used to reduce model size and impose structure. 
-CNNs share kernels across spatial locations, recurrent networks reuse transition parameters across time, and multi-task models often share a representation backbone across related objectives. 
-HexNNs use a different form of sharing: orientation-specific subnetworks are coupled through a common underlying graph. 
+Parameter sharing is commonly used to reduce model size and impose structure \cite{caruana1997multitask}.
+CNNs share kernels across spatial locations, recurrent networks reuse transition parameters across time, and multi-task models often share a representation backbone across related objectives.
+HexNNs use a different form of sharing: orientation-specific subnetworks are coupled through a common underlying graph.
 Training one orientation may therefore alter the behavior of other orientations, creating measurable transfer or interference.
 
-HexNNs can also be compared with ensembles. 
-Unlike an ensemble of independent models, a HexNN does not maintain separate parameters for each orientation. 
+HexNNs can also be compared with ensembles.
+Unlike an ensemble of independent models, a HexNN does not maintain separate parameters for each orientation.
 Its directional subnetworks are not independent; their behavior is coupled by construction.
 
+%%% SUGGESTION: Existing text: "can also be compared with ensembles"
+%%% SUGGESTION: This comparison is probably safer than claiming MoE behavior.
+%%% SUGGESTION: Deep ensembles, snapshot ensembles, SWA, and shared-backbone multihead systems are probably your best comparison family.
 
 \subsection{Continual Learning and Interference}
 
-% Points to hit:
+Sequential learning can produce interference between tasks through shared parameters \cite{kirkpatrick2017overcoming}.
+This is commonly discussed through the lens of catastrophic forgetting, where optimizing for a later task degrades performance on previously learned tasks.
 
-% Sequential learning can cause interference between tasks.
-% Catastrophic forgetting is a known failure mode.
-% Your experiment is not exactly continual learning unless you train orientations/tasks sequentially.
-% The relevant concept is interference through shared parameters.
+The present work is not a continual-learning system in the traditional sense.
+However, HexNN orientations may still interfere with one another because they share parameters through the same underlying topology.
+The relevant connection is therefore parameter interference rather than task identity.
 
-Moreover, human cognition and artificial intelligence are known to face common challenges, such as managing knowledge across diverse tasks without losing prior knowledge gain.
-This is known as catastrophic forgetting, where a network trained on one task is unable to perform well on a different task.
-This is a known challenge in artificial intelligence, and it is a known challenge in human cognition.
-
+%%% SUGGESTION: This version is substantially safer than directly analogizing to human cognition.
 
 \subsection{Cognitive Motivation}
-% Points to hit:
 
-% Neural networks are historically brain-inspired abstractions.
-% The HexNN structure was partly motivated by questions about compartmentalized behavior and shared internal representation.
-% This paper does not model DID or human identity.
-% The cognitive analogy is heuristic, not empirical.
+Foundational neural-network architectures have historically drawn inspiration from biological systems.
+CNNs were partially motivated by the visual cortex and locality-sensitive receptive fields \cite{fukushima1980neocognitron,lecun1998gradient}.
+Recurrent architectures and LSTMs introduced mechanisms resembling persistent internal state and temporal feedback \cite{hochreiter1997long}.
 
-Foundational architectural models that have been proposed are able to uncover different inductive biases that are not possible with the traditional MLP architecture using natural design as motivation.
-CNNs, for example, discovered feature invariance after modeling the convolutional kernals after the visual cortex and its neurophysiological design.
-RNNs and LSTMs resemble the neurophysiological self looping design of the hippocampus and its role in memory and spatial navigation and this was able to introduce the concept of recurrent connections and the idea of memory cells in artificial intelligence.
-So consider the phenomenon found in people who have a dissociative identity disorder (DID), where memories and personalities are split between identities despite having the same brain.
-To borrow speculative language from Douglas Hofstadter, we can imagine a network toplogy that is able to hold different representations of the same data in the same hardware and each "strange loop" working as its own coherent identity but potentially affecting the learned experiences with other identities.
+The HexNN structure was partly motivated by questions about compartmentalized behavior and shared internal representation.
+To borrow speculative language from Douglas Hofstadter, one can imagine a network topology capable of maintaining multiple directional interpretations of the same underlying substrate \cite{hofstadter1979geb,hofstadter2007strange}.
 
-%Philosophical accounts of self-reference and cognitive loops offer one informal motivation for considering architectures with multiple recurrent or directional interpretations, but the present work does not depend on those claims.
+%%% SUGGESTION: Existing text in prior draft heavily emphasized DID.
+%%% SUGGESTION: Keeping the cognitive framing heuristic and lightweight is probably the safer conference-paper choice.
+%%% SUGGESTION: Reviewers in ML venues may react negatively if DID analogies appear central to the scientific claim.
 
-To be clear, this paper does not model DID or aim to benchmark DID like symptoms in a clear method like the research proposed by [blank].
-DID was the human based inspiration given its similar characteristics to extremely compartmentalized behavior, something not usually found in highly emergent cognitive systems, such as humans.
-This inspiration also comes from the primary author's own trauma with a mother with split identities, and a father with hemiplegia after a hemoraggic stroke impaired his ability to move his left side.
-The cognitive analogy is strictly heuristic, not empirical.
+This paper does not model DID or attempt to reproduce human cognitive conditions.
+The analogy is heuristic rather than empirical and primarily serves as motivation for exploring parameter sharing, directional reinterpretation, and interference between coupled subnetworks.
+
+%%% SUGGESTION: Existing autobiographical material about family medical history is probably too personal and not scientifically useful for the conference version.
+%%% SUGGESTION: It may fit better in acknowledgements, talks, or a future reflective writeup rather than the main paper.
