@@ -8,7 +8,6 @@ from services.figure_service.RefFigure import RefFigure
 from services.figure_service.LearningRateRefFigure import LearningRateRefFigure
 from services.figure_service.DynamicWeightsFigure import DynamicWeightsFigure
 
-
 # Shared display strings used across all network types to avoid duplication.
 REGRESSION_SCORE_DETAIL = "mean exp(-RMSE) per example"
 R2_DETAIL = "coefficient of determination"

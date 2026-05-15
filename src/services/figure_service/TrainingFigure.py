@@ -31,7 +31,9 @@ class TrainingFigure(Figure):
         self.lines_adj_r2 = {}
 
         for channel in self.channels:
-            (self.lines_loss[channel],) = self.ax_loss.plot([], [], label=f"Channel {channel}", color=self.colors[channel])
+            (self.lines_loss[channel],) = self.ax_loss.plot(
+                [], [], label=f"Channel {channel}", color=self.colors[channel]
+            )
             (self.lines_reg_score[channel],) = self.ax_reg_score.plot(
                 [], [], label=f"Channel {channel}", color=self.colors[channel]
             )
