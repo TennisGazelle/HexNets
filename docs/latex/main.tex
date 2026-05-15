@@ -1,50 +1,51 @@
-% \\documentclass{article}
-\\documentclass[twocolumn]{article}
-\\usepackage{graphicx} % Required for inserting images
-\\usepackage{amsmath}
-\\usepackage{amssymb}
-\\usepackage{mathtools}
-\\usepackage[backend=biber,style=numeric]{biblatex}
-\\addbibresource{citations.bib}
+% \documentclass{article}
+\documentclass[twocolumn]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage[backend=biber,style=numeric]{biblatex}
+\addbibresource{citations.bib}
 
-\\title{Hexagons are the Bestagons: A Novel Neural Network Topology}
-% \\author{Daniel Lopez, Cezareo Rodriguez}
-\\author{
-Daniel Lopez \\quad Cezareo Rodriguez\\\\
-SimpleRose Inc.,\\\\
-St. Louis, MO\\\\
-\\texttt{\\{daniel, cezareo\\}@simplerose.com}
+\title{Hexagons are the Bestagons: A Novel Neural Network Topology}
+% \author{Daniel Lopez, Cezareo Rodriguez}
+\author{
+Daniel Lopez \quad Cezareo Rodriguez\\
+SimpleRose Inc.,\\
+St. Louis, MO\\
+\texttt{\{daniel, cezareo\}@simplerose.com}
 }
 
 
-\\date{May 2026}
+\date{May 2026}
 
-\\begin{document}
+\begin{document}
 
-\\maketitle
+\maketitle
 
-\\begin{abstract}
+\begin{abstract}
     We propose and establish baselines for a novel, albeit impractical neural network topology that departs from traditional Cartesian grid layouts of neurons and connections and employs a hexagonal lattice enabling neighboring networks with overlapping weights, Hexagonal Neural Networks.
     Inspired by extreme behavior compartmentalization behavior disorders observed in the general populace, this network structure focuses on the influence of directional training on overlapping weights.
     Early baselines reveals new learning behaviors through loss and accuracy iterations and consistent improvement from single direction propagation which has widespread usage in modern day commercial deep learning structures.
 
-    %%% SUGGESTION: The abstract currently mixes architectural claims, cognitive motivation, and empirical observations together. Consider narrowing the abstract to:
+    %%% SUGGESTION: The abstract currently mixes architectural claims, cognitive motivation, and empirical observations together. For a stronger conference paper, consider narrowing the abstract to:
     %%% SUGGESTION: (1) what HexNNs are,
     %%% SUGGESTION: (2) what experimental question is tested,
     %%% SUGGESTION: (3) the strongest observed result.
-    %%% SUGGESTION: Journals and stronger conference submissions usually expect the abstract to avoid speculative framing.
-\\end{abstract}
+    %%% SUGGESTION: Existing text: "Inspired by extreme behavior compartmentalization behavior disorders..."
+    %%% SUGGESTION: This is likely too speculative for the abstract. Move human/cognitive inspiration to a short motivation paragraph or omit from the conference version.
+\end{abstract}
 
-\\input{introduction}
-\\input{background}
-\\input{implementation}
-\\input{data}
-\\input{results}
-\\input{conclusion}
+\input{introduction}
+\input{background}
+\input{implementation}
+\input{data}
+\input{results}
+\input{conclusion}
 
-\\section*{Limitations}
+\section*{Limitations}
 
-%%% SUGGESTION: This paper likely benefits from an explicit limitations section.
+%%% SUGGESTION: This paper likely benefits from an explicit limitations section, but keep it short for a conference version.
 %%% SUGGESTION: Reviewers will probably question:
 %%% SUGGESTION: - scaling cost
 %%% SUGGESTION: - whether improvements are due to parameter count differences
@@ -56,11 +57,11 @@ St. Louis, MO\\\\
 % TODO: discuss uncertainty around generalization beyond synthetic tasks
 % TODO: discuss parameter-count parity with MLP baselines
 
-\\section*{Future Work}
+\section*{Future Work}
 
-%%% NOTE: Future work should stay tightly coupled to the paper's core thesis.
+%%% NOTE: Keep future work tightly coupled to the conference paper's core thesis.
 %%% NOTE: Rotational transfer, synchronization schedules, lesioning, and nested-core studies are appropriate.
-%%% NOTE: The maze system and Hofstadter/attractor explorations should likely remain out-of-scope for this paper except perhaps one sentence of broader future directions.
+%%% NOTE: The maze system and Hofstadter/attractor explorations should remain out-of-scope for this paper except perhaps one sentence of broader future directions.
 
 % TODO: rotational scheduling studies
 % TODO: transfer/interference matrices
@@ -69,6 +70,6 @@ St. Louis, MO\\\\
 % TODO: PyTorch and large-scale benchmarking backend
 % TODO: synchronization strategies and multi-rotation training
 
-\\printbibliography
+\printbibliography
 
-\\end{document}
+\end{document}
