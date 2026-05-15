@@ -1,5 +1,8 @@
 """Unit tests for figure_service.py"""
 
+import matplotlib
+matplotlib.use("Agg")
+
 import pytest
 import sys
 from pathlib import Path
@@ -13,7 +16,9 @@ from services.figure_service import (
     LearningRateRefFigure,
     TrainingFigure,
     RefFigure,
+    DynamicWeightsFigure,
 )
+from services.figure_service.FigureService import REGRESSION_SCORE_DETAIL, R2_DETAIL
 
 # Patch the module where FigureService is defined (FigureService.py). The package
 # re-exports the class as FigureService, so 'services.figure_service.FigureService'
@@ -432,3 +437,241 @@ class TestFigureServiceEdgeCases:
         abs_path = Path("/absolute/path/to/figures")
         service.set_figures_path(abs_path)
         assert service.figures_path == abs_path
+
+
+class TestPrepareTrainingAnimation:
+    """Tests for FigureService.prepare_training_animation."""
+
+    def _make_loss(self, name="mean_squared_error"):
+        loss = Mock()
+        loss.display_name = name
+        loss.__str__ = lambda self: name
+        return loss
+
+    def _make_activation(self, name="sigmoid"):
+        act = Mock()
+        act.display_name = name
+        return act
+
+    def _make_training_figure(self, tmp_path):
+        service = FigureService()
+        service.set_figures_path(tmp_path)
+        return service.init_training_figure(
+            "mlpnet_training_mse_sigmoid.png",
+            "Initial title",
+            "mse",
+            REGRESSION_SCORE_DETAIL,
+            R2_DETAIL,
+        )
+
+    def test_simple_names_uses_stable_basename(self, tmp_path):
+        service = FigureService()
+        tf = self._make_training_figure(tmp_path)
+        loss = self._make_loss()
+        act = self._make_activation()
+
+        service.prepare_training_animation(
+            tf,
+            output_dir=tmp_path / "plots",
+            simple_names=True,
+            network_kind="MLP",
+            display_name="mlp",
+            loss=loss,
+            activation=act,
+        )
+
+        assert tf.filename.name == "training_metrics.png"
+        assert tf.filename.parent == tmp_path / "plots"
+
+    def test_descriptive_names_preserves_original_basename(self, tmp_path):
+        service = FigureService()
+        tf = self._make_training_figure(tmp_path)
+        loss = self._make_loss()
+        act = self._make_activation()
+
+        service.prepare_training_animation(
+            tf,
+            output_dir=tmp_path / "plots",
+            simple_names=False,
+            network_kind="MLP",
+            display_name="mlp",
+            loss=loss,
+            activation=act,
+        )
+
+        assert tf.filename.name == "mlpnet_training_mse_sigmoid.png"
+
+    def test_title_contains_network_kind_and_display_name(self, tmp_path):
+        service = FigureService()
+        tf = self._make_training_figure(tmp_path)
+        loss = self._make_loss("huber")
+        act = self._make_activation("relu")
+
+        service.prepare_training_animation(
+            tf,
+            output_dir=tmp_path / "plots",
+            simple_names=True,
+            network_kind="Hexagonal",
+            display_name="hex",
+            loss=loss,
+            activation=act,
+        )
+
+        assert "Hexagonal" in tf.title
+        assert "hex" in tf.title
+        assert "huber" in tf.title
+        assert "relu" in tf.title
+
+    def test_detail_strings_use_shared_constants(self, tmp_path):
+        service = FigureService()
+        tf = self._make_training_figure(tmp_path)
+        loss = self._make_loss()
+        act = self._make_activation()
+
+        service.prepare_training_animation(
+            tf,
+            output_dir=tmp_path / "plots",
+            simple_names=True,
+            network_kind="MLP",
+            display_name="mlp",
+            loss=loss,
+            activation=act,
+        )
+
+        assert tf.regression_score_detail == REGRESSION_SCORE_DETAIL
+        assert tf.r2_detail == R2_DETAIL
+
+    def test_init_weights_live_figure_creates_figure(self, tmp_path):
+        service = FigureService()
+        service.set_figures_path(tmp_path)
+        layer_shapes = [(3, 4), (4, 2)]
+        wf = service.init_weights_live_figure("weights_live.png", "Live Weights", layer_shapes)
+        key = FigureService.weights_live_figure_key(layer_shapes)
+
+        assert wf is service.figures[key]
+        assert isinstance(wf, DynamicWeightsFigure)
+        assert wf.filename == tmp_path / "weights_live.png"
+
+    def test_init_weights_live_figure_reuses_when_layer_shapes_match(self, tmp_path):
+        service = FigureService()
+        service.set_figures_path(tmp_path)
+        layer_shapes = [(3, 4)]
+        key = FigureService.weights_live_figure_key(layer_shapes)
+        wf1 = service.init_weights_live_figure("first.png", "First title", layer_shapes)
+        n_figs = len(plt.get_fignums())
+        wf2 = service.init_weights_live_figure("second.png", "Second title", layer_shapes)
+        assert wf1 is wf2
+        assert wf2 is service.figures[key]
+        assert wf2.title == "Second title"
+        assert wf2.filename == tmp_path / "second.png"
+        assert len(plt.get_fignums()) == n_figs
+        plt.close(wf2.fig)
+
+    def test_init_weights_live_figure_replaces_when_layer_shapes_differ(self, tmp_path):
+        service = FigureService()
+        service.set_figures_path(tmp_path)
+        k_small = FigureService.weights_live_figure_key([(2, 2)])
+        k_large = FigureService.weights_live_figure_key([(5, 5)])
+        wf_small = service.init_weights_live_figure("w.png", "A", [(2, 2)])
+        old_fig = wf_small.fig
+        wf_large = service.init_weights_live_figure("w.png", "B", [(5, 5)])
+        assert wf_small is not wf_large
+        assert k_small not in service.figures
+        assert service.figures[k_large] is wf_large
+        assert wf_large.layer_shapes == ((5, 5),)
+        assert wf_large.fig is not old_fig
+        plt.close(wf_large.fig)
+
+
+class TestDynamicWeightsFigure:
+    """Tests for DynamicWeightsFigure."""
+
+    def test_init_single_layer(self, tmp_path):
+        shapes = [(5, 5)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        assert len(fig.images) == 1
+        assert fig.filename == tmp_path / "w.png"
+        plt.close("all")
+
+    def test_init_multi_layer(self, tmp_path):
+        shapes = [(3, 4), (4, 2), (2, 1)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        assert len(fig.images) == 3
+        plt.close("all")
+
+    def test_update_figure_raw_weights(self, tmp_path):
+        shapes = [(3, 4)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        W = np.random.randn(3, 4)
+        fig.update_figure([W])
+        data = fig.images[0].get_array()
+        assert data.shape == (3, 4)
+        np.testing.assert_array_equal(data, W)
+        plt.close("all")
+
+    def test_update_figure_activation_only(self, tmp_path):
+        shapes = [(4, 4)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        W = np.array([[1.0, 0.0, -0.5, 0.0], [0.0, 2.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.3, 0.0], [0.0, 0.0, 0.0, 0.0]])
+        fig.update_figure([W], activation_only=True)
+        data = fig.images[0].get_array()
+        expected = (W != 0).astype(float)
+        np.testing.assert_array_equal(data, expected)
+        plt.close("all")
+
+    def test_save_figure_creates_file(self, tmp_path):
+        shapes = [(3, 3)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        W = np.eye(3)
+        fig.update_figure([W])
+        fig.save_figure()
+        assert (tmp_path / "w.png").is_file()
+        assert (tmp_path / "w.png").stat().st_size > 0
+        plt.close("all")
+
+    def test_layer_shapes_from_matrices(self):
+        matrices = [np.zeros((3, 4)), np.zeros((4, 2))]
+        shapes = DynamicWeightsFigure.layer_shapes_from_matrices(matrices)
+        assert shapes == [(3, 4), (4, 2)]
+
+    def test_update_figure_highlight_masks_smoke(self, tmp_path):
+        shapes = [(4, 4)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        W = np.random.randn(4, 4)
+        mask = np.zeros((4, 4), dtype=bool)
+        mask[1, 2] = True
+        mask[3, 0] = True
+        fig.update_figure([W], highlight_masks=[mask])
+        assert len(fig._highlight_patches[0]) == 2
+        plt.close("all")
+
+    def test_highlight_edgecolor_matches_training_channel_colors(self, tmp_path):
+        """Same tab10 edge color for all cells; changes with highlight_channel like TrainingFigure."""
+        shapes = [(2, 2)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        W = np.ones((2, 2), dtype=float)
+        mask = np.ones((2, 2), dtype=bool)
+        fig.update_figure([W], highlight_masks=[mask], highlight_channel=0)
+        patches = fig._highlight_patches[0]
+        c0 = np.asarray(patches[0].get_edgecolor()).ravel()
+        for p in patches[1:]:
+            np.testing.assert_allclose(np.asarray(p.get_edgecolor()).ravel(), c0)
+        fig.update_figure([W], highlight_masks=[mask], highlight_channel=3)
+        c3 = np.asarray(fig._highlight_patches[0][0].get_edgecolor()).ravel()
+        assert not np.allclose(c0[:3], c3[:3], atol=0.05)
+        plt.close("all")
+
+    def test_update_figure_highlight_masks_cleared_on_redraw(self, tmp_path):
+        shapes = [(3, 3)]
+        fig = DynamicWeightsFigure("title", tmp_path / "w.png", shapes)
+        W = np.eye(3)
+        m1 = np.zeros((3, 3), dtype=bool)
+        m1[0, 1] = True
+        fig.update_figure([W], highlight_masks=[m1])
+        assert len(fig._highlight_patches[0]) == 1
+        m2 = np.zeros((3, 3), dtype=bool)
+        m2[2, 2] = True
+        fig.update_figure([W], highlight_masks=[m2])
+        assert len(fig._highlight_patches[0]) == 1
+        plt.close("all")

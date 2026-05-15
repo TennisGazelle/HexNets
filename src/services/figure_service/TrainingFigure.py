@@ -30,16 +30,14 @@ class TrainingFigure(Figure):
         self.lines_r2 = {}
         self.lines_adj_r2 = {}
 
-        colors = plt.cm.tab10(np.linspace(0, 1, len(self.channels)))
-
         for channel in self.channels:
-            (self.lines_loss[channel],) = self.ax_loss.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_loss[channel],) = self.ax_loss.plot([], [], label=f"Channel {channel}", color=self.colors[channel])
             (self.lines_reg_score[channel],) = self.ax_reg_score.plot(
-                [], [], label=f"Channel {channel}", color=colors[channel]
+                [], [], label=f"Channel {channel}", color=self.colors[channel]
             )
-            (self.lines_r2[channel],) = self.ax_r2.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_r2[channel],) = self.ax_r2.plot([], [], label=f"Channel {channel}", color=self.colors[channel])
             (self.lines_adj_r2[channel],) = self.ax_adj_r2.plot(
-                [], [], label=f"Channel {channel}", color=colors[channel]
+                [], [], label=f"Channel {channel}", color=self.colors[channel]
             )
 
         self.ax_loss.legend()
@@ -64,6 +62,15 @@ class TrainingFigure(Figure):
         self.ax_adj_r2.set_ylabel("Adjusted R^2")
         self.ax_adj_r2.grid(True)
 
+    def refresh_metadata(self):
+        """Reapply title and axis labels after external mutations to title/*_detail fields."""
+        self.fig.suptitle(self.title)
+        self.ax_loss.set_title(f"Loss ({self.loss_detail})")
+        self.ax_reg_score.set_title(f"Regression score ({self.regression_score_detail})")
+        self.ax_r2.set_title(f"R^2 ({self.r2_detail})")
+        self.ax_adj_r2.set_title(f"Adjusted R^2 ({self.r2_detail})")
+        self.fig.canvas.draw_idle()
+
     def save_figure(self):
         # Ensure filename is a Path object
         filename_path = pathlib.Path(self.filename) if isinstance(self.filename, str) else self.filename
@@ -80,7 +87,7 @@ class TrainingFigure(Figure):
     def show_figure(self):
         self.fig.show()
 
-    def update_figure(self, training_metrics: dict, channel: int = 0):
+    def update_figure(self, training_metrics: dict, channel: int = 0, redraw: bool = True):
         required_keys = ("loss", "regression_score", "r_squared")
         if not all(k in training_metrics for k in required_keys):
             return
@@ -129,4 +136,5 @@ class TrainingFigure(Figure):
         self.ax_adj_r2.relim()
         self.ax_adj_r2.autoscale_view()
 
-        self.fig.canvas.draw()
+        if redraw:
+            self.fig.canvas.draw()

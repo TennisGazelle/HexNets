@@ -65,7 +65,14 @@ class AdhocCommand(Command):
             for rotation in range(6):
                 net.rotate(rotation)
                 # net.graph_weights(activation_only=False, detail=f"r{rotation}_i{i}")
-                net.train_animated(data, epochs=args.epochs, pause=args.pause)
+                net.train_animated(
+                    data,
+                    epochs=args.epochs,
+                    pause=args.pause,
+                    simple_figure_names=True,
+                    show_training_metrics=True,
+                    show_weights_live=True,
+                )
 
         # net.graph_weights(activation_only=False, detail="untrained")
         # net._graph_multi_activation(r_list=[0, 1])

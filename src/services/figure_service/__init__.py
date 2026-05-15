@@ -17,5 +17,6 @@ for file in os.listdir(os.path.dirname(__file__)):
 from services.figure_service.RefFigure import RefFigure
 from services.figure_service.LearningRateRefFigure import LearningRateRefFigure
 from services.figure_service.TrainingFigure import TrainingFigure
+from services.figure_service.DynamicWeightsFigure import DynamicWeightsFigure
 
-__all__ = ["Figure", "RefFigure", "LearningRateRefFigure", "TrainingFigure", "FigureService"]
+__all__ = ["Figure", "RefFigure", "LearningRateRefFigure", "TrainingFigure", "DynamicWeightsFigure", "FigureService"]

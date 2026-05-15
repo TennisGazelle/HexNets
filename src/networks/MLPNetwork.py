@@ -10,6 +10,7 @@ from tabulate import tabulate
 from tqdm import trange
 
 from services.figure_service.FigureService import FigureService
+from services.figure_service.DynamicWeightsFigure import DynamicWeightsFigure
 from networks.network import BaseNeuralNetwork
 from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
@@ -104,15 +105,21 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
     # --- instance methods ---
     def _init_figure_service(self):
+        from services.figure_service.FigureService import REGRESSION_SCORE_DETAIL, R2_DETAIL
+
         self.figure_service = FigureService()
         self.figure_service.set_figures_path(None)
         self.training_figure = self.figure_service.init_training_figure(
             f"mlpnet_training_{self.loss}_{self.activation}.png",
             f"Training {self.display_name}",
             self.loss.display_name,
-            "mean exp(-RMSE) per example",
-            "coefficient of determination",
+            REGRESSION_SCORE_DETAIL,
+            R2_DETAIL,
         )
+
+    def get_weight_matrices_for_live_plot(self):
+        """Return the current weight matrices for live heatmap display."""
+        return self.W
 
     # --- structure helpers ---
     def _add_layer(self, incoming_dim: int, outgoing_dim: int):
@@ -230,7 +237,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                     self.loss.display_name,
                     self.activation.display_name,
                 ]
-            ]
+            ],
         )
 
     def show_latest_metrics(self):
@@ -394,35 +401,44 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         epochs=25,
         pause=0.05,
         output_dir: Union[pathlib.Path, None] = None,
+        simple_figure_names: bool = False,
+        show_training_metrics: bool = True,
+        show_weights_live: bool = False,
     ) -> Tuple[float, float, float]:
         """
         Train while animating loss and regression score over epochs.
+
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
+        - simple_figure_names: use short stable names (training_metrics.png,
+          weights_live.png) suited for run folders; default keeps descriptive
+          names for standalone use.
+        - show_training_metrics: live-update the metrics figure each epoch.
+        - show_weights_live: open and live-update a weight heatmap each epoch.
         """
-        logger.info("MLP Network Training:")
-        logger.info(f"epochs:\t{epochs}")
-        logger.info(f"datapoints:\t{len(data)}")
-
-        logger.info("Training...")
-
-        logger.debug(f"train_animated called with output_dir={output_dir}")
-        self.figure_service.set_figures_path(output_dir)
-        logger.debug(f"figures_path set to {self.figure_service.figures_path}")
-        # Update the filename to use the new figures_path
-        filename_path = (
-            pathlib.Path(self.training_figure.filename)
-            if isinstance(self.training_figure.filename, str)
-            else self.training_figure.filename
+        logger.info("Training with params...")
+        table_print(["epochs", "num data points"], [[epochs, len(data)]])
+        self.figure_service.prepare_training_animation(
+            self.training_figure,
+            output_dir=output_dir,
+            simple_names=simple_figure_names,
+            network_kind="MLP",
+            display_name=self.display_name,
+            loss=self.loss,
+            activation=self.activation,
         )
-        filename_base = filename_path.name
-        self.training_figure.filename = self.figure_service.figures_path / filename_base
         logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
-        self.training_figure.title = (
-            f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
-        )
-        self.training_figure.loss_detail = self.loss.display_name
-        self.training_figure.regression_score_detail = "mean exp(-RMSE) per example"
-        self.training_figure.r2_detail = "coefficient of determination"
+
+        weights_figure = None
+        if show_weights_live:
+            wf_name = "weights_live.png" if simple_figure_names else f"mlpnet_weights_live.png"
+            weights_figure = self.figure_service.init_weights_live_figure(
+                wf_name,
+                f"MLP Weights — {self.display_name}",
+                DynamicWeightsFigure.layer_shapes_from_matrices(self.W),
+            )
+        if not show_training_metrics and show_weights_live:
+            # Keep metrics figure data updated for final save, but do not show it live.
+            plt.close(self.training_figure.fig)
 
         # Last-epoch save must not use self.epochs_completed in the condition: we increment it every
         # iteration (unlike Hex), so "epoch == epochs + self.epochs_completed - 1" is wrong for
@@ -513,12 +529,17 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                     "regression_score": epoch_reg_score,
                     "r_squared": epoch_r2,
                     "adjusted_r_squared": epoch_adj_r2,
-                }
+                },
+                redraw=show_training_metrics,
             )
 
             self.apply_delta_W()
 
-            plt.pause(pause)
+            if show_weights_live and weights_figure is not None:
+                weights_figure.update_figure(self.get_weight_matrices_for_live_plot())
+
+            if show_training_metrics or show_weights_live:
+                plt.pause(pause)
 
             if epoch == epoch_stop - 1:
                 logger.debug(f"About to save figure at epoch {epoch}")
@@ -526,6 +547,9 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
                 logger.info("Training complete!")
                 self.show_latest_metrics()
                 logger.info(f"Training figure saved to: {self.training_figure.filename}")
+                if weights_figure is not None:
+                    weights_figure.save_figure()
+                    logger.info(f"Weights figure saved to: {weights_figure.filename}")
 
             self.epochs_completed += 1
 

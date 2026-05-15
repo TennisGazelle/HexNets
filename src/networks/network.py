@@ -85,6 +85,32 @@ class BaseNeuralNetwork(ABC):
         pass
 
     @abstractmethod
+    def train_animated(
+        self,
+        data,
+        epochs: int = 1,
+        pause: float = 0.05,
+        output_dir: pathlib.Path = None,
+        simple_figure_names: bool = False,
+        show_training_metrics: bool = True,
+        show_weights_live: bool = False,
+    ):
+        """
+        Train while animating loss and regression score over epochs.
+
+        - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
+        - epochs: number of epochs to train for
+        - pause: time to pause between epochs
+        - output_dir: directory to save figures to
+        - simple_figure_names: use short stable names (training_metrics.png,
+          weights_live.png) suited for run folders; default keeps descriptive
+          names for standalone use.
+        - show_training_metrics: live-update the metrics figure each epoch.
+        - show_weights_live: open and live-update a weight heatmap each epoch.
+        """
+        pass
+
+    @abstractmethod
     def test(self, x):
         pass
 
