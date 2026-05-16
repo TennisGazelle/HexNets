@@ -24,9 +24,11 @@ St. Louis, MO\\
 \maketitle
 
 \begin{abstract}
-    We propose and establish baselines for a novel, albeit impractical neural network topology that departs from traditional Cartesian grid layouts of neurons and connections and employs a hexagonal lattice enabling neighboring networks with overlapping weights, Hexagonal Neural Networks.
-    Inspired by extreme behavior compartmentalization behavior disorders observed in the general populace, this network structure focuses on the influence of directional training on overlapping weights.
-    Early baselines reveals new learning behaviors through loss and accuracy iterations and consistent improvement from single direction propagation which has widespread usage in modern day commercial deep learning structures.
+    Hexagonal Neural Networks (HexNNs) are a novel neural network topology that exploits the rotational symmetry of the hexagonal lattice to enable directional training and inference and induce shared representational influence between orientations.
+    This yields a new operator, rotation, that can be integrated into the training loop and this paper establishes a baseline benchmark set that tests the performance of the new operator.
+    Early results show that basic rotation sequences in the training loop provides stable performance that is better than or comparable to MLP baselines on synthetic datasets.
+    Further, complex benchmarks show that with a proper synchronization and rotation scheduling strategy, this setup can provide six shared weight networks that can be trained and evaluated in parallel, each with a different abstract representational space that influence each other to escape local optima and find better solutions than their equivalent MLP counterparts.
+
 \end{abstract}
 
 \input{introduction}
@@ -34,7 +36,9 @@ St. Louis, MO\\
 \input{implementation}
 \input{data}
 \input{results}
+\input{limitations}
 \input{conclusion}
+\input{future}
 
 \printbibliography
 

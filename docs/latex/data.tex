@@ -1,5 +1,14 @@
 \section{Data}
 
+%%% SUGGESTION: This section should probably become "Experimental Setup and Benchmark Families" or simply "Experiments" for conference readability.
+%%% SUGGESTION: Right now the strongest missing piece is experimental discipline rather than additional ideas.
+%%% SUGGESTION: Reviewers will mainly care about:
+%%% SUGGESTION: - parameter-count parity
+%%% SUGGESTION: - seed count
+%%% SUGGESTION: - fair baselines
+%%% SUGGESTION: - train/test methodology
+%%% SUGGESTION: - whether transfer/interference metrics are rigorously defined
+
 \section{Benchmark Families}
 
 The full cartesian product of all datasets and all known activation patterns, loss functions, learning rate, optimizers now with the new rotation operator would be thorough, it's not quite feasible for the scope of a paper, but it is considered for future work and exhaustive Hexnet dynamic surveying.
@@ -7,7 +16,22 @@ The full cartesian product of all datasets and all known activation patterns, lo
 Therefore we define a Benchmark Family is a subset of this cartesian product where hold certain hyperparameter constants and test individual themes with thess operators.
 The theme of each family along with our findings are detailed below. The datasets are defined afterwards.
 
+%%% SUGGESTION: Existing text: "all known activation patterns"
+%%% SUGGESTION: Narrow this wording. Reviewers may interpret it literally.
+%%% SUGGESTION: Existing text: "future work and exhaustive Hexnet dynamic surveying"
+%%% SUGGESTION: Consider simpler language such as "future exhaustive hyperparameter sweeps".
+%%% SUGGESTION: Define benchmark families formally.
+%%% TODO: add a benchmark-family table summarizing:
+%%% TODO: - family objective
+%%% TODO: - datasets
+%%% TODO: - fixed variables
+%%% TODO: - swept variables
+%%% TODO: - evaluation metrics
+
 \subsection{Family A - Linear Structure Recovery}
+
+%%% SUGGESTION: This is probably the correct first benchmark family.
+%%% SUGGESTION: Linear and near-linear tasks are good because they isolate topology/scheduling behavior before nonlinear complexity dominates.
 
 Hyper parameters that we will sweep:
 
@@ -29,6 +53,14 @@ Hyper parameters that we will sweep:
     \end{tabular}
     \label{tab:Benchmark A Hyper parameters}
 \end{table}
+
+%%% TODO: add random seed count.
+%%% TODO: add optimizer choices.
+%%% TODO: add batch size.
+%%% TODO: add train/validation/test split policy.
+%%% TODO: add rotation schedule variables.
+%%% TODO: explicitly state whether MLP baselines are parameter matched.
+%%% SUGGESTION: Parameter-count parity may become the single most important reviewer concern.
 
 \begin{table}
     \centering
@@ -55,81 +87,107 @@ Hyper parameters that we will sweep:
     \end{tabular}
 \end{table}
 
+%%% TODO: replace placeholder dataset notes.
+%%% TODO: specify exact transformation equations.
+%%% TODO: specify dimensionality.
+%%% TODO: specify whether data are noisy or noiseless.
+%%% TODO: specify sample counts.
+%%% TODO: define orthogonal_rotation formally.
+
 This helps us achieve parity with MLP with basic data sets and basic flow validation.
-% CLAIM 1: - verified by file 
 We see hex geometry perform just as well as equivalent MLP architecture, then it may be safe to assume isotropic maps are not trivially penalized.
 
-% CLAIM 2: - verified by file 
 We also see that on diagonal\_scale, diagonal\_linear, and low\_rank\_linear datasets, Hexnet performs better.
 
 Hex Net loss and regression values fluctuate harshly after the rotation operator is applied, but this interference helps over all loss reach lower optimas on average.
 
-% CLAIM 3: - verified by file 
 When we specifically tested the orthogonal\_rotation dataset, we noticed that it differed in performance to the other affine transformations encoded in datasets.
 
+%%% SUGGESTION: Move all empirical observations out of Data and into Results.
+%%% SUGGESTION: The Data/Experimental Setup section should define methodology, not conclusions.
+%%% SUGGESTION: Existing text: "Hexnet performs better"
+%%% SUGGESTION: Add statistical framing later:
+%%% SUGGESTION: - mean across seeds
+%%% SUGGESTION: - variance
+%%% SUGGESTION: - effect size
+%%% SUGGESTION: - significance if appropriate
+%%% SUGGESTION: Existing text: "fluctuate harshly"
+%%% SUGGESTION: Replace with measurable language such as oscillatory convergence, transient loss spikes, or synchronization instability.
 
 \subsection{Base Case}
 Baselines for $H_0$ have been created where loss function, activation functions, and n are variable, and we can measure their performance with regression metrics such as scalar loss (according to the respective loss function), accuracy (root mean square deviation, as is standard for regression based data sets) and $R^2$ (the coefficient of determination).
+
+%%% SUGGESTION: RMSE is not usually called "accuracy".
+%%% SUGGESTION: Use separate regression metrics terminology.
+%%% TODO: define all evaluation metrics formally.
+%%% TODO: define transfer/interference metrics formally.
+%%% TODO: define how cross-orientation evaluation is performed.
+
+\subsection{Rotation Scheduling Families}
+
+%%% TODO: add benchmark-family stubs for:
+%%% TODO: - single-orientation training
+%%% TODO: - sequential orientation rotation
+%%% TODO: - train-one/test-all transfer
+%%% TODO: - adjacent vs opposite orientation coupling
+%%% TODO: - synchronization interval sweeps
+%%% TODO: - EPR sweeps
+%%% TODO: - rotation ordering sweeps
+
+%%% SUGGESTION: This may become the most novel empirical contribution of the paper.
+%%% SUGGESTION: The scheduling/interference behavior is likely more interesting than raw regression performance.
 
 \subsection{Simulated Data Setup}
 
 I did things here (identity dataset, linear dataset, chat gpt outputted)
 
+%%% TODO: formally define synthetic data generation.
+%%% TODO: specify random distributions.
+%%% TODO: specify reproducibility seed policy.
+%%% TODO: specify whether train/test distributions differ.
+%%% SUGGESTION: Avoid mentioning "chat gpt outputted" in the final paper.
+
 \subsection{Real Data Sets}
 
 I did things with real data here
 
-% 4. Data and Experimental Setup
+%%% TODO: define every real dataset.
+%%% TODO: specify preprocessing.
+%%% TODO: specify feature normalization.
+%%% TODO: specify why equal-dimensional input/output assumptions remain valid.
+%%% TODO: specify train/test split methodology.
 
-% 4.1 Objectives
-% - In-orientation performance.
-% - Cross-orientation transfer.
-% - Directional interference.
-% - Comparison to MLP baselines.
+\subsection{Baseline Definitions}
 
-% 4.2 Synthetic Datasets
-% 4.2.1 Identity Mapping
-% - Tests implementation sanity.
-% - Equal input/output dimensionality.
-% - Expected to be learnable by all reasonable baselines.
+%%% TODO: add a baseline comparison table.
+%%% TODO: include:
+%%% TODO: - parameter count
+%%% TODO: - topology
+%%% TODO: - shared weights
+%%% TODO: - number of subnetworks
+%%% TODO: - schedule policy
+%%% TODO: - inference procedure
 
-% 4.2.2 Linear Transformations
-% - Tests simple structured mappings.
-% - Include dense, diagonal, low-rank, and orthogonal matrices if available.
+%%% SUGGESTION: You probably do not need many baseline families for the first paper.
+%%% SUGGESTION: Strong conference papers often win by having fewer but cleaner experiments.
+%%% SUGGESTION: Recommended minimal baseline set:
+%%% SUGGESTION: - parameter-matched MLP
+%%% SUGGESTION: - HexNN single orientation
+%%% SUGGESTION: - HexNN rotation-scheduled
+%%% SUGGESTION: - six-independent-network ensemble baseline
 
-% 4.2.3 Nonlinear Synthetic Functions
-% - Tests whether behavior persists beyond linear mappings.
+\subsection{Experimental Controls}
 
-% 4.3 Real Datasets
-% - Describe dataset source.
-% - Describe preprocessing.
-% - Explain dimensionality matching.
-% - Specify regression/classification metrics.
+%%% TODO: explicitly define:
+%%% TODO: - parameter-count matching strategy
+%%% TODO: - random seed count
+%%% TODO: - stopping criteria
+%%% TODO: - early stopping policy
+%%% TODO: - hardware used
+%%% TODO: - runtime budget
+%%% TODO: - optimizer settings
+%%% TODO: - gradient clipping policy if any
+%%% TODO: - learning-rate scheduler policy
 
-% 4.4 Baselines
-% 4.4.1 Standard MLP
-% 4.4.2 Parameter-Matched MLP
-% 4.4.3 Six Independent MLPs
-% 4.4.4 Shared-Backbone Multi-Head Model
-
-% 4.5 Metrics
-% - Training loss.
-% - MSE/RMSE.
-% - R^2.
-% - Directional transfer matrix.
-% - Interference/retention score.
-
-% 4.6 Training Protocols
-% 4.6.1 Single-Orientation Training
-% 4.6.2 Sequential-Orientation Training
-% 4.6.3 Joint-Orientation Training
-% 4.6.4 Hyperparameter Sweeps
-
-% 5. Preliminary Results
-
-% 5.1 Base Case Results
-% 5.2 Cross-Orientation Transfer
-% 5.3 Opposite vs. Adjacent Direction Coupling
-% 5.4 Sequential Direction Interference
-% 5.5 Baseline Comparison
-% 5.6 Sensitivity to n, Activation, and Loss
+%%% SUGGESTION: These controls materially affect review outcomes.
+%%% SUGGESTION: Reviewer confidence increases substantially when experiment controls are explicit.
