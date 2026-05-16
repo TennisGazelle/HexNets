@@ -1,10 +1,6 @@
-import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 from services.figure_service.figure import Figure
-from services.logging_config import get_logger
-
-logger = get_logger(__name__)
 
 
 class TrainingFigure(Figure):
@@ -30,16 +26,16 @@ class TrainingFigure(Figure):
         self.lines_r2 = {}
         self.lines_adj_r2 = {}
 
-        colors = plt.cm.tab10(np.linspace(0, 1, len(self.channels)))
-
         for channel in self.channels:
-            (self.lines_loss[channel],) = self.ax_loss.plot([], [], label=f"Channel {channel}", color=colors[channel])
-            (self.lines_reg_score[channel],) = self.ax_reg_score.plot(
-                [], [], label=f"Channel {channel}", color=colors[channel]
+            (self.lines_loss[channel],) = self.ax_loss.plot(
+                [], [], label=f"Channel {channel}", color=self.colors[channel]
             )
-            (self.lines_r2[channel],) = self.ax_r2.plot([], [], label=f"Channel {channel}", color=colors[channel])
+            (self.lines_reg_score[channel],) = self.ax_reg_score.plot(
+                [], [], label=f"Channel {channel}", color=self.colors[channel]
+            )
+            (self.lines_r2[channel],) = self.ax_r2.plot([], [], label=f"Channel {channel}", color=self.colors[channel])
             (self.lines_adj_r2[channel],) = self.ax_adj_r2.plot(
-                [], [], label=f"Channel {channel}", color=colors[channel]
+                [], [], label=f"Channel {channel}", color=self.colors[channel]
             )
 
         self.ax_loss.legend()
@@ -64,23 +60,16 @@ class TrainingFigure(Figure):
         self.ax_adj_r2.set_ylabel("Adjusted R^2")
         self.ax_adj_r2.grid(True)
 
-    def save_figure(self):
-        # Ensure filename is a Path object
-        filename_path = pathlib.Path(self.filename) if isinstance(self.filename, str) else self.filename
-        # Create parent directory if it doesn't exist
-        filename_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Saving figure to {filename_path.absolute()}")
-        try:
-            self.fig.savefig(filename_path)
-            logger.debug(f"Successfully saved figure to {filename_path.absolute()}")
-        except Exception as e:
-            logger.error(f"Error saving figure: {e}")
-            raise
+    def refresh_metadata(self):
+        """Reapply title and axis labels after external mutations to title/*_detail fields."""
+        self.fig.suptitle(self.title)
+        self.ax_loss.set_title(f"Loss ({self.loss_detail})")
+        self.ax_reg_score.set_title(f"Regression score ({self.regression_score_detail})")
+        self.ax_r2.set_title(f"R^2 ({self.r2_detail})")
+        self.ax_adj_r2.set_title(f"Adjusted R^2 ({self.r2_detail})")
+        self._canvas_draw(idle=True)
 
-    def show_figure(self):
-        self.fig.show()
-
-    def update_figure(self, training_metrics: dict, channel: int = 0):
+    def update_figure(self, training_metrics: dict, channel: int = 0, redraw: bool = True):
         required_keys = ("loss", "regression_score", "r_squared")
         if not all(k in training_metrics for k in required_keys):
             return
@@ -98,35 +87,32 @@ class TrainingFigure(Figure):
             self.training_metrics[channel]["adjusted_r_squared"].append(training_metrics["adjusted_r_squared"])
 
         # loss
-        self.lines_loss[channel].set_data(
-            np.arange(1, len(self.training_metrics[channel]["loss"]) + 1),
+        self._refresh_line(
+            self.ax_loss,
+            self.lines_loss[channel],
             self.training_metrics[channel]["loss"],
         )
-        self.ax_loss.relim()
-        self.ax_loss.autoscale_view()
 
         # regression score (mean per-example exp(-RMSE))
-        self.lines_reg_score[channel].set_data(
-            np.arange(1, len(self.training_metrics[channel]["regression_score"]) + 1),
+        self._refresh_line(
+            self.ax_reg_score,
+            self.lines_reg_score[channel],
             self.training_metrics[channel]["regression_score"],
         )
-        self.ax_reg_score.relim()
-        self.ax_reg_score.autoscale_view()
 
         # r^2
-        self.lines_r2[channel].set_data(
-            np.arange(1, len(self.training_metrics[channel]["r_squared"]) + 1),
+        self._refresh_line(
+            self.ax_r2,
+            self.lines_r2[channel],
             self.training_metrics[channel]["r_squared"],
         )
-        self.ax_r2.relim()
-        self.ax_r2.autoscale_view()
 
         # adjusted r^2
-        self.lines_adj_r2[channel].set_data(
-            np.arange(1, len(self.training_metrics[channel]["adjusted_r_squared"]) + 1),
+        self._refresh_line(
+            self.ax_adj_r2,
+            self.lines_adj_r2[channel],
             self.training_metrics[channel]["adjusted_r_squared"],
         )
-        self.ax_adj_r2.relim()
-        self.ax_adj_r2.autoscale_view()
 
-        self.fig.canvas.draw()
+        if redraw:
+            self._canvas_draw()

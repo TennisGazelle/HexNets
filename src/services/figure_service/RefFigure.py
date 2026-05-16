@@ -11,12 +11,6 @@ class RefFigure(Figure):
         ax = self.fig.add_subplot(111)
         ax.set_title(detail)
 
-    def save_figure(self):
-        self.fig.savefig()
-
-    def show_figure(self):
-        self.fig.show()
-
     def update_figure(self, *args, **kwargs):
         """Update the figure with new data. Placeholder implementation."""
         pass

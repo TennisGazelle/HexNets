@@ -15,7 +15,8 @@ DATASETS=(
 ACTIVATIONS=(sigmoid relu linear leaky_relu)
 LOSSES=(mean_squared_error huber)
 LEARNING_RATES=(constant exponential_decay)
-N_DIMENSIONS=(3)
+DATASET_SIZE=1000
+N_DIMENSIONS=4
 
 for dataset in "${DATASETS[@]}"; do
     for activation in "${ACTIVATIONS[@]}"; do
@@ -29,13 +30,13 @@ for dataset in "${DATASETS[@]}"; do
                         --model hex --num_dims "${N_DIMENSIONS}" --rotation 0 \
                         --epochs "${E2E_EPOCHS}" \
                         --type "${dataset}" \
+                        --dataset-size "${DATASET_SIZE}" \
                         --activation "${activation}" \
                         --loss "${loss}" \
                         --learning-rate "${learning_rate}" \
                         --run-name "e2etest-famA/hex-${combo_string}" \
                         --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
-                        --run-note "e2e benchmark family A (linear)"\
-                        --dry-run
+                        --run-note "e2e benchmark family A (linear)"&
 
                 rm -rf "runs/e2etest-famA/mlp-${combo_string}"
                 e2e_train "Family A mlp: ${combo_string}"
@@ -43,14 +44,15 @@ for dataset in "${DATASETS[@]}"; do
                         --model mlp --num_dims "${N_DIMENSIONS}" \
                         --epochs "${E2E_EPOCHS}" \
                         --type "${dataset}" \
+                        --dataset-size "${DATASET_SIZE}" \
                         --activation "${activation}" \
                         --loss "${loss}" \
                         --learning-rate "${learning_rate}" \
                         --run-name "e2etest-famA/mlp-${combo_string}" \
                         --run-tags "${FAM_TAG_BASE},famA,${dataset},${activation},${loss}" \
-                        --run-note "e2e benchmark family A (linear)"\
-                        --dry-run
+                        --run-note "e2e benchmark family A (linear)"&
             done
         done
     done
+    wait
 done

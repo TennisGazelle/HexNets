@@ -1,15 +1,14 @@
-import logging
 import pickle
 from typing import Any, List, Mapping, Union, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pathlib
 import json
-import copy
-from tabulate import tabulate
 from tqdm import trange
 
 from services.figure_service.FigureService import FigureService
+from services.figure_service.weight_heatmap import render_weight_panels
+from services.figure_service.DynamicWeightsFigure import DynamicWeightsFigure
 from networks.network import BaseNeuralNetwork
 from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
@@ -41,7 +40,7 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         self.hidden_dims = hidden_dims
         self.W = []
         self.delta_W = []
-        self._init_figure_service()
+        self._init_figure_service(training_filename_prefix="mlpnet_training_")
 
         if len(hidden_dims) == 0:
             raise ValueError("hidden_dims must be a list of at least one integer")
@@ -103,16 +102,21 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         return sum(dims[i] * dims[i + 1] for i in range(len(dims) - 1))
 
     # --- instance methods ---
-    def _init_figure_service(self):
-        self.figure_service = FigureService()
-        self.figure_service.set_figures_path(None)
-        self.training_figure = self.figure_service.init_training_figure(
-            f"mlpnet_training_{self.loss}_{self.activation}.png",
-            f"Training {self.display_name}",
-            self.loss.display_name,
-            "mean exp(-RMSE) per example",
-            "coefficient of determination",
-        )
+    def _metrics_for_display(self) -> Metrics:
+        return self.training_metrics
+
+    def _metrics_table_headers(self) -> List[str]:
+        return ["Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"]
+
+    def _training_metrics_r2_n(self) -> int:
+        return self.output_dim
+
+    def _training_metrics_r2_p(self) -> int:
+        return self.input_dim
+
+    def get_weight_matrices_for_live_plot(self):
+        """Return the current weight matrices for live heatmap display."""
+        return self.W
 
     # --- structure helpers ---
     def _add_layer(self, incoming_dim: int, outgoing_dim: int):
@@ -218,33 +222,20 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
 
     def show_stats(self):
         logger.info("MLP Network Stats:")
-        data = [
-            ["layer_sizes", [self.input_dim] + self.hidden_dims + [self.output_dim]],
-            ["lr", self.learning_rate_fn.display_name],
-            ["epochs completed", self.epochs_completed],
-            ["loss_method", self.loss.display_name],
-            ["activation_method", self.activation.display_name],
-        ]
-        logger.info("\n" + tabulate(data, headers=["Parameter", "Value"], tablefmt="grid"))
 
-        # print(f"loss:\t{self.training_metrics['loss'][-1]:.3f}")
-        # print(f"regression_score:\t{self.training_metrics.regression_score[-1]:.3f}")
-        # print(f"r_squared:\t{self.training_metrics['r_squared'][-1]:.3f}")
-
-    def show_latest_metrics(self):
-        metrics = self.training_metrics
-        data = (
-            [0.0, 0.0, 0.0, 0.0, 0]
-            if len(metrics.loss) == 0
-            else [
-                metrics.loss[-1],
-                metrics.regression_score[-1],
-                metrics.r_squared[-1],
-                metrics.adjusted_r_squared[-1] if metrics.adjusted_r_squared else 0.0,
-                self.epochs_completed,
-            ]
+        layer_sizes = [self.input_dim] + self.hidden_dims + [self.output_dim]
+        table_print(
+            ["layer_sizes", "lr", "epochs completed", "loss_method", "activation_method"],
+            [
+                [
+                    layer_sizes,
+                    self.learning_rate_fn.display_name,
+                    self.epochs_completed,
+                    self.loss.display_name,
+                    self.activation.display_name,
+                ]
+            ],
         )
-        table_print(["Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"], [[*data]])
 
     def graph_weights(
         self,
@@ -260,32 +251,6 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         filename = f"mlpnet_in{self.input_dim}_h{hslug}_out{self.output_dim}_" f"{title.replace(' ', '_')}{suffix}.png"
         full_path = parent_dir / filename
 
-        n_layers = len(self.W)
-        fig_w = max(4 * n_layers, 6)
-        fig, axes = plt.subplots(1, n_layers, figsize=(fig_w, 5))
-        if n_layers == 1:
-            axes = np.array([axes])
-
-        vmin = vmax = None
-        if not activation_only and self.W:
-            vmin = min(float(w.min()) for w in self.W)
-            vmax = max(float(w.max()) for w in self.W)
-
-        for ax, i in zip(axes, range(n_layers)):
-            W = self.W[i]
-            matrix = (W != 0).astype(int) if activation_only else W
-            cmap = "Greys" if activation_only else "viridis"
-            imshow_kw = {"cmap": cmap, "interpolation": "none"}
-            if not activation_only:
-                imshow_kw["vmin"] = vmin
-                imshow_kw["vmax"] = vmax
-            im = ax.imshow(matrix, **imshow_kw)
-            ax.set_title(f"Layer {i} ({W.shape[0]}×{W.shape[1]})")
-            ax.set_xlabel("out")
-            ax.set_ylabel("in")
-            if not activation_only:
-                fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-
         subtitle_parts = [
             f"in={self.input_dim}, hidden=[{hslug}], out={self.output_dim}",
             f"lr={self.learning_rate_fn.display_name}",
@@ -294,19 +259,19 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
             subtitle_parts.append(detail)
         if activation_only:
             subtitle_parts.append("non-zero weights (dense layers are usually all 1)")
-        plt.suptitle(title)
-        plt.figtext(0.5, 0.02, " · ".join(subtitle_parts), ha="center", fontsize=9)
-        plt.tight_layout(rect=[0, 0.06, 1, 0.96])
 
-        try:
-            plt.savefig(full_path)
-            # Avoid UserWarning on non-interactive backends (e.g. Agg in CI / tests).
-            if "agg" not in str(plt.matplotlib.get_backend()).lower():
-                plt.show()
-        finally:
-            plt.close(fig)
-
-        return str(full_path), fig
+        panel_titles = [f"Layer {i} ({W.shape[0]}×{W.shape[1]})" for i, W in enumerate(self.W)]
+        saved_path, fig = render_weight_panels(
+            self.W,
+            activation_only=activation_only,
+            title=title,
+            subtitle=" · ".join(subtitle_parts),
+            panel_titles=panel_titles,
+            path=full_path,
+            show=True,
+        )
+        plt.close(fig)
+        return saved_path or str(full_path), fig
 
     def graph_structure(self, detail="", output_dir: pathlib.Path = None, medium="matplotlib"):
         if medium == "matplotlib":
@@ -392,35 +357,44 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         epochs=25,
         pause=0.05,
         output_dir: Union[pathlib.Path, None] = None,
+        simple_figure_names: bool = False,
+        show_training_metrics: bool = True,
+        show_weights_live: bool = False,
     ) -> Tuple[float, float, float]:
         """
         Train while animating loss and regression score over epochs.
+
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
+        - simple_figure_names: use short stable names (training_metrics.png,
+          weights_live.png) suited for run folders; default keeps descriptive
+          names for standalone use.
+        - show_training_metrics: live-update the metrics figure each epoch.
+        - show_weights_live: open and live-update a weight heatmap each epoch.
         """
-        logger.info("MLP Network Training:")
-        logger.info(f"epochs:\t{epochs}")
-        logger.info(f"datapoints:\t{len(data)}")
-
-        logger.info("Training...")
-
-        logger.debug(f"train_animated called with output_dir={output_dir}")
-        self.figure_service.set_figures_path(output_dir)
-        logger.debug(f"figures_path set to {self.figure_service.figures_path}")
-        # Update the filename to use the new figures_path
-        filename_path = (
-            pathlib.Path(self.training_figure.filename)
-            if isinstance(self.training_figure.filename, str)
-            else self.training_figure.filename
+        logger.info("Training with params...")
+        table_print(["epochs", "num data points"], [[epochs, len(data)]])
+        self.figure_service.prepare_training_animation(
+            self.training_figure,
+            output_dir=output_dir,
+            simple_names=simple_figure_names,
+            network_kind="MLP",
+            display_name=self.display_name,
+            loss=self.loss,
+            activation=self.activation,
         )
-        filename_base = filename_path.name
-        self.training_figure.filename = self.figure_service.figures_path / filename_base
         logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
-        self.training_figure.title = (
-            f"MLP Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
-        )
-        self.training_figure.loss_detail = self.loss.display_name
-        self.training_figure.regression_score_detail = "mean exp(-RMSE) per example"
-        self.training_figure.r2_detail = "coefficient of determination"
+
+        weights_figure = None
+        if show_weights_live:
+            wf_name = "weights_live.png" if simple_figure_names else f"mlpnet_weights_live.png"
+            weights_figure = self.figure_service.init_weights_live_figure(
+                wf_name,
+                f"MLP Weights — {self.display_name}",
+                DynamicWeightsFigure.layer_shapes_from_matrices(self.W),
+            )
+        if not show_training_metrics and show_weights_live:
+            # Keep metrics figure data updated for final save, but do not show it live.
+            plt.close(self.training_figure.fig)
 
         # Last-epoch save must not use self.epochs_completed in the condition: we increment it every
         # iteration (unlike Hex), so "epoch == epochs + self.epochs_completed - 1" is wrong for
@@ -431,100 +405,32 @@ class MLPNetwork(BaseNeuralNetwork, display_name="mlp"):
         # training loop
         for epoch in trange(epoch_start, epoch_stop):
             total_loss = 0.0
-            regression_score_sum = 0
-            count = 0
-            ss_res_sum = 0.0
-            sum_y = 0.0
-            sum_y2 = 0.0
-            num_elems = 0
+            self.training_metrics.reset_epoch_tally()
 
             for x_input, y_target in data:
-                # print('---')
                 activations = self.forward(x_input)
-
-                # for li, a in enumerate(activations):
-                #     pos = np.count_nonzero(a > 0)
-                #     neg = np.count_nonzero(a < 0)
-                #     zeros = np.count_nonzero(a == 0)
-                #     total = len(a)
-                #     print(f"layer {li}: {a}")
-                #     print(f"layer {li}: pos={pos}, neg={neg}, zeros={zeros}, total={total}, ratio={pos/total}")
-
-                # loss (MSE on final layer nodes only)
                 y_pred = activations[-1]
                 total_loss += self.loss.calc_loss(y_target, y_pred)
-
-                # accuracy
-                # if classification:
-                #     pred_bin = (y_pred >= threshold).astype(int)
-                #     tgt_bin = (y_target >= 0.5).astype(int)
-                #     correct += np.mean(pred_bin == tgt_bin)
-                # else:
-                # a simple bounded score for regression feel: 1/(1+MAE)
-                # mae = np.mean(np.abs(y_pred - y_target))
-                # correct += 1.0 / (1.0 + mae)
-
-                rmse = np.sqrt(np.mean((y_pred - y_target) ** 2))
-                score = np.exp(-rmse)  # maps 0->1, larger errors decay smoothly
-                regression_score_sum += score
-
-                # scale = np.maximum(1e-8, np.mean(np.abs(y_target)))  # per-sample
-                # nmae = np.mean(np.abs(y_pred - y_target)) / scale
-                # correct += np.exp(-nmae)
-
-                # r_squared
-                ss_res_sum += float(np.sum((y_pred - y_target) ** 2))
-                sum_y += float(np.sum(y_target))
-                sum_y2 += float(np.sum(y_target**2))
-
-                count += 1
-                num_elems += y_pred.shape[0]
-
-                # backprop step
+                self.training_metrics.tally_regression_score_r2(y_pred, y_target)
                 self.backward(activations, y_target, apply_delta_W=False)
 
-                # if epoch % 10 == 0:
-                #     activations_after = self.forward(x0)
-                #     y_pred_after = activations_after[-1][self.layer_indices[-1]]
-                #     mae_after = np.mean(np.abs(y_pred_after - y_target))
-                #     print(f"MAE before: {mae}, after: {mae_after}, delta_y={np.linalg.norm(y_pred_after - y_pred)}")
-
-            # r_squared, cont'd
-            ss_tot = sum_y2 - (sum_y**2 / (num_elems))
-            r_squared = 1 - (ss_res_sum / (ss_tot + 1e-12))
-
-            # Calculate adjusted R-squared
-            p = self.input_dim  # Number of features/parameters
-            if num_elems > p + 1:
-                adjusted_r_squared = 1 - (1 - r_squared) * (num_elems - 1) / (num_elems - p - 1)
-            else:
-                adjusted_r_squared = r_squared  # Fallback if insufficient samples
-
-            epoch_loss = total_loss / count
-            epoch_reg_score = regression_score_sum / count
-            epoch_r2 = r_squared
-            epoch_adj_r2 = adjusted_r_squared
-            self.training_metrics.add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
-            self.training_figure.update_figure(
-                {
-                    "loss": epoch_loss,
-                    "regression_score": epoch_reg_score,
-                    "r_squared": epoch_r2,
-                    "adjusted_r_squared": epoch_adj_r2,
-                }
+            epoch_loss = total_loss / len(data)
+            epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics.calc_regression_score_and_r2(
+                self._training_metrics_r2_n(), p=self._training_metrics_r2_p()
             )
-
-            self.apply_delta_W()
-
-            plt.pause(pause)
-
-            if epoch == epoch_stop - 1:
-                logger.debug(f"About to save figure at epoch {epoch}")
-                self.training_figure.save_figure()
-                logger.info("Training complete!")
-                self.show_latest_metrics()
-                logger.info(f"Training figure saved to: {self.training_figure.filename}")
-
+            self.training_metrics.add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
+            self._finalize_training_epoch(
+                epoch_loss=epoch_loss,
+                epoch_reg_score=epoch_reg_score,
+                epoch_r2=epoch_r2,
+                epoch_adj_r2=epoch_adj_r2,
+                training_channel=0,
+                weights_figure=weights_figure,
+                pause=pause,
+                show_training_metrics=show_training_metrics,
+                show_weights_live=show_weights_live,
+                is_last_epoch=(epoch == epoch_stop - 1),
+            )
             self.epochs_completed += 1
 
         return epoch_loss, epoch_reg_score, epoch_r2, self.training_figure.fig

@@ -33,6 +33,7 @@ def _valid_train_args(**overrides):
         run_dir=None,
         run_name=None,
         dry_run=False,
+        train_show="metrics",
     )
     defaults.update(overrides)
     return Namespace(**defaults)

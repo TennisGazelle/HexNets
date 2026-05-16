@@ -275,6 +275,20 @@ def add_training_arguments(parser: ArgumentParser):
         "--dry-run", help="What would be run, do not create a run.", default=False, action="store_true", dest="dry_run"
     )
 
+    group.add_argument(
+        "--train-show",
+        help=(
+            "Which live matplotlib figures to display during training. "
+            "'metrics' shows the loss/R² curves, 'weights' shows heatmaps of "
+            "the weight matrices, 'both' enables both, 'none' runs headless. "
+            "JSON metrics are always collected regardless of this setting."
+        ),
+        type=str,
+        default="metrics",
+        choices=("metrics", "weights", "both", "none"),
+        dest="train_show",
+    )
+
 
 def validate_hex_only_arguments(args: Namespace):
     if args.n < 2:

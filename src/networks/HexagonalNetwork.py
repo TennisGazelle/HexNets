@@ -1,8 +1,6 @@
-import copy
 import math
 import os
 import pickle
-from tabulate import tabulate
 from typing import Any, List, Dict, Mapping, Union, Tuple
 import pathlib
 from utils import table_print
@@ -16,18 +14,14 @@ from matplotlib.colors import ListedColormap
 
 from networks.metrics import Metrics
 from services.figure_service import FigureService
+from services.figure_service.DynamicWeightsFigure import DynamicWeightsFigure
 from networks.activation.activations import BaseActivation
 from networks.loss.loss import BaseLoss
 from networks.network import BaseNeuralNetwork
 
-from networks.activation.LeakyRelu import LeakyReLU
-from networks.activation.Relu import ReLU
 from networks.activation.Sigmoid import Sigmoid
 
-from networks.loss.HuberLoss import HuberLoss
-from networks.loss.LogCoshLoss import LogCoshLoss
 from networks.loss.MeanSquaredErrorLoss import MeanSquaredErrorLoss
-from networks.loss.QuantileLoss import QuantileLoss
 from data.dataset import BaseDataset, randomized_enumerate
 
 # === Hexagonal Neural Network ===
@@ -51,7 +45,7 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self.dir_W = self._init_dir_W()
         self._sync_global_to_dir()
         self._setup_training_metrics()
-        self._init_figure_service()
+        self._init_figure_service(training_filename_prefix="hexnet_training_")
 
     # --- static methods ---
     @staticmethod
@@ -206,9 +200,9 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                     node_idx += 1
             return new_indices
 
-        if r == 1:
-            return [rw[::-1] for rw in _get_top_right_to_bottom_left()]
         if r == 4:
+            return [rw[::-1] for rw in _get_top_right_to_bottom_left()]
+        if r == 1:
             return [rw for rw in _get_top_right_to_bottom_left()[::-1]]
 
         def _get_top_left_to_bottom_right():
@@ -250,16 +244,38 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
     def set_training_metrics(self, channel: int, metrics: Metrics):
         self.training_metrics[channel] = metrics
 
-    def _init_figure_service(self):
-        self.figure_service = FigureService()
-        self.figure_service.set_figures_path(None)
-        self.training_figure = self.figure_service.init_training_figure(
-            f"hexnet_training_{self.loss}_{self.activation}.png",
-            f"Training {self.display_name}",
-            self.loss.display_name,
-            "mean exp(-RMSE) per example",
-            "coefficient of determination",
-        )
+    def _metrics_for_display(self) -> Metrics:
+        return self.training_metrics[self.r]
+
+    def _metrics_table_headers(self) -> List[str]:
+        return ["Rotation", "Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"]
+
+    def _metrics_table_row_prefix(self) -> List[Any]:
+        return [self.r]
+
+    def _training_metrics_r2_n(self) -> int:
+        return self.n
+
+    def _training_metrics_r2_p(self) -> int:
+        return self.n
+
+    def _rotation_forward_edge_mask(self) -> np.ndarray:
+        """Directed feedforward edges for rotation ``r`` on ``global_W`` indices (row=u, col=v).
+
+        Outlines only (u, v) with u in layer i and v in layer i+1 in ``dir_W[r]['indices']``;
+        the transpose cell (v, u) is not marked even though ``global_W`` is symmetric.
+        """
+        mask = np.zeros(self.global_W.shape, dtype=bool)
+        layers = self.dir_W[self.r]["indices"]
+        for i in range(len(layers) - 1):
+            for u in layers[i]:
+                for v in layers[i + 1]:
+                    mask[u, v] = True
+        return mask
+
+    def get_weight_matrices_for_live_plot(self):
+        """Return shared ``global_W`` for live heatmap (full matrix); use highlight mask for active rotation."""
+        return [self.global_W.copy()]
 
     # --- weights ---
 
@@ -326,8 +342,10 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 #     continue
                 for v in dst_nodes:
                     grads[u, v] += delta[v] * au
+
+            # backpropagate delta to previous layer
+            # (pre-activation grads already folded into activation deriv)
             if i > 0:
-                # backpropagate delta to previous layer (pre-activation grads already folded into relu deriv)
                 new_delta = np.zeros(len(activations[i]))
                 for u in src_nodes:
                     s = 0.0
@@ -345,11 +363,11 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
     def apply_delta_W(self):
         current_rate = self.learning_rate_fn.rate_at_iteration(self.data_iteration)
-        self.dir_W[self.r]["W"] -= current_rate * self.dir_W[self.r]["delta_W"]
+        change = current_rate * self.dir_W[self.r]["delta_W"]
+        self.dir_W[self.r]["W"] -= change
+        self.global_W -= change
 
-        self.global_W -= current_rate * self.dir_W[self.r]["delta_W"]
-        self.global_W -= current_rate * self.dir_W[self.r]["delta_W"].T
-
+        # clear direction W
         self.dir_W[self.r]["delta_W"].fill(0)
 
     # --- public API ---
@@ -369,11 +387,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
         self._sync_global_to_dir()
 
     def train(self, data, epochs=1):
-        logger.info("Hexagonal Network Training:")
-        logger.info(f"epochs:\t{epochs}")
-        logger.info(f"datapoints:\t{len(data)}")
-
-        logger.info("Training...")
         for epoch in range(epochs):
             for x_input, y_target in data:
                 x_full = self.pad_input(x_input)
@@ -383,7 +396,6 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
                 self.data_iteration += 1
             self.apply_delta_W()
             self.epochs_completed += 1
-        logger.info("Training complete!")
 
     def test(self, x_input):
         x_full = self.pad_input(x_input)
@@ -698,36 +710,27 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             ],
         )
 
-    def show_latest_metrics(self):
-        metrics = self.training_metrics[self.r]
-        data = (
-            [0.0, 0.0, 0.0, 0.0, 0]
-            if len(metrics.loss) == 0
-            else [
-                metrics.loss[-1],
-                metrics.regression_score[-1],
-                metrics.r_squared[-1],
-                metrics.adjusted_r_squared[-1] if metrics.adjusted_r_squared else 0.0,
-                self.epochs_completed,
-            ]
-        )
-        table_print(
-            ["Rotation", "Loss", "Reg. score", "R^2", "Adjusted R^2", "Epochs"],
-            [[self.r, *data]],
-        )
-
     def train_animated(
         self,
         data: BaseDataset,
         epochs=25,
         pause=0.05,
         output_dir: Union[pathlib.Path, None] = None,
+        simple_figure_names: bool = False,
+        show_training_metrics: bool = True,
+        show_weights_live: bool = False,
     ):
         """
         Train while animating loss and regression score over epochs.
+
         - data: iterable of (x_input, y_target) with shapes (n,) and (n,)
+        - simple_figure_names: use short stable names (training_metrics.png,
+          weights_live.png) suited for run folders; default keeps descriptive
+          names for standalone use.
+        - show_training_metrics: live-update the metrics figure each epoch.
+        - show_weights_live: open and live-update a weight heatmap each epoch.
         """
-        logger.info("==> Training with params...")
+        logger.info("Training with params...")
         table_print(
             ["epochs", "rotation", "num data points"],
             [
@@ -739,31 +742,33 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
             ],
         )
 
-        logger.debug(f"train_animated called with output_dir={output_dir}")
-        self.figure_service.set_figures_path(output_dir)
-        logger.debug(f"figures_path set to {self.figure_service.figures_path}")
-        # Update the filename to use the new figures_path
-        filename_path = (
-            pathlib.Path(self.training_figure.filename)
-            if isinstance(self.training_figure.filename, str)
-            else self.training_figure.filename
+        self.figure_service.prepare_training_animation(
+            self.training_figure,
+            output_dir=output_dir,
+            simple_names=simple_figure_names,
+            network_kind="Hexagonal",
+            display_name=self.display_name,
+            loss=self.loss,
+            activation=self.activation,
         )
-        filename_base = filename_path.name
-        self.training_figure.filename = self.figure_service.figures_path / filename_base
         logger.debug(f"training_figure.filename set to {self.training_figure.filename}")
-        self.training_figure.title = f"Hexagonal Network Training {self.display_name} (loss={self.loss}, activation={self.activation.display_name})"
-        self.training_figure.loss_detail = self.loss.display_name
-        self.training_figure.regression_score_detail = "mean exp(-RMSE) per example"
-        self.training_figure.r2_detail = "coefficient of determination"
+
+        weights_figure = None
+        if show_weights_live:
+            wf_name = "weights_live.png" if simple_figure_names else "hexnet_weights_live.png"
+            weights_figure = self.figure_service.init_weights_live_figure(
+                wf_name,
+                f"Hexagonal Weights — {self.display_name} r={self.r}",
+                DynamicWeightsFigure.layer_shapes_from_matrices(self.get_weight_matrices_for_live_plot()),
+            )
+        if not show_training_metrics and show_weights_live:
+            # Keep metrics figure data updated for final save, but do not show it live.
+            plt.close(self.training_figure.fig)
 
         # training loop
         for epoch in trange(self.epochs_completed, self.epochs_completed + epochs):
             total_loss = 0.0
-            # correct = 0
-            # count = 0
-            # ss_res_sum = 0.0
-            # sum_y = 0.0
-            # sum_y2 = 0.0
+            self.training_metrics[self.r].reset_epoch_tally()
 
             for index, (x_input, y_target) in randomized_enumerate(data):
                 self.data_iteration = index
@@ -830,30 +835,25 @@ class HexagonalNeuralNetwork(BaseNeuralNetwork, display_name="hex"):
 
             epoch_loss = total_loss / len(data)
             epoch_reg_score, epoch_r2, epoch_adj_r2 = self.training_metrics[self.r].calc_regression_score_and_r2(
-                self.n, p=self.n
+                self._training_metrics_r2_n(), p=self._training_metrics_r2_p()
             )
             self.training_metrics[self.r].add_metric(epoch_loss, epoch_reg_score, epoch_r2, epoch_adj_r2)
-            self.training_figure.update_figure(
-                {
-                    "loss": epoch_loss,
-                    "regression_score": epoch_reg_score,
-                    "r_squared": epoch_r2,
-                    "adjusted_r_squared": epoch_adj_r2,
+            self._finalize_training_epoch(
+                epoch_loss=epoch_loss,
+                epoch_reg_score=epoch_reg_score,
+                epoch_r2=epoch_r2,
+                epoch_adj_r2=epoch_adj_r2,
+                training_channel=self.r,
+                weights_figure=weights_figure,
+                pause=pause,
+                show_training_metrics=show_training_metrics,
+                show_weights_live=show_weights_live,
+                is_last_epoch=(epoch == self.epochs_completed + epochs - 1),
+                weights_update_kwargs={
+                    "highlight_masks": [self._rotation_forward_edge_mask()],
+                    "highlight_channel": self.r,
                 },
-                self.r,
             )
-
-            self.apply_delta_W()
-
-            plt.pause(pause)
-
-            if epoch == self.epochs_completed + epochs - 1:
-                logger.debug(f"About to save figure at epoch {epoch}")
-                self.training_figure.save_figure()
-                logger.info("")
-                logger.info("Training complete!")
-                self.show_latest_metrics()
-                logger.info(f"Training figure saved to: {self.training_figure.filename}")
 
         # todo: keep track of epochs completed for each rotation
         if self.r == 0:

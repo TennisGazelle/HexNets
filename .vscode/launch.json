@@ -147,7 +147,14 @@
             "args": [
                 "train",
                 "-m", "mlp",
-                "-t", "identity",
+                "-n", "5",
+                "-t", "unit_sphere_projection",
+                "-ds", "1000",
+                "-e", "200",
+                "-lr", "exponential_decay",
+                "-rn", "mlp-test",
+                "-f",
+                "--train-show", "both",
             ]
         },
         {
@@ -176,8 +183,15 @@
             "args": [
                 "train",
                 "-m", "hex",
+                "-n", "3",
+                "-r", "3",
                 "-t", "identity",
-                "-r", "1"
+                "-ds", "1000",
+                "-e", "200",
+                "-lr", "exponential_decay",
+                "-rn", "hex-test",
+                "-f",
+                "--train-show", "both",
             ]
         },
         {

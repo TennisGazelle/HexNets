@@ -43,11 +43,6 @@ def read_json_object(fileref: pathlib.Path, description: str) -> dict:
     return data
 
 
-def get_json_file_contents(fileref: pathlib.Path) -> dict:
-    """Deprecated for run files; prefer :func:`read_json_object`. Kept for callers expecting dict-only JSON."""
-    return read_json_object(fileref, fileref.name)
-
-
 def resolve_git_commit(
     repo_root: Optional[pathlib.Path] = None,
 ) -> Tuple[Optional[str], Optional[str]]:

@@ -4,7 +4,8 @@ Project state and context: what was last asked, what.s active, what.s next.
 
 ## Last thing asked / in progress
 
-- Fix unit tests after `run_name` / `--run-name` CLI alignment (`test_commands_train`, `test_run_config_template`; resume hint text).
+- **DynamicWeightsFigure highlight outlines**: optional ``highlight_channel`` (hex passes ``self.r``) uses the same ``Figure.colors`` tab10 slot as ``TrainingFigure`` lines for that rotation; all outline strokes share that color. Omitted channel + mask defaults to black.
+- **Live weights in ``FigureService.figures``**: stable shape key ``weights_live:…``; layout change closes other live-weight entries.
 
 ---
 
