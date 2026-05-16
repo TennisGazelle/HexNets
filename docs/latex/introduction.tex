@@ -7,13 +7,10 @@ This imposes a simple ordered sequence of transformations on the input data, whe
 Hidden layers can then be interpreted as intermediate representations whose structure depends on the imposed ordering of the network.
 
 Through these variations, many inductive biases have been successfully encoded such as convolutional locality, invariance to translation, rotation, scaling, and other geometric transformations \cite{lecun1998gradient,cohen2016group,worrall2017harmonic,jaderberg2015spatial,sabour2017dynamic}.
-While many variations of this base model have been iterated on with respect to shared weights, activation functions, and other hyperparameters, the core architectural ordering of the network remains the same and only a few deviations encode geometric transformations of the data, such as 2D or 3D convolution layers popularized in computer vision tasks.
+While many variations of this base model have been iterated on with respect to shared weights, activation functions, and other hyperparameters, the core architectural directionality of the network tends to remain the same and only a few deviations encode geometric transformations of the data, such as 2D or 3D convolution layers popularized in computer vision tasks.
+They do still alter informational flow in substantially novel ways to produce these new inductive biases, but generally still have one input to output directionality.
 Convolutional Neural Networks (CNNs) encode locality and translation equivariance through shared convolutional kernels \cite{lecun1998gradient,fukushima1980neocognitron}.
 Extensions such as group-equivariant CNNs impose additional transformation structure, including rotation or reflection equivariance, by tying parameters across transformations \cite{cohen2016group,worrall2017harmonic}.
-
-%%% SUGGESTION: Existing text: "the core architectural ordering of the network remains the same"
-%%% SUGGESTION: This is directionally true, but reviewers may object because transformers, recurrence, graph networks, and diffusion architectures substantially alter information flow.
-%%% SUGGESTION: Consider narrowing the claim to feedforward/topological ordering rather than architecture broadly.
 
 \subsection{Hexagonal Neural Networks}
 
@@ -54,11 +51,7 @@ The opposite orientation of $H_i$ is $H_{(i+3) \bmod 6}$.
 As we can see, this new change in architecture may have some interesting implications for the training of the network.
 What are the implications of training the network in one direction, and how does that impact the training of the network in other directions?
 What effects will this have on the performance of the network in other directions?
-Is there an optimal sequencing of training with intermitten rotations that can yield lower overall loss in any one network or a mixture of experts (MoE) approach that can yield lower overall loss than the MLP equivalent?
-
-%%% SUGGESTION: Existing text: "mixture of experts (MoE) approach"
-%%% SUGGESTION: Unless you explicitly benchmark against MoE-style routing or expert isolation, reviewers may see this as an unsupported comparison.
-%%% SUGGESTION: Consider reframing as "ensemble-like" or "multi-orientation" behavior instead.
+Most importantly, what new inductive biases, if any, can be encoded with this new architecture?
 
 \subsection{Contributions}
 

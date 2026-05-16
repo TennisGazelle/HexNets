@@ -1,0 +1,35 @@
+\section{Future Work}
+
+Given the success of the basic rotation operator, we can explore more complex rotation sequences and scheduling strategies to further improve the performance of the HexNet.
+There are also several new research directions that can be explored with this new operator.
+
+\subsection{Ensemble-like Behavior and Learning}
+Effectively, training a Hexnet yields six independent (although substantially overlapping) networks, each with a unique representational space of the same input data.
+This is analogous to a mixture of experts (MoE) approach where each expert is a different orientation of the same network.
+Is there an optimal sequencing of training with intermitten rotations that can yield lower overall loss in any one network or a mixture of experts (MoE) approach that can yield lower overall loss than the MLP equivalent?
+
+\subsection{Rotational Scheduling Studies}
+
+Rotational and synchronization schedules are a critical component of the HexNet architecture.
+Performance of a HexNet is heavily dependent on the scheduling strategy used, which may differ wildly depending on the dataset and task.
+
+Non-sequential rotation schedules, such as alternating opposite or alternating every other direction, may be more effective at escaping local optima and finding better solutions than sequential schedules.
+Further, non-uniform rotation schedules, such as random or learned, may be more effective at finding better solutions than uniform schedules.
+
+
+\subsection{Nested-Core Studies}
+
+If we have a trained network of size $d$, is it possible to insert this into a larger network of size $d+1$ and continue training the larger network?
+This is a valid and critical question as this could lead to a more efficient training process and a more efficient inference process.
+One could train smaller network cores and then insert them into varying sized larger networks to see if the smaller core can be used to initialize the larger network and if it can be used to improve the performance of the larger network.
+
+\subsection{Leisoning Studies}
+
+Studies around simulating mental disorders have been performed which involve creating a neural network with specific lesions and alterations to study their drift from ground truth.
+These studios can be extended to HexNet architecture with directional lesioning to study the effect of these alterations on neighboring directions.
+
+\subsection{PyTorch and Large-Scale Benchmarking Backend}
+
+The current implementation of the HexNet is written in NumPy using a naive global and directional weight matrix given the structural instability of the hypothesis and is not optimized for large-scale benchmarking.
+Implementing this with a more efficient backend such as PyTorch or JAX could lead to significant performance improvements and enable larger scale experiments, especially with GPU acceleration.
+Further, it would be interesting to see if the HexNet can be scaled to larger datasets and tasks to see if it can still perform well.

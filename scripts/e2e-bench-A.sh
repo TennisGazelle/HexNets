@@ -22,6 +22,7 @@ for dataset in "${DATASETS[@]}"; do
         for loss in "${LOSSES[@]}"; do
             for learning_rate in "${LEARNING_RATES[@]}"; do
                 combo_string="${dataset}-${activation}-${loss}-${learning_rate}-n${N_DIMENSIONS}"
+                run_tags="${FAM_TAG_BASE},famA,${dataset},${activation},${loss},${learning_rate}"
 
                 rm -rf "runs/e2etest-famA/hex-${combo_string}"
                 e2e_train "Family A hex: ${combo_string}" \

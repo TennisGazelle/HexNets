@@ -29,6 +29,7 @@ print_line "Benchmark families A-F (runs under runs/e2etest-fam*/ )..."
 FAM_TAG_BASE="e2e,benchmark"
 
 source scripts/e2e-bench-A.sh
+
 exit 0;
 
 # --- Family B: smooth nonlinear (small activation × loss cross) ---
