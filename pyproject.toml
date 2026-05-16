@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hexnet"
-version = "0.4.0"
+version = "0.5.0"
 description = "Hexagonal Neural Network CLI tool"
 authors = [
     { name = "Daniel Lopez", email = "daniellopez123456789@gmail.com" }
